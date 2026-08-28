@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
+import { rename } from "node:fs/promises";
 import path from "node:path";
+import { appPagesRoot } from "./app-root";
 import type { CreateConfig } from "./config";
 import { appendEnvExample, appendGlobalsCss, copyExtra, mergePackageJson } from "./fs";
 import { templateDir } from "./paths";
@@ -8,8 +10,12 @@ async function runShell(name: string, config: CreateConfig): Promise<void> {
   await copyExtra(name, config, { appPrefix: true });
 }
 
-async function runExtra(name: string, config: CreateConfig): Promise<void> {
-  await copyExtra(name, config);
+async function runExtra(
+  name: string,
+  config: CreateConfig,
+  options: { appPrefix?: boolean } = {},
+): Promise<void> {
+  await copyExtra(name, config, options);
   const manifest = readExtraManifest(name);
   if (manifest.package) {
     await mergePackageJson(config.projectDir, manifest.package);
@@ -21,6 +27,20 @@ async function runExtra(name: string, config: CreateConfig): Promise<void> {
     const snippetPath = path.join(templateDir("extras", name), manifest.globalsCss);
     await appendGlobalsCss(config.projectDir, readFileSync(snippetPath, "utf8"));
   }
+}
+
+export function contactPath(config: CreateConfig): string {
+  return !config.intl && config.locale === "pt-PT" ? "contacto" : "contact";
+}
+
+async function runResend(config: CreateConfig): Promise<void> {
+  await runExtra("resend", config, { appPrefix: true });
+  const dest = contactPath(config);
+  if (dest === "contact") {
+    return;
+  }
+  const root = path.join(config.projectDir, appPagesRoot(config));
+  await rename(path.join(root, "contact"), path.join(root, dest));
 }
 
 export type ExtraManifest = {
@@ -94,7 +114,7 @@ export const installers: Installer[] = [
   {
     name: "resend",
     shouldRun: (config) => config.resend,
-    run: noop,
+    run: (config) => runResend(config),
   },
   {
     name: "playwright",
