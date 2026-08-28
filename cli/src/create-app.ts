@@ -5,6 +5,8 @@ import { writeAgents } from "./agents";
 import type { CreateConfig } from "./config";
 import { writeEnv } from "./env-file";
 import { copyTemplateDir } from "./fs";
+import { initGit } from "./git";
+import { installDeps } from "./install";
 import { runInstallers } from "./installers";
 import { htmlLang, templateDir } from "./paths";
 
@@ -39,5 +41,10 @@ export async function createApp(config: CreateConfig): Promise<void> {
   await runInstallers(config);
   await writeEnv(config);
   await writeAgents(config);
-  // install/git not wired (Task 15)
+  if (config.git) {
+    await initGit(config.projectDir);
+  }
+  if (!config.skipInstall) {
+    await installDeps(config.projectDir);
+  }
 }

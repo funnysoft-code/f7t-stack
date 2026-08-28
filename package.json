@@ -3,24 +3,32 @@
   "version": "0.0.0",
   "description": "FunnySoft Next.js app generator",
   "license": "MIT",
-  "type": "module",
   "bin": {
     "create-f7t-app": "./cli/src/index.ts"
   },
-  "files": ["cli/src", "template", "README.md", "LICENSE"],
+  "files": [
+    "cli/src",
+    "template",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
   "scripts": {
     "test": "vitest run",
     "check": "oxlint cli && oxfmt --check cli package.json tsconfig.json vitest.config.ts && tsc --noEmit && vitest run"
   },
-  "engines": {
-    "bun": ">=1.4.0"
+  "dependencies": {
+    "@clack/prompts": "1.7.0"
   },
-  "packageManager": "bun@1.4.0",
   "devDependencies": {
     "@types/node": "24.10.1",
     "oxfmt": "0.65.0",
     "oxlint": "1.80.0",
     "typescript": "7.0.2",
     "vitest": "4.1.11"
-  }
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  },
+  "packageManager": "bun@1.4.0"
 }
