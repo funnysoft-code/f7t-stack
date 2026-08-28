@@ -102,7 +102,26 @@ export function readExtraManifest(extraName: string): ExtraManifest {
   return JSON.parse(readFileSync(manifestPath, "utf8")) as ExtraManifest;
 }
 
-async function noop(): Promise<void> {}
+const GITHUB_E2E_JOB = `
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps
+      - run: bun run test:e2e
+`;
+
+async function runGithubActions(config: CreateConfig): Promise<void> {
+  await copyExtra("github-actions", config);
+  const ymlPath = path.join(config.projectDir, ".github/workflows/ci.yml");
+  const yml = await readFile(ymlPath, "utf8");
+  await writeFile(
+    ymlPath,
+    yml.split("__F7T_E2E_JOB__").join(config.playwright ? GITHUB_E2E_JOB : ""),
+  );
+}
 
 export const installers: Installer[] = [
   {
@@ -163,7 +182,7 @@ export const installers: Installer[] = [
   {
     name: "github-actions",
     shouldRun: (config) => config.githubActions,
-    run: noop,
+    run: (config) => runGithubActions(config),
   },
 ];
 

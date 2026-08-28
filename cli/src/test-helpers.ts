@@ -10,9 +10,7 @@ const dirs: string[] = [];
 
 export function trackTempDirs(): void {
   afterEach(async () => {
-    await Promise.all(
-      dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })),
-    );
+    await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
   });
 }
 
@@ -26,7 +24,6 @@ export async function gen(
       appName: "shop",
       yes: true,
       skipInstall: true,
-      githubActions: false,
       ...flags,
     },
     cwd,
