@@ -1,8 +1,11 @@
 import { copyFile, mkdir, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { writeAgents } from "./agents";
 import type { CreateConfig } from "./config";
+import { writeEnv } from "./env-file";
 import { copyTemplateDir } from "./fs";
+import { runInstallers } from "./installers";
 import { htmlLang, templateDir } from "./paths";
 
 async function assertProjectDirReady(projectDir: string, force: boolean): Promise<void> {
@@ -33,5 +36,8 @@ export async function createApp(config: CreateConfig): Promise<void> {
   if (!existsSync(envPath)) {
     await copyFile(path.join(config.projectDir, ".env.example"), envPath);
   }
+  await runInstallers(config);
+  await writeEnv(config);
+  await writeAgents(config);
   // install/git not wired (Task 15)
 }
