@@ -15,6 +15,7 @@ describe("drizzle extras", () => {
     expect(example).toContain("file:./dev.db");
     const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
     expect(pkg.scripts["db:migrate"]).toBeDefined();
+    expect(pkg.devDependencies["@types/bun"]).toBe("1.4.0");
   });
 
   test("postgres adds compose and a postgres URL", async () => {

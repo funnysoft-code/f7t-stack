@@ -146,8 +146,14 @@ export function parseArgv(argv: string[]): FlagInput {
       case "--skip-install":
         input.skipInstall = true;
         break;
+      case "--git":
+        input.git = true;
+        break;
       case "--no-git":
         input.git = false;
+        break;
+      case "--github-actions":
+        input.githubActions = true;
         break;
       case "--no-github-actions":
         input.githubActions = false;

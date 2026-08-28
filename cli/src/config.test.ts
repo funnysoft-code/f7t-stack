@@ -45,6 +45,19 @@ describe("parseArgv", () => {
   test("--app-name wins over positional", () => {
     expect(parseArgv(["ignored", "--app-name", "real"]).appName).toBe("real");
   });
+
+  test("--git and --github-actions are presence flags", () => {
+    const input = parseArgv(["--git", "--github-actions"]);
+    expect(input.git).toBe(true);
+    expect(input.githubActions).toBe(true);
+  });
+
+  test("later git and github-actions flags win", () => {
+    expect(parseArgv(["--git", "--no-git"]).git).toBe(false);
+    expect(parseArgv(["--no-git", "--git"]).git).toBe(true);
+    expect(parseArgv(["--github-actions", "--no-github-actions"]).githubActions).toBe(false);
+    expect(parseArgv(["--no-github-actions", "--github-actions"]).githubActions).toBe(true);
+  });
 });
 
 describe("resolveConfig", () => {
