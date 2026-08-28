@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
 import { Geist } from "next/font/google";
 import { notFound } from "next/navigation";
 import { routing } from "~/i18n/routing";
@@ -27,6 +28,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
+  setRequestLocale(locale);
 
   return (
     <html lang={locale}>

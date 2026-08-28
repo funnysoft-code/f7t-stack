@@ -17,6 +17,16 @@ describe("next-intl extra", () => {
     expect(routing).toContain("localePrefix");
     expect(routing).toContain("as-needed");
     expect(routing).toContain("pt-PT");
+    const layout = await readFile(path.join(dir, "src/app/[locale]/layout.tsx"), "utf8");
+    expect(layout).toContain("setRequestLocale");
+    const contact = await readFile(path.join(dir, "src/app/[locale]/contact/page.tsx"), "utf8");
+    expect(contact).toContain("useTranslations");
+    expect(contact).toContain("next-intl");
+    expect(contact).not.toContain("__F7T_LOCALE__");
+    const pt = JSON.parse(await readFile(path.join(dir, "messages/pt-PT.json"), "utf8")) as {
+      Contact: { title: string };
+    };
+    expect(pt.Contact.title).toBe("Contacto");
   });
 
   test("intl plus sanity keeps studio unprefixed", async () => {

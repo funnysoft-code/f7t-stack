@@ -43,9 +43,15 @@ function extraRootSkip(fromAbs: string): Set<string> {
   }
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
     globalsCss?: string;
+    skip?: string[];
   };
   if (manifest.globalsCss) {
     skip.add(path.basename(manifest.globalsCss));
+  }
+  if (manifest.skip) {
+    for (const name of manifest.skip) {
+      skip.add(name);
+    }
   }
   return skip;
 }

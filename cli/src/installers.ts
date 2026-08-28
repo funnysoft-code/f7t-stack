@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { rename, unlink, writeFile } from "node:fs/promises";
+import { readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appPagesRoot } from "./app-root";
 import type { CreateConfig } from "./config";
@@ -36,11 +36,19 @@ export function contactPath(config: CreateConfig): string {
 async function runResend(config: CreateConfig): Promise<void> {
   await runExtra("resend", config, { appPrefix: true });
   const dest = contactPath(config);
-  if (dest === "contact") {
+  const root = path.join(config.projectDir, appPagesRoot(config));
+  if (dest !== "contact") {
+    await rename(path.join(root, "contact"), path.join(root, dest));
+  }
+  if (!config.intl) {
     return;
   }
-  const root = path.join(config.projectDir, appPagesRoot(config));
-  await rename(path.join(root, "contact"), path.join(root, dest));
+  const from = path.join(templateDir("extras", "resend"), "intl-contact-page.tsx");
+  const content = await readFile(from, "utf8");
+  await writeFile(
+    path.join(root, dest, "page.tsx"),
+    content.split("__F7T_APP_NAME__").join(config.appName),
+  );
 }
 
 async function runNextIntl(config: CreateConfig): Promise<void> {
@@ -77,6 +85,7 @@ export type ExtraManifest = {
   }>;
   agents?: string;
   globalsCss?: string;
+  skip?: string[];
 };
 
 export type Installer = {

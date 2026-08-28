@@ -31,5 +31,7 @@ describe("resend extra", () => {
     const page = await readFile(path.join(dir, "src/app/contact/page.tsx"), "utf8");
     expect(page).toContain("use client");
     expect(page).toContain("/api/contact");
+    expect(page).not.toContain("next-intl");
+    expect(page).toContain("Contact");
   });
 });
