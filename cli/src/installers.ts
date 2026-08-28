@@ -8,9 +8,9 @@ async function runShell(name: string, config: CreateConfig): Promise<void> {
   await copyExtra(name, config, { appPrefix: true });
 }
 
-async function runSanity(config: CreateConfig): Promise<void> {
-  await copyExtra("sanity", config);
-  const manifest = readExtraManifest("sanity");
+async function runExtra(name: string, config: CreateConfig): Promise<void> {
+  await copyExtra(name, config);
+  const manifest = readExtraManifest(name);
   if (manifest.package) {
     await mergePackageJson(config.projectDir, manifest.package);
   }
@@ -54,17 +54,17 @@ export const installers: Installer[] = [
   {
     name: "sanity",
     shouldRun: (config) => config.data === "sanity",
-    run: runSanity,
+    run: (config) => runExtra("sanity", config),
   },
   {
     name: "drizzle-sqlite",
     shouldRun: (config) => config.data === "drizzle" && config.db === "sqlite",
-    run: noop,
+    run: (config) => runExtra("drizzle-sqlite", config),
   },
   {
     name: "drizzle-postgres",
     shouldRun: (config) => config.data === "drizzle" && config.db === "postgres",
-    run: noop,
+    run: (config) => runExtra("drizzle-postgres", config),
   },
   {
     name: "next-intl",

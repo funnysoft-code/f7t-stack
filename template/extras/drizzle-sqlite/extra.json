@@ -1,0 +1,23 @@
+{
+  "package": {
+    "dependencies": {
+      "drizzle-orm": "0.45.2"
+    },
+    "devDependencies": {
+      "drizzle-kit": "0.31.10"
+    },
+    "scripts": {
+      "db:generate": "drizzle-kit generate",
+      "db:migrate": "drizzle-kit migrate",
+      "db:studio": "drizzle-kit studio"
+    }
+  },
+  "env": [
+    {
+      "key": "DATABASE_URL",
+      "side": "server",
+      "zod": "z.string()",
+      "example": "file:./dev.db"
+    }
+  ]
+}
