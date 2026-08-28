@@ -99,7 +99,7 @@ export const installers: Installer[] = [
   {
     name: "playwright",
     shouldRun: (config) => config.playwright,
-    run: noop,
+    run: (config) => runExtra("playwright", config),
   },
   {
     name: "harness-grok",
