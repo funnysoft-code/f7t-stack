@@ -153,12 +153,12 @@ export const installers: Installer[] = [
   {
     name: "harness-grok",
     shouldRun: (config) => config.harness === "grok" || config.harness === "both",
-    run: noop,
+    run: (config) => runExtra("harness-grok", config),
   },
   {
     name: "harness-cursor",
     shouldRun: (config) => config.harness === "cursor" || config.harness === "both",
-    run: noop,
+    run: (config) => runExtra("harness-cursor", config),
   },
   {
     name: "github-actions",
