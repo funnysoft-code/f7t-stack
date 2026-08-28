@@ -55,7 +55,9 @@ describe("createApp", () => {
     expect(pkg.scripts.check).toContain("react-doctor@0.9.12");
     expect(pkg.packageManager).toBe("bun@1.4.0");
     const page = await readFile(path.join(config.projectDir, "src/app/page.tsx"), "utf8");
-    expect(page).toContain("shop");
+    expect(page).toContain("header");
+    const layout = await readFile(path.join(config.projectDir, "src/app/layout.tsx"), "utf8");
+    expect(layout).toContain("shop");
     const env = await readFile(path.join(config.projectDir, "src/env.js"), "utf8");
     expect(env).toContain("NEXT_PUBLIC_SITE_URL");
     expect(env).not.toContain("DATABASE_URL");

@@ -1,7 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { CreateConfig } from "./config";
+import { copyExtra } from "./fs";
 import { templateDir } from "./paths";
+
+async function runShell(name: string, config: CreateConfig): Promise<void> {
+  await copyExtra(name, config, { appPrefix: true });
+}
 
 export type ExtraManifest = {
   package?: {
@@ -58,12 +63,12 @@ export const installers: Installer[] = [
   {
     name: "shell-site",
     shouldRun: (config) => config.shell === "site",
-    run: noop,
+    run: (config) => runShell("shell-site", config),
   },
   {
     name: "shell-app",
     shouldRun: (config) => config.shell === "app",
-    run: noop,
+    run: (config) => runShell("shell-app", config),
   },
   {
     name: "shadcn",
