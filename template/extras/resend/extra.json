@@ -18,5 +18,6 @@
       "zod": "z.string().email().optional()",
       "example": ""
     }
-  ]
+  ],
+  "agents": "Resend contact form. `POST /api/contact` is a Route Handler with a Zod body. Env: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`."
 }

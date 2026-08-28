@@ -1,0 +1,3 @@
+{
+  "agents": "GitHub Actions CI in `.github/workflows/ci.yml` runs `bun run check`."
+}

@@ -35,5 +35,6 @@
       "zod": "z.string().optional()",
       "example": ""
     }
-  ]
+  ],
+  "agents": "Sanity Studio lives at `/studio` (`src/app/studio`). Schema is the `siteSettings` singleton only. After schema changes run `bun run typegen`. Do not hand-edit generated `schema.json` or types."
 }

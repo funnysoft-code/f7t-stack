@@ -6,5 +6,6 @@
     "scripts": {
       "test:e2e": "playwright test"
     }
-  }
+  },
+  "agents": "Playwright. `bun run test:e2e` runs `e2e/smoke.spec.ts` against `/`."
 }

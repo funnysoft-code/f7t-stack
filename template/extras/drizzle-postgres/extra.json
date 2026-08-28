@@ -20,5 +20,6 @@
       "zod": "z.string()",
       "example": "postgres://app:app@localhost:5432/app"
     }
-  ]
+  ],
+  "agents": "Drizzle with Postgres. Start the database with `docker compose up -d`, then `bun run db:migrate`. Schema in `src/server/db`. Scripts: `db:generate`, `db:migrate`, `db:studio`. No sample Post table. Queries go through Route Handlers, not tRPC."
 }

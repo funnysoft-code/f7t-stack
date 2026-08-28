@@ -1,0 +1,3 @@
+{
+  "agents": "Site shell: header, one section, footer. Copy and nav live in `src/lib/site.ts`."
+}

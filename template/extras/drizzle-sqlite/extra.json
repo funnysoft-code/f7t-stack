@@ -19,5 +19,6 @@
       "zod": "z.string()",
       "example": "file:./dev.db"
     }
-  ]
+  ],
+  "agents": "Drizzle with bun SQLite. `DATABASE_URL=file:./dev.db`. Schema in `src/server/db`. Scripts: `db:generate`, `db:migrate`, `db:studio`. No sample Post table. Queries go through Route Handlers, not tRPC."
 }

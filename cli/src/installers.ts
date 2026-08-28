@@ -186,6 +186,17 @@ export const installers: Installer[] = [
   },
 ];
 
+export function landedExtras(
+  config: CreateConfig,
+): Array<{ name: string; manifest: ExtraManifest }> {
+  return installers
+    .filter((installer) => installer.shouldRun(config))
+    .map((installer) => ({
+      name: installer.name,
+      manifest: readExtraManifest(installer.name),
+    }));
+}
+
 export async function runInstallers(config: CreateConfig): Promise<void> {
   for (const installer of installers) {
     if (installer.shouldRun(config)) {
