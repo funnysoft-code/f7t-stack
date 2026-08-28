@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { rename } from "node:fs/promises";
+import { rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appPagesRoot } from "./app-root";
 import type { CreateConfig } from "./config";
@@ -41,6 +41,26 @@ async function runResend(config: CreateConfig): Promise<void> {
   }
   const root = path.join(config.projectDir, appPagesRoot(config));
   await rename(path.join(root, "contact"), path.join(root, dest));
+}
+
+async function runNextIntl(config: CreateConfig): Promise<void> {
+  await runExtra("next-intl", config);
+  await unlink(path.join(config.projectDir, "src/app/page.tsx"));
+  const studioDir = path.join(config.projectDir, "src/app/studio");
+  if (!existsSync(studioDir)) {
+    return;
+  }
+  await writeFile(
+    path.join(studioDir, "layout.tsx"),
+    `export default function StudioLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+`,
+  );
 }
 
 export type ExtraManifest = {
@@ -94,7 +114,7 @@ export const installers: Installer[] = [
   {
     name: "next-intl",
     shouldRun: (config) => config.intl,
-    run: noop,
+    run: (config) => runNextIntl(config),
   },
   {
     name: "shell-site",
