@@ -21,7 +21,9 @@ export default function HomePage() {
         <section className="mx-auto max-w-5xl px-6 py-24">
           <p className="text-sm font-medium text-zinc-500">{site.locale}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-tight">{site.name}</h1>
-          <p className="mt-4 max-w-xl text-lg text-zinc-600">A focused starting point for your site.</p>
+          <p className="mt-4 max-w-xl text-lg text-zinc-600">
+            A focused starting point for your site.
+          </p>
         </section>
       </main>
       <footer className="border-t border-zinc-200 bg-white">

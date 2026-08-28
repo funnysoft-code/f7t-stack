@@ -117,10 +117,8 @@ async function runGithubActions(config: CreateConfig): Promise<void> {
   await copyExtra("github-actions", config);
   const ymlPath = path.join(config.projectDir, ".github/workflows/ci.yml");
   const yml = await readFile(ymlPath, "utf8");
-  await writeFile(
-    ymlPath,
-    yml.split("__F7T_E2E_JOB__").join(config.playwright ? GITHUB_E2E_JOB : ""),
-  );
+  const next = yml.split("__F7T_E2E_JOB__").join(config.playwright ? GITHUB_E2E_JOB : "");
+  await writeFile(ymlPath, next.replace(/\n+$/, "\n"));
 }
 
 export const installers: Installer[] = [

@@ -70,10 +70,7 @@ describe("resolveConfig", () => {
   });
 
   test("drizzle without db is sqlite", () => {
-    const config = resolveConfig(
-      { appName: "acme", yes: true, data: "drizzle" },
-      "/tmp",
-    );
+    const config = resolveConfig({ appName: "acme", yes: true, data: "drizzle" }, "/tmp");
     expect(config.db).toBe("sqlite");
   });
 

@@ -73,11 +73,7 @@ function takeValue(flag: string, argv: string[], index: number): string {
   return value;
 }
 
-function takeEnum<T extends string>(
-  flag: string,
-  value: string,
-  allowed: readonly T[],
-): T {
+function takeEnum<T extends string>(flag: string, value: string, allowed: readonly T[]): T {
   if (!(allowed as readonly string[]).includes(value)) {
     throw new Error(`${flag} must be one of: ${allowed.join(", ")}`);
   }
@@ -174,10 +170,7 @@ export function parseArgv(argv: string[]): FlagInput {
   return input;
 }
 
-export function resolveConfig(
-  input: FlagInput,
-  cwd: string = process.cwd(),
-): CreateConfig {
+export function resolveConfig(input: FlagInput, cwd: string = process.cwd()): CreateConfig {
   if ((input.yes || input.ci) && input.appName === undefined) {
     throw new Error("--app-name is required with --yes or --CI");
   }
