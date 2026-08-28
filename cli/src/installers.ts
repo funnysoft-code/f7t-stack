@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { CreateConfig } from "./config";
-import { appendEnvExample, copyExtra, mergePackageJson } from "./fs";
+import { appendEnvExample, appendGlobalsCss, copyExtra, mergePackageJson } from "./fs";
 import { templateDir } from "./paths";
 
 async function runShell(name: string, config: CreateConfig): Promise<void> {
@@ -16,6 +16,10 @@ async function runExtra(name: string, config: CreateConfig): Promise<void> {
   }
   if (manifest.env) {
     await appendEnvExample(config.projectDir, manifest.env);
+  }
+  if (manifest.globalsCss) {
+    const snippetPath = path.join(templateDir("extras", name), manifest.globalsCss);
+    await appendGlobalsCss(config.projectDir, readFileSync(snippetPath, "utf8"));
   }
 }
 
@@ -32,6 +36,7 @@ export type ExtraManifest = {
     example: string;
   }>;
   agents?: string;
+  globalsCss?: string;
 };
 
 export type Installer = {
@@ -84,7 +89,7 @@ export const installers: Installer[] = [
   {
     name: "shadcn",
     shouldRun: (config) => config.shadcn,
-    run: noop,
+    run: (config) => runExtra("shadcn", config),
   },
   {
     name: "resend",

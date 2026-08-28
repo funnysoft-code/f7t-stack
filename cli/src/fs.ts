@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appPagesRoot } from "./app-root";
@@ -35,6 +35,21 @@ async function replaceInTree(dir: string, replacements: Record<string, string>):
   }
 }
 
+function extraRootSkip(fromAbs: string): Set<string> {
+  const skip = new Set(["extra.json", "node_modules"]);
+  const manifestPath = path.join(fromAbs, "extra.json");
+  if (!existsSync(manifestPath)) {
+    return skip;
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    globalsCss?: string;
+  };
+  if (manifest.globalsCss) {
+    skip.add(path.basename(manifest.globalsCss));
+  }
+  return skip;
+}
+
 function extraReplacements(config: CreateConfig): Record<string, string> {
   return {
     __F7T_APP_NAME__: config.appName,
@@ -53,9 +68,10 @@ export async function copyExtra(
     throw new Error(`Missing extra directory: ${name}`);
   }
   const replacements = extraReplacements(config);
+  const skip = extraRootSkip(fromAbs);
   const entries = await readdir(fromAbs, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name === "extra.json" || entry.name === "node_modules") {
+    if (skip.has(entry.name)) {
       continue;
     }
     const src = path.join(fromAbs, entry.name);
@@ -115,6 +131,20 @@ export async function mergePackageJson(
     pkg.scripts = { ...pkg.scripts, ...patch.scripts };
   }
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+
+export async function appendGlobalsCss(projectDir: string, snippet: string): Promise<void> {
+  const block = snippet.trim();
+  if (block.length === 0) {
+    return;
+  }
+  const cssPath = path.join(projectDir, "src/app/globals.css");
+  const current = existsSync(cssPath) ? await readFile(cssPath, "utf8") : "";
+  if (current.includes(block)) {
+    return;
+  }
+  const prefix = current.length === 0 || current.endsWith("\n") ? current : `${current}\n`;
+  await writeFile(cssPath, `${prefix}${block}\n`);
 }
 
 export async function appendEnvExample(
