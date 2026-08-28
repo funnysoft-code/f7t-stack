@@ -1,11 +1,22 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { CreateConfig } from "./config";
-import { copyExtra } from "./fs";
+import { appendEnvExample, copyExtra, mergePackageJson } from "./fs";
 import { templateDir } from "./paths";
 
 async function runShell(name: string, config: CreateConfig): Promise<void> {
   await copyExtra(name, config, { appPrefix: true });
+}
+
+async function runSanity(config: CreateConfig): Promise<void> {
+  await copyExtra("sanity", config);
+  const manifest = readExtraManifest("sanity");
+  if (manifest.package) {
+    await mergePackageJson(config.projectDir, manifest.package);
+  }
+  if (manifest.env) {
+    await appendEnvExample(config.projectDir, manifest.env);
+  }
 }
 
 export type ExtraManifest = {
@@ -43,7 +54,7 @@ export const installers: Installer[] = [
   {
     name: "sanity",
     shouldRun: (config) => config.data === "sanity",
-    run: noop,
+    run: runSanity,
   },
   {
     name: "drizzle-sqlite",

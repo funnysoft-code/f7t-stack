@@ -90,3 +90,43 @@ export async function copyTemplateDir(
   });
   await replaceInTree(toAbs, replacements);
 }
+
+export async function mergePackageJson(
+  projectDir: string,
+  patch: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  },
+): Promise<void> {
+  const pkgPath = path.join(projectDir, "package.json");
+  const pkg = JSON.parse(await readFile(pkgPath, "utf8")) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
+  if (patch.dependencies) {
+    pkg.dependencies = { ...pkg.dependencies, ...patch.dependencies };
+  }
+  if (patch.devDependencies) {
+    pkg.devDependencies = { ...pkg.devDependencies, ...patch.devDependencies };
+  }
+  if (patch.scripts) {
+    pkg.scripts = { ...pkg.scripts, ...patch.scripts };
+  }
+  await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+
+export async function appendEnvExample(
+  projectDir: string,
+  entries: Array<{ key: string; example: string }>,
+): Promise<void> {
+  if (entries.length === 0) {
+    return;
+  }
+  const envPath = path.join(projectDir, ".env.example");
+  const current = existsSync(envPath) ? await readFile(envPath, "utf8") : "";
+  const block = entries.map((entry) => `${entry.key}=${entry.example}`).join("\n");
+  const prefix = current.length === 0 || current.endsWith("\n") ? current : `${current}\n`;
+  await writeFile(envPath, `${prefix}${block}\n`);
+}

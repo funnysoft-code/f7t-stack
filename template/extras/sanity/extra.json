@@ -1,0 +1,39 @@
+{
+  "package": {
+    "dependencies": {
+      "@sanity/vision": "5.31.2",
+      "next-sanity": "13.3.3",
+      "sanity": "5.31.2",
+      "styled-components": "6.4.2"
+    },
+    "scripts": {
+      "typegen": "sanity schema extract && sanity typegen generate"
+    }
+  },
+  "env": [
+    {
+      "key": "NEXT_PUBLIC_SANITY_PROJECT_ID",
+      "side": "client",
+      "zod": "z.string().optional()",
+      "example": ""
+    },
+    {
+      "key": "NEXT_PUBLIC_SANITY_DATASET",
+      "side": "client",
+      "zod": "z.string().default(\"production\")",
+      "example": "production"
+    },
+    {
+      "key": "SANITY_API_READ_TOKEN",
+      "side": "server",
+      "zod": "z.string().optional()",
+      "example": ""
+    },
+    {
+      "key": "SANITY_REVALIDATE_SECRET",
+      "side": "server",
+      "zod": "z.string().optional()",
+      "example": ""
+    }
+  ]
+}
