@@ -1,7 +1,15 @@
 {
   "name": "create-f7t-app",
   "version": "0.0.0",
-  "description": "FunnySoft Next.js app generator",
+  "description": "FunnySoft Next.js app generator (T3-shaped, bun-first)",
+  "keywords": [
+    "bun",
+    "create-f7t-app",
+    "funnysoft",
+    "next.js",
+    "scaffold",
+    "t3"
+  ],
   "license": "MIT",
   "bin": {
     "create-f7t-app": "./cli/src/index.ts"
