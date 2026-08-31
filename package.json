@@ -11,9 +11,7 @@
     "t3"
   ],
   "license": "MIT",
-  "bin": {
-    "create-f7t-app": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist",
     "template",

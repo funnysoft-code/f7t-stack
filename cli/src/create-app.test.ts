@@ -20,6 +20,7 @@ describe("createApp", () => {
     const pkg = JSON.parse(await readFile(path.join(config.projectDir, "package.json"), "utf8"));
     expect(pkg.name).toBe("shop");
     expect(config.projectDir).toBe(path.join(cwd, "shop"));
+    await expect(stat(path.join(config.projectDir, ".gitignore"))).resolves.toBeTruthy();
   });
 
   test("aborts when the directory is not empty", async () => {

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appPagesRoot } from "./app-root";
 import type { CreateConfig } from "./config";
@@ -101,6 +101,14 @@ export async function copyExtra(
   }
 }
 
+async function promoteGitignore(dir: string): Promise<void> {
+  const from = path.join(dir, "gitignore");
+  const to = path.join(dir, ".gitignore");
+  if (existsSync(from)) {
+    await rename(from, to);
+  }
+}
+
 export async function copyTemplateDir(
   fromAbs: string,
   toAbs: string,
@@ -111,6 +119,7 @@ export async function copyTemplateDir(
     filter: (src) => path.basename(src) !== "node_modules",
   });
   await replaceInTree(toAbs, replacements);
+  await promoteGitignore(toAbs);
 }
 
 export async function mergePackageJson(
