@@ -1,6 +1,6 @@
 {
   "name": "create-f7t-app",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "FunnySoft Next.js app generator (T3-shaped, bun-first)",
   "keywords": [
     "bun",
@@ -12,16 +12,18 @@
   ],
   "license": "MIT",
   "bin": {
-    "create-f7t-app": "./cli/src/index.ts"
+    "create-f7t-app": "./dist/index.js"
   },
   "files": [
-    "cli/src",
+    "dist",
     "template",
     "README.md",
     "LICENSE"
   ],
   "type": "module",
   "scripts": {
+    "build": "bun build cli/src/index.ts --outfile dist/index.js --target node --format esm",
+    "prepublishOnly": "bun run build",
     "test": "vitest run",
     "check": "oxlint cli && oxfmt --check cli package.json tsconfig.json vitest.config.ts && tsc --noEmit && vitest run"
   },
@@ -36,7 +38,8 @@
     "vitest": "4.1.11"
   },
   "engines": {
-    "bun": ">=1.4.0"
+    "bun": ">=1.4.0",
+    "node": ">=20"
   },
   "packageManager": "bun@1.4.0"
 }

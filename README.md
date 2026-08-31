@@ -3,6 +3,7 @@
 FunnySoft's Next.js app generator. Same job as [create-t3-app](https://create.t3.gg/): an interactive CLI that copies a base template and optional extras. Not a Laravel product, not an Apex Scout monorepo, not a docs marketing site.
 
 ```bash
+npx create-f7t-app@latest
 bunx create-f7t-app@latest
 ```
 
@@ -80,7 +81,7 @@ Laravel, Inertia, Expo, Auth, tRPC, Prisma, a T3 docs site, upgrading existing a
 
 ## Development
 
-Until the first real publish, invoke the CLI from this repo:
+From this repo:
 
 ```bash
 bun cli/src/index.ts

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { parseArgv, resolveConfig } from "./config";
 import { createApp } from "./create-app";
 import { logNextSteps } from "./next-steps";
