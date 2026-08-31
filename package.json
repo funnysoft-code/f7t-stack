@@ -11,16 +11,16 @@
     "t3"
   ],
   "license": "MIT",
-  "bin": "./dist/index.js",
+  "bin": "./create-f7t-app.js",
   "files": [
-    "dist",
+    "create-f7t-app.js",
     "template",
     "README.md",
     "LICENSE"
   ],
   "type": "module",
   "scripts": {
-    "build": "bun build cli/src/index.ts --outfile dist/index.js --target node --format esm",
+    "build": "bun build cli/src/index.ts --outfile create-f7t-app.js --target node --format esm && chmod +x create-f7t-app.js",
     "prepublishOnly": "bun run build",
     "test": "vitest run",
     "check": "oxlint cli && oxfmt --check cli package.json tsconfig.json vitest.config.ts && tsc --noEmit && vitest run"

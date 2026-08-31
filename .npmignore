@@ -1,4 +1,5 @@
 cli
 docs
 .github
+dist
 *.tgz
