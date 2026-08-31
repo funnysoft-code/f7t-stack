@@ -1,0 +1,17 @@
+{
+  "HomePage": {
+    "title": "Início"
+  },
+  "Contact": {
+    "title": "Contacto",
+    "intro": "Envie uma mensagem. Respondemos assim que possível.",
+    "name": "Nome",
+    "email": "Email",
+    "message": "Mensagem",
+    "send": "Enviar",
+    "sending": "A enviar...",
+    "sent": "Mensagem enviada.",
+    "error": "Não foi possível enviar. Tente novamente.",
+    "home": "Início"
+  }
+}

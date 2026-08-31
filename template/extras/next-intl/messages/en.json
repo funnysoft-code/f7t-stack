@@ -1,0 +1,17 @@
+{
+  "HomePage": {
+    "title": "Home"
+  },
+  "Contact": {
+    "title": "Contact",
+    "intro": "Send a message. We will get back to you shortly.",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "send": "Send",
+    "sending": "Sending...",
+    "sent": "Message sent.",
+    "error": "Could not send. Try again.",
+    "home": "Home"
+  }
+}

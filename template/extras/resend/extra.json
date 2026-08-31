@@ -1,0 +1,23 @@
+{
+  "package": {
+    "dependencies": {
+      "resend": "6.24.0"
+    }
+  },
+  "skip": ["intl-contact-page.tsx"],
+  "env": [
+    {
+      "key": "RESEND_API_KEY",
+      "side": "server",
+      "zod": "z.string().optional()",
+      "example": ""
+    },
+    {
+      "key": "CONTACT_TO_EMAIL",
+      "side": "server",
+      "zod": "z.string().email().optional()",
+      "example": ""
+    }
+  ],
+  "agents": "Resend contact form. `POST /api/contact` is a Route Handler with a Zod body. Env: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`."
+}

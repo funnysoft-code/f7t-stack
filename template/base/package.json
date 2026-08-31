@@ -1,0 +1,36 @@
+{
+  "name": "__F7T_APP_NAME__",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "oxlint .",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "oxlint . && oxfmt --check . && tsc --noEmit && vitest run && bunx react-doctor@0.9.12 . --no-telemetry -y"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "0.13.11",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.3",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  },
+  "packageManager": "bun@1.4.0"
+}

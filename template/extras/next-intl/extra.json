@@ -1,0 +1,8 @@
+{
+  "package": {
+    "dependencies": {
+      "next-intl": "4.14.1"
+    }
+  },
+  "agents": "next-intl. Pages live under `src/app/[locale]/`. Default locale `en`, `localePrefix: as-needed`. Studio and `src/app/api` stay unprefixed."
+}

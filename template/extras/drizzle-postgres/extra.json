@@ -1,0 +1,25 @@
+{
+  "package": {
+    "dependencies": {
+      "drizzle-orm": "0.45.2",
+      "postgres": "3.4.9"
+    },
+    "devDependencies": {
+      "drizzle-kit": "0.31.10"
+    },
+    "scripts": {
+      "db:generate": "drizzle-kit generate",
+      "db:migrate": "drizzle-kit migrate",
+      "db:studio": "drizzle-kit studio"
+    }
+  },
+  "env": [
+    {
+      "key": "DATABASE_URL",
+      "side": "server",
+      "zod": "z.string()",
+      "example": "postgres://app:app@localhost:5432/app"
+    }
+  ],
+  "agents": "Drizzle with Postgres. Start the database with `docker compose up -d`, then `bun run db:migrate`. Schema in `src/server/db`. Scripts: `db:generate`, `db:migrate`, `db:studio`. No sample Post table. Queries go through Route Handlers, not tRPC."
+}
