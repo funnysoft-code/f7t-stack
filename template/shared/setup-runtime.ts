@@ -55,6 +55,8 @@ const guidance: Record<string, string> = {
   "php-dependencies":
     "Check network access, composer.lock and preconfigured Composer credentials. For API + Next, authorized Scramble Pro access is mandatory.",
   platform: "Enable the extensions and PHP version required by composer.lock in both CLI and Herd.",
+  boost:
+    "Check Boost guideline/skill installation in the PHP root and the root skill-sync script. Rerun setup after restoring installed formatting tools and package access.",
   services:
     "Check PostgreSQL authentication, Redis and Herd SMTP at the hosts and ports in .env. Herd defaults: 5432, 6138, 2525; set REDIS_PORT=6379 if your Valkey uses it.",
   "application-key": "Check .env permissions. Existing application keys must remain unchanged.",
@@ -101,12 +103,19 @@ export async function initializeProject(
         const lock = await lstat(path.join(phpRoot, "composer.lock"));
         if (!lock.isFile() || lock.isSymbolicLink())
           throw new Error("A regular Composer release lock is required");
-        await run(["composer", "validate", "--no-check-publish"], phpRoot);
+        await run(["composer", "validate", "--strict", "--no-check-all"], phpRoot);
         await run(["composer", "install", "--no-interaction", "--prefer-dist"], phpRoot);
       });
       await stage("platform", async () => {
         await run(["composer", "check-platform-reqs"], phpRoot);
         await run(["herd", "composer", "check-platform-reqs"], phpRoot);
+      });
+      await stage("boost", async () => {
+        await run(
+          ["php", "artisan", "boost:install", "--guidelines", "--skills", "--no-interaction"],
+          phpRoot,
+        );
+        await run(["bash", "scripts/boost-sync-opencode-skills.sh"], root);
       });
       const helper = path.join(root, "scripts/setup.php");
       await stage("services", () =>

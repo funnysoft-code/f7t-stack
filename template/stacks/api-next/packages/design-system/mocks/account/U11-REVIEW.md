@@ -10,14 +10,14 @@ The production view retains the top navigation, broad form column, narrower secu
 
 Measured runtime values:
 
-| Property | Value |
-| --- | --- |
-| Background | `rgb(9, 9, 9)` |
-| Primary action | `rgb(230, 36, 37)` |
-| Primary label | `rgb(0, 0, 0)` |
-| Font | `"Space Grotesk Variable", sans-serif`, loaded locally |
-| Desktop viewport | 1440 × 900 |
-| Phone viewport | 390 × 844 |
+| Property         | Value                                                  |
+| ---------------- | ------------------------------------------------------ |
+| Background       | `rgb(9, 9, 9)`                                         |
+| Primary action   | `rgb(230, 36, 37)`                                     |
+| Primary label    | `rgb(0, 0, 0)`                                         |
+| Font             | `"Space Grotesk Variable", sans-serif`, loaded locally |
+| Desktop viewport | 1440 × 900                                             |
+| Phone viewport   | 390 × 844                                              |
 
 The phone form comes before its companion and the primary action fills the available width. Final captures wait for fonts, request reduced motion, and disable screenshot animations. Earlier viewport-change captures caught a width transition and were replaced. No horizontal page overflow was found in the measured account routes.
 
@@ -68,19 +68,21 @@ FUNNYSOFT_REGISTRATION_ENABLED=false FRONTEND_URL=http://localhost:3042 APP_URL=
 Clicked the rendered Retry button through dev-browser, without navigating manually or signing in again:
 
 ```js
-const page = await browser.getPage('u11-outage-retry');
-await page.getByRole('button', { name: 'Retry loading this page', exact: true }).click();
-await page.getByRole('heading', { name: 'Personal details', exact: true }).waitFor({ timeout: 15000 });
+const page = await browser.getPage("u11-outage-retry");
+await page.getByRole("button", { name: "Retry loading this page", exact: true }).click();
+await page
+  .getByRole("heading", { name: "Personal details", exact: true })
+  .waitFor({ timeout: 15000 });
 ```
 
 Result: `/settings/profile` restored, the full-name field still equaled `Outage retry review`, and both unavailable and sign-in heading counts were zero. The same browser session remained authenticated across backend shutdown and restart. No production defect or code change was needed. The safe restored screenshot, `routes/outage-retry-restored.png`, was inspected at 1440 × 900 with fonts ready and animations disabled.
 
-Browser handoff remains live:
+Browser handoff remains live. After the background Chrome process exited normally following the initial handoff, Chrome was relaunched detached with the same isolated profile. A fresh navigation to the protected profile confirmed the same authenticated identity remained available. The target ID below reflects that relaunch:
 
 - CDP: `http://localhost:9242`
 - dev-browser browser name: `u11-main`
 - Named page: `u11-outage-retry`
-- Target ID: `AD6A9B61E6E4A71E9C8E157EBCF66A5A`
+- Target ID: `54B58892C77B4377FC0EC9989ABCBBC2`
 - Current page: `http://localhost:3042/settings/profile`
 
 ```sh
@@ -107,20 +109,20 @@ Temporary verifier diagnostics were removed. Command-line environment overrides 
 
 Commands below ran in the installed fixture unless a source-root path is shown. PHP commands ran in its `services/api` directory.
 
-| Command | Result |
-| --- | --- |
-| `F7T_TRANSPORT_DATABASE=f7t_u5_api F7T_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' bun run test` | 11 files, 116 tests passed. Authored libraries: 100% statements, branches, functions, lines. Includes real session/account/Horizon transport and fresh-backend contract regression. |
-| `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' bun run test:e2e` | 20 passed; production frontend rebuilt successfully. |
-| `bun run typecheck` | Passed, including final repeat. |
-| `bun run doctor` | No issues in 59 files. |
-| `FUNNYSOFT_REGISTRATION_ENABLED=true bash scripts/generate-api-client.sh --check` | Passed. |
-| `bun run check:workflows` | 13 registered jobs have Playwright tags. |
-| `php -d pcov.directory="$PWD" -d pcov.initial.files=4096 vendor/bin/pest --compact --coverage --min=100 --filter='^(?!.*keeps Redis session state)'` | 93 passed, 839 assertions, 100% coverage. The known Redis-clearing test was excluded per assignment. |
-| `vendor/bin/pest --type-coverage --min=100 --compact` | 100% type coverage. |
-| `vendor/bin/phpstan analyse --level=max --memory-limit=2G --no-progress` | No errors. |
-| `vendor/bin/pint --test Modules/Identity/Http/Resources/UserResource.php Modules/Identity/Tests/Http/AccountSummaryTest.php config/fortify.php` | Passed. |
-| `vendor/bin/rector process Modules/Identity/Http/Resources/UserResource.php Modules/Identity/Tests/Http/AccountSummaryTest.php config/fortify.php --dry-run --no-progress-bar` | Passed, no changes proposed. |
-| `git diff --check` | Passed from source root. |
+| Command                                                                                                                                                                        | Result                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `F7T_TRANSPORT_DATABASE=f7t_u5_api F7T_CHROMIUM_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' bun run test`                                        | 11 files, 116 tests passed. Authored libraries: 100% statements, branches, functions, lines. Includes real session/account/Horizon transport and fresh-backend contract regression. |
+| `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' bun run test:e2e`                                                          | 20 passed; production frontend rebuilt successfully.                                                                                                                                |
+| `bun run typecheck`                                                                                                                                                            | Passed, including final repeat.                                                                                                                                                     |
+| `bun run doctor`                                                                                                                                                               | No issues in 59 files.                                                                                                                                                              |
+| `FUNNYSOFT_REGISTRATION_ENABLED=true bash scripts/generate-api-client.sh --check`                                                                                              | Passed.                                                                                                                                                                             |
+| `bun run check:workflows`                                                                                                                                                      | 13 registered jobs have Playwright tags.                                                                                                                                            |
+| `php -d pcov.directory="$PWD" -d pcov.initial.files=4096 vendor/bin/pest --compact --coverage --min=100 --filter='^(?!.*keeps Redis session state)'`                           | 93 passed, 839 assertions, 100% coverage. The known Redis-clearing test was excluded per assignment.                                                                                |
+| `vendor/bin/pest --type-coverage --min=100 --compact`                                                                                                                          | 100% type coverage.                                                                                                                                                                 |
+| `vendor/bin/phpstan analyse --level=max --memory-limit=2G --no-progress`                                                                                                       | No errors.                                                                                                                                                                          |
+| `vendor/bin/pint --test Modules/Identity/Http/Resources/UserResource.php Modules/Identity/Tests/Http/AccountSummaryTest.php config/fortify.php`                                | Passed.                                                                                                                                                                             |
+| `vendor/bin/rector process Modules/Identity/Http/Resources/UserResource.php Modules/Identity/Tests/Http/AccountSummaryTest.php config/fortify.php --dry-run --no-progress-bar` | Passed, no changes proposed.                                                                                                                                                        |
+| `git diff --check`                                                                                                                                                             | Passed from source root.                                                                                                                                                            |
 
 Source-root formatter check passed on 92 files:
 

@@ -15,7 +15,7 @@
     {
       "key": "CONTACT_TO_EMAIL",
       "side": "server",
-      "zod": "z.string().email().optional()",
+      "zod": "z.email().optional()",
       "example": ""
     }
   ],

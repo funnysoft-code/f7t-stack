@@ -10,11 +10,11 @@ The native Fortify confirmation endpoints remain authoritative:
 - Sensitive JSON requests return 423 when confirmation is missing or expired. HTML requests redirect to the native confirmation page. U10 should preserve the intended local action, perform confirmation, then retry that action once.
 - Passkey confirmation uses the package controller, which verifies the credential before calling `passwordConfirmed()`. Passkey login does not set this timestamp, including for accounts with confirmed authenticator enrollment.
 
-| Method and path | Input | Boundary | Success |
-| --- | --- | --- | --- |
-| PATCH `/settings/profile` | `name`, `email` | Authenticated; unchanged email requires verified account; changed email requires recent confirmation | 204 |
-| PUT `/settings/password` | `password`, `password_confirmation` | Authenticated, verified, recently confirmed | 204 |
-| DELETE `/settings/account` | None | Authenticated, recently confirmed | 204 |
+| Method and path            | Input                               | Boundary                                                                                             | Success |
+| -------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------- | ------- |
+| PATCH `/settings/profile`  | `name`, `email`                     | Authenticated; unchanged email requires verified account; changed email requires recent confirmation | 204     |
+| PUT `/settings/password`   | `password`, `password_confirmation` | Authenticated, verified, recently confirmed                                                          | 204     |
+| DELETE `/settings/account` | None                                | Authenticated, recently confirmed                                                                    | 204     |
 
 No mutation requires `current_password`. A valid passkey confirmation will therefore satisfy deletion and password changes without a second raw-password proof. The new password must be at least 12 characters and match its confirmation.
 
@@ -24,14 +24,14 @@ Unverified email correction is restricted to changing the email while retaining 
 
 The pinned pair is PHP `laravel/passkeys` 0.2.1 with Fortify 1.39.0, and browser `@laravel/passkeys` 0.4.0. Use `Passkeys.register({ name })` for enrollment, `Passkeys.verify()` for login, and `Passkeys.verify({ routes: { options: '/passkeys/confirm/options', submit: '/passkeys/confirm' } })` for confirmation. A 423 response requires confirmation and a fresh options request before retrying the intended ceremony. Cancellation or unsupported WebAuthn leaves password login available. Never retain credential payloads, QR/manual secrets, or recovery codes in logs, analytics, or persistent frontend storage.
 
-| Method and path | Success |
-| --- | --- |
-| GET `/user/passkeys/options` | `{ "options": <WebAuthn creation options> }` |
-| POST `/user/passkeys` | Input `name`, `credential`; 200 `{ "status": "passkey-registered", "id": "<UUIDv7>", "name": "..." }` |
-| GET `/user/passkeys` | 200 `{ "data": [{ "id": "<UUIDv7>", "name": "...", "createdAt": "...", "lastUsedAt": null }] }`; authenticated and verified, no recent proof needed for safe metadata |
-| DELETE `/user/passkeys/{UUIDv7}` | 200 `{ "status": "passkey-deleted" }` |
-| GET `/passkeys/login/options`, `/passkeys/confirm/options` | `{ "options": <WebAuthn assertion options> }` |
-| POST `/passkeys/login`, `/passkeys/confirm` | Input `credential`, optional `remember`; 200 package status response |
+| Method and path                                            | Success                                                                                                                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET `/user/passkeys/options`                               | `{ "options": <WebAuthn creation options> }`                                                                                                                          |
+| POST `/user/passkeys`                                      | Input `name`, `credential`; 200 `{ "status": "passkey-registered", "id": "<UUIDv7>", "name": "..." }`                                                                 |
+| GET `/user/passkeys`                                       | 200 `{ "data": [{ "id": "<UUIDv7>", "name": "...", "createdAt": "...", "lastUsedAt": null }] }`; authenticated and verified, no recent proof needed for safe metadata |
+| DELETE `/user/passkeys/{UUIDv7}`                           | 200 `{ "status": "passkey-deleted" }`                                                                                                                                 |
+| GET `/passkeys/login/options`, `/passkeys/confirm/options` | `{ "options": <WebAuthn assertion options> }`                                                                                                                         |
+| POST `/passkeys/login`, `/passkeys/confirm`                | Input `credential`, optional `remember`; 200 package status response                                                                                                  |
 
 All ceremonies require user verification. Options expire after 60 seconds server-side and are bound to the session, purpose, and current user. A submission reaching the ceremony middleware consumes state even when malformed or invalid. Each new options request replaces any older ceremony. Session blocking serializes competing options/submissions. Verification failures return generic 422 `credential` errors without reporting credential-bearing exceptions. Request a fresh challenge to restart.
 

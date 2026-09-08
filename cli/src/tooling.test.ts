@@ -40,6 +40,12 @@ test.each(STACK_IDS)("%s declares installed quality tools before installation", 
         ? "packages/api-client"
         : "src/lib";
   expect(coverage).toContain(authored);
+  if (stack === "inertia-monolith") {
+    const config = read(`${root}/vite.config.ts`);
+    for (const asset of ["docs/playbook/**", ".opencode/**", "scripts/**", "lefthook.yml"]) {
+      expect(config).not.toContain(`"${asset}"`);
+    }
+  }
 });
 
 test.each(["inertia-monolith", "api-next"] as const)(
@@ -48,6 +54,11 @@ test.each(["inertia-monolith", "api-next"] as const)(
     const root = stacks[stack].templateRoot;
     const phpRoot = stacks[stack].phpRoot!;
     const composer = json(`${root}/${phpRoot}/composer.json`);
+    expect(composer.description).toEqual(expect.any(String));
+    expect(composer.license).toBe("MIT");
+    expect(composer.require["laravel/fortify"]).toBe("1.39.0");
+    expect(composer.require["laravel/nightwatch"]).toBe("1.30.0");
+    expect(composer.require["resend/resend-php"]).toBe("1.13.0");
     for (const tool of [
       "laravel/boost",
       "laravel/pint",
@@ -78,6 +89,7 @@ test.each(["inertia-monolith", "api-next"] as const)(
       cloud: true,
       guidelines: true,
       packages: ["funnysoft/boost-guidelines"],
+      skills: expect.arrayContaining(["funnysoft-quality"]),
     });
     expect(read(`${root}/${phpRoot}/config/boost.php`)).toContain("'.opencode/skills'");
     if (stack === "inertia-monolith") {

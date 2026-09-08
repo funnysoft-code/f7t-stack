@@ -43,7 +43,6 @@ export function TurnstileCheck({
   useEffect(() => {
     let active = true;
     let remove: (() => void) | undefined;
-    onToken("");
     void loadWidget()
       .then((widget) => {
         if (active && container.current) {

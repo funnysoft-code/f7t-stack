@@ -1989,10 +1989,7 @@
     {
       "foreground": "foreground",
       "background": "background",
-      "values": [
-        "#f2f2f2",
-        "#090909"
-      ],
+      "values": ["#f2f2f2", "#090909"],
       "ratio": 17.79,
       "minimum": 4.5,
       "passed": true
@@ -2000,10 +1997,7 @@
     {
       "foreground": "muted-foreground",
       "background": "card",
-      "values": [
-        "#a6a6a6",
-        "#111111"
-      ],
+      "values": ["#a6a6a6", "#111111"],
       "ratio": 7.76,
       "minimum": 4.5,
       "passed": true
@@ -2011,10 +2005,7 @@
     {
       "foreground": "muted-foreground",
       "background": "muted",
-      "values": [
-        "#a6a6a6",
-        "#1b1b1b"
-      ],
+      "values": ["#a6a6a6", "#1b1b1b"],
       "ratio": 7.08,
       "minimum": 4.5,
       "passed": true
@@ -2022,10 +2013,7 @@
     {
       "foreground": "primary-foreground",
       "background": "primary",
-      "values": [
-        "#000000",
-        "#e62425"
-      ],
+      "values": ["#000000", "#e62425"],
       "ratio": 4.64,
       "minimum": 4.5,
       "passed": true
@@ -2033,10 +2021,7 @@
     {
       "foreground": "destructive",
       "background": "muted",
-      "values": [
-        "#ff8585",
-        "#1b1b1b"
-      ],
+      "values": ["#ff8585", "#1b1b1b"],
       "ratio": 7.34,
       "minimum": 4.5,
       "passed": true
@@ -2044,10 +2029,7 @@
     {
       "foreground": "success",
       "background": "muted",
-      "values": [
-        "#9bd4b1",
-        "#1b1b1b"
-      ],
+      "values": ["#9bd4b1", "#1b1b1b"],
       "ratio": 10.21,
       "minimum": 4.5,
       "passed": true
@@ -2055,10 +2037,7 @@
     {
       "foreground": "companion-muted",
       "background": "companion",
-      "values": [
-        "#b0b0b0",
-        "#171717"
-      ],
+      "values": ["#b0b0b0", "#171717"],
       "ratio": 8.27,
       "minimum": 4.5,
       "passed": true
@@ -2066,10 +2045,7 @@
     {
       "foreground": "input",
       "background": "background",
-      "values": [
-        "#696969",
-        "#090909"
-      ],
+      "values": ["#696969", "#090909"],
       "ratio": 3.63,
       "minimum": 3,
       "passed": true
@@ -2077,10 +2053,7 @@
     {
       "foreground": "input",
       "background": "card",
-      "values": [
-        "#696969",
-        "#111111"
-      ],
+      "values": ["#696969", "#111111"],
       "ratio": 3.44,
       "minimum": 3,
       "passed": true
@@ -2088,10 +2061,7 @@
     {
       "foreground": "ring",
       "background": "companion",
-      "values": [
-        "#f2f2f2",
-        "#171717"
-      ],
+      "values": ["#f2f2f2", "#171717"],
       "ratio": 16.01,
       "minimum": 3,
       "passed": true

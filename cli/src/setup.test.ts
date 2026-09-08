@@ -56,7 +56,7 @@ describe("guided setup", () => {
       status: "incomplete",
       failedStage: "php-dependencies",
     });
-    expect(calls).toContain("composer validate --no-check-publish");
+    expect(calls).toContain("composer validate --strict --no-check-all");
     expect(calls).not.toContain("composer install --no-interaction --prefer-dist");
   });
   test.each([
@@ -110,6 +110,8 @@ describe("guided setup", () => {
     ["javascript-dependencies", "bun install"],
     ["php-dependencies", "composer install"],
     ["platform", "composer check-platform-reqs"],
+    ["boost", "artisan boost:install"],
+    ["boost", "boost-sync-opencode-skills.sh"],
     ["services", "setup.php services"],
     ["database", "setup.php database"],
     ["migrations", "artisan migrate"],
@@ -160,7 +162,16 @@ describe("guided setup", () => {
       ["composer", "install", "--no-interaction", "--prefer-dist"],
       path.join(root, "services/api"),
     ]);
+    expect(calls).toContainEqual([
+      ["composer", "validate", "--strict", "--no-check-all"],
+      path.join(root, "services/api"),
+    ]);
     expect(calls).toContainEqual([["bun", "run", "api:generate"], root]);
+    expect(calls).toContainEqual([
+      ["php", "artisan", "boost:install", "--guidelines", "--skills", "--no-interaction"],
+      path.join(root, "services/api"),
+    ]);
+    expect(calls).toContainEqual([["bash", "scripts/boost-sync-opencode-skills.sh"], root]);
   });
   test.each(["sqlite", "postgres"])(
     "Next Drizzle %s generates and applies migrations",

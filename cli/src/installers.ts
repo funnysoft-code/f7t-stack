@@ -8,6 +8,16 @@ import { templateDir } from "./paths";
 
 async function runShell(name: string, config: CreateConfig): Promise<void> {
   await copyExtra(name, config, { appPrefix: true });
+  if (config.intl) {
+    const page = path.join(config.projectDir, appPagesRoot(config), "page.tsx");
+    await writeFile(
+      page,
+      (await readFile(page, "utf8")).replace(
+        'import Link from "next/link";',
+        'import { Link } from "~/i18n/navigation";',
+      ),
+    );
+  }
 }
 
 async function runExtra(
@@ -167,5 +177,21 @@ export async function runInstallers(config: CreateConfig): Promise<void> {
     if (installer.shouldRun(config)) {
       await installer.run(config);
     }
+  }
+  // These are selected integration APIs, not dead code or lint exclusions.
+  // React Doctor reads Knip entry points while still scanning their implementation.
+  const entry = [
+    ...(config.data === "sanity" ? ["src/sanity/lib/site-settings.ts"] : []),
+    ...(config.data === "drizzle" ? ["src/server/db/index.ts", "src/server/db/schema.ts"] : []),
+    ...(config.shadcn ? ["src/components/ui/button.tsx"] : []),
+    ...(config.intl ? ["src/i18n/navigation.ts"] : []),
+  ];
+  if (entry.length) {
+    const inline = `[${entry.map((file) => JSON.stringify(file)).join(", ")}]`;
+    const formatted =
+      inline.length + '  "entry": '.length <= 100
+        ? inline
+        : `[\n${entry.map((file) => `    ${JSON.stringify(file)}`).join(",\n")}\n  ]`;
+    await writeFile(path.join(config.projectDir, "knip.json"), `{\n  "entry": ${formatted}\n}\n`);
   }
 }

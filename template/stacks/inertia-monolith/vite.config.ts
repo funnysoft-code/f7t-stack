@@ -20,12 +20,6 @@ export default defineConfig({
       "resources/js/routes/**",
       "resources/js/wayfinder/**",
       "resources/js/types/generated.d.ts",
-      "docs/playbook/**",
-      ".opencode/**",
-      "STANDARDS_MANIFEST.json",
-      "packages/boost-guidelines/**",
-      "scripts/**",
-      "lefthook.yml",
     ],
   },
   plugins: [

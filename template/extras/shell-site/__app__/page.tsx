@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { site } from "~/lib/site";
 
 export default function HomePage() {
@@ -5,14 +6,14 @@ export default function HomePage() {
     <div className="flex min-h-dvh flex-col bg-zinc-50 text-zinc-950">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-          <a href="/" className="text-sm font-semibold tracking-tight">
+          <Link href="/" className="text-sm font-semibold tracking-tight">
             {site.name}
-          </a>
+          </Link>
           <nav className="flex items-center gap-6 text-sm text-zinc-600">
             {site.nav.map((item) => (
-              <a key={item.href} href={item.href} className="hover:text-zinc-950">
+              <Link key={item.href} href={item.href} className="hover:text-zinc-950">
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>

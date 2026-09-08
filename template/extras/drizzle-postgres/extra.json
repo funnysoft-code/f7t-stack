@@ -8,7 +8,7 @@
       "drizzle-kit": "0.31.10"
     },
     "scripts": {
-      "db:generate": "drizzle-kit generate",
+      "db:generate": "drizzle-kit generate && oxfmt drizzle",
       "db:migrate": "drizzle-kit migrate",
       "db:studio": "drizzle-kit studio"
     }

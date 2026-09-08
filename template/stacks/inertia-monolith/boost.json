@@ -3,5 +3,6 @@
   "cloud": true,
   "guidelines": true,
   "packages": ["funnysoft/boost-guidelines"],
+  "skills": ["funnysoft-quality"],
   "sail": false
 }

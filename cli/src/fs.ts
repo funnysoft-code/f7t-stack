@@ -234,6 +234,13 @@ export async function mergePackageJson(
   if (patch.scripts) {
     pkg.scripts = { ...pkg.scripts, ...patch.scripts };
   }
+  for (const field of ["dependencies", "devDependencies"] as const) {
+    if (pkg[field]) {
+      pkg[field] = Object.fromEntries(
+        Object.entries(pkg[field]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+      );
+    }
+  }
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 

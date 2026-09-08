@@ -2,6 +2,8 @@
   "$schema": "https://getcomposer.org/schema.json",
   "name": "funnysoft/api",
   "type": "project",
+  "description": "A FunnySoft Laravel API and Next.js application.",
+  "license": "MIT",
   "require": {
     "php": "^8.5",
     "dedoc/scramble": "^0.13.42",

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 const appName = "__F7T_APP_NAME__";
 const locale = "__F7T_LOCALE__";
@@ -39,12 +40,14 @@ type Status = "idle" | "sending" | "sent" | "error";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<Status>("idle");
+  const sending = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (status === "sending") {
+    if (sending.current || status === "sent") {
       return;
     }
+    sending.current = true;
     setStatus("sending");
     const form = new FormData(event.currentTarget);
     try {
@@ -60,6 +63,8 @@ export default function ContactPage() {
       setStatus(response.ok ? "sent" : "error");
     } catch {
       setStatus("error");
+    } finally {
+      sending.current = false;
     }
   }
 
@@ -67,12 +72,12 @@ export default function ContactPage() {
     <div className="min-h-dvh bg-zinc-50 text-zinc-950">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-          <a href="/" className="text-sm font-semibold tracking-tight">
+          <Link href="/" className="text-sm font-semibold tracking-tight">
             {appName}
-          </a>
-          <a href="/" className="text-sm text-zinc-600 hover:text-zinc-950">
+          </Link>
+          <Link href="/" className="text-sm text-zinc-600 hover:text-zinc-950">
             {copy.home}
-          </a>
+          </Link>
         </div>
       </header>
       <main className="mx-auto max-w-xl px-6 py-16">
@@ -85,13 +90,7 @@ export default function ContactPage() {
           </label>
           <label className="block text-sm font-medium text-zinc-700">
             {copy.email}
-            <input
-              className={fieldClass}
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-            />
+            <input className={fieldClass} name="email" type="email" required autoComplete="email" />
           </label>
           <label className="block text-sm font-medium text-zinc-700">
             {copy.message}

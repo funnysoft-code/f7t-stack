@@ -59,20 +59,20 @@ Granting the permission never verifies the account. Unknown accounts and actions
 
 Fortify 1.39 supplies the controllers, password broker, signed verification request, session rotation and mutation responses. `routes/auth.php` loads its native route definitions inside the application-owned routing lifecycle. Account pages have response bindings without bundled production screens. Normal page requests render the named Inertia component; JSON requests return `{ component, props }` for contract testing. Inertia requests retain the native protocol.
 
-| Route name | Method and path | Component or behavior |
-| --- | --- | --- |
-| `login` / `login.store` | GET / POST `/login` | `auth/login`; successful JSON login returns `two_factor: false` |
-| `logout` | POST `/logout` | Invalidate session and CSRF token; JSON 204, browser `/login` |
-| `register` / `register.store` | GET / POST `/register` | Conditional `auth/register`; JSON 201, browser verification notice |
-| `password.request` / `password.email` | GET / POST `/forgot-password` | `auth/forgot-password`; uniform status for known, unknown and broker-throttled emails |
-| `password.reset` | GET `/reset-password/{token}` | `auth/reset-password`, with `token` and `email` props |
-| `password.update` | POST `/reset-password` | Native reset broker; uniform invalid/expired-link field error |
-| `verification.notice` | GET `/email/verify` | `auth/verify-email`; authenticated, unverified-safe |
-| `verification.send` | POST `/email/verification-notification` | Authenticated, unverified-safe; named six-per-minute limiter |
-| `verification.verify` | GET `/email/verify/{id}/{hash}` | Native signed UUID user ID plus current-email hash checks |
-| `password.confirm` / `password.confirm.store` | GET / POST `/user/confirm-password` | `auth/confirm-password`; native recent-password confirmation |
-| `password.confirmation` | GET `/user/confirmed-password-status` | Native confirmation status |
-| `home` | GET `/` | `home`; requires authentication and verified email |
+| Route name                                    | Method and path                         | Component or behavior                                                                 |
+| --------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------- |
+| `login` / `login.store`                       | GET / POST `/login`                     | `auth/login`; successful JSON login returns `two_factor: false`                       |
+| `logout`                                      | POST `/logout`                          | Invalidate session and CSRF token; JSON 204, browser `/login`                         |
+| `register` / `register.store`                 | GET / POST `/register`                  | Conditional `auth/register`; JSON 201, browser verification notice                    |
+| `password.request` / `password.email`         | GET / POST `/forgot-password`           | `auth/forgot-password`; uniform status for known, unknown and broker-throttled emails |
+| `password.reset`                              | GET `/reset-password/{token}`           | `auth/reset-password`, with `token` and `email` props                                 |
+| `password.update`                             | POST `/reset-password`                  | Native reset broker; uniform invalid/expired-link field error                         |
+| `verification.notice`                         | GET `/email/verify`                     | `auth/verify-email`; authenticated, unverified-safe                                   |
+| `verification.send`                           | POST `/email/verification-notification` | Authenticated, unverified-safe; named six-per-minute limiter                          |
+| `verification.verify`                         | GET `/email/verify/{id}/{hash}`         | Native signed UUID user ID plus current-email hash checks                             |
+| `password.confirm` / `password.confirm.store` | GET / POST `/user/confirm-password`     | `auth/confirm-password`; native recent-password confirmation                          |
+| `password.confirmation`                       | GET `/user/confirmed-password-status`   | Native confirmation status                                                            |
+| `home`                                        | GET `/`                                 | `home`; requires authentication and verified email                                    |
 
 Every account page receives `capabilities.registrationEnabled` and nullable `status`. `AuthCapabilitiesData::current()` is the shared source for subsequent account page props. No raw user model or credentials are included. U7 should keep notice, resend and logout outside verified-only groups and protect application data with both `auth` and `verified`. Vendor profile/password update features are disabled so they cannot bypass the U7 settings boundary. U8-U9 own factor enablement and its contracts. Browser integration and screen states follow the approved U10 design.
 

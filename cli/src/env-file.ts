@@ -8,7 +8,7 @@ type EnvEntry = NonNullable<ExtraManifest["env"]>[number];
 const BASE_SITE_URL: EnvEntry = {
   key: "NEXT_PUBLIC_SITE_URL",
   side: "client",
-  zod: "z.string().url()",
+  zod: "z.url()",
   example: "http://localhost:3000",
 };
 

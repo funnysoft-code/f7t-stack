@@ -47,18 +47,18 @@ The phone companion follows the form, as selected. Full-document phone images re
 
 ## Measured contrast
 
-| Semantic pair | Ratio |
-| --- | --- |
-| Foreground on background | 17.79:1 |
-| Supporting text on card | 7.76:1 |
-| Supporting text on muted | 7.08:1 |
-| Primary action text | 4.64:1 |
-| Error text on muted | 7.34:1 |
-| Success text on muted | 10.21:1 |
-| Companion supporting text | 8.27:1 |
-| Input boundary against input background | 3.63:1 |
-| Input boundary against card | 3.44:1 |
-| Focus ring against companion | 16.01:1 |
+| Semantic pair                           | Ratio   |
+| --------------------------------------- | ------- |
+| Foreground on background                | 17.79:1 |
+| Supporting text on card                 | 7.76:1  |
+| Supporting text on muted                | 7.08:1  |
+| Primary action text                     | 4.64:1  |
+| Error text on muted                     | 7.34:1  |
+| Success text on muted                   | 10.21:1 |
+| Companion supporting text               | 8.27:1  |
+| Input boundary against input background | 3.63:1  |
+| Input boundary against card             | 3.44:1  |
+| Focus ring against companion            | 16.01:1 |
 
 ## Evidence retention
 

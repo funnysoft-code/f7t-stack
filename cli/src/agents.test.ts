@@ -26,5 +26,28 @@ describe("standards stamping and env.js rewrite", () => {
     expect(await readFile(path.join(none, "src/env.js"), "utf8")).not.toContain("DATABASE_URL");
     const drizzle = await gen({ data: "drizzle" });
     expect(await readFile(path.join(drizzle, "src/env.js"), "utf8")).toContain("DATABASE_URL");
+    expect(await readFile(path.join(drizzle, "src/bun-env.d.ts"), "utf8")).toContain(
+      'reference types="bun"',
+    );
+    expect(await readFile(path.join(none, "src/env.js"), "utf8")).toContain("z.url()");
+  });
+
+  test("selected integration entries stay scanned and localized shells use localized links", async () => {
+    const dir = await gen({ data: "drizzle", db: "sqlite", intl: true, shadcn: true });
+    expect(JSON.parse(await readFile(path.join(dir, "knip.json"), "utf8"))).toEqual({
+      entry: [
+        "src/server/db/index.ts",
+        "src/server/db/schema.ts",
+        "src/components/ui/button.tsx",
+        "src/i18n/navigation.ts",
+      ],
+    });
+    const page = await readFile(path.join(dir, "src/app/[locale]/page.tsx"), "utf8");
+    expect(page).toContain('import { Link } from "~/i18n/navigation"');
+    expect(page).not.toContain("<a ");
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    for (const field of ["dependencies", "devDependencies"]) {
+      expect(Object.keys(pkg[field])).toEqual(Object.keys(pkg[field]).sort());
+    }
   });
 });
