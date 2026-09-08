@@ -18,9 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register the framework's web group and standard middleware aliases.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(fn (Request $request): bool => $request->is('api/*') || $request->expectsJson());
+        $exceptions->shouldRenderJsonWhen(fn (Request $request): bool => $request->is('api/*', 'horizon/api', 'horizon/api/*') || $request->expectsJson());
         $exceptions->respond(function (Response $response): Response {
-            if (request()->is('api/*')) {
+            if (request()->is('api/*', 'horizon', 'horizon/*')) {
                 $response->headers->set('Cache-Control', 'private, no-store');
             }
 

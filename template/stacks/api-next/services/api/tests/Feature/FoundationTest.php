@@ -27,14 +27,15 @@ it('boots without production credentials and migrates individual accounts', func
 
 it('denies Horizon by default even locally and requires verification plus permission', function (): void {
     app()->detectEnvironment(fn (): string => 'local');
-    $this->getJson('/horizon')->assertForbidden();
-    $this->get('/horizon')->assertForbidden();
+    $this->getJson('/horizon')->assertUnauthorized();
+    $this->get('/horizon')->assertRedirect('/login?next=%2Fhorizon');
     $user = User::query()->create(['name' => 'Operator', 'email' => 'operator@example.test', 'password' => 'test-password']);
     expect(Gate::forUser($user)->allows('viewHorizon'))->toBeFalse();
     $this->actingAs($user)->getJson('/horizon/api/stats')->assertForbidden();
     Permission::findOrCreate('view-horizon', 'web');
     $user->givePermissionTo('view-horizon');
     expect(Gate::forUser($user)->allows('viewHorizon'))->toBeFalse();
+    $this->get('/horizon/dashboard')->assertRedirect('/verify-email?next=%2Fhorizon%2Fdashboard');
     $user->markEmailAsVerified();
     expect(Gate::forUser($user)->allows('viewHorizon'))->toBeTrue();
     $this->get('/horizon')->assertOk();

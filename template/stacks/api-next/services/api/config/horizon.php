@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\HorizonSessionBoundary;
 use Illuminate\Support\Str;
 
 return [
@@ -11,7 +12,7 @@ return [
     'use' => 'default',
     'prefix' => env('HORIZON_PREFIX', Str::slug((string) env('APP_NAME', '__F7T_APP_NAME__')).'-horizon:'),
     // HorizonServiceProvider requires an authenticated, verified permission holder.
-    'middleware' => ['web', 'throttle:horizon'],
+    'middleware' => ['web', HorizonSessionBoundary::class, 'throttle:horizon'],
     'waits' => ['redis:default' => 60],
     'trim' => ['recent' => 60, 'pending' => 60, 'completed' => 60, 'recent_failed' => 10080, 'failed' => 10080, 'monitored' => 10080],
     'silenced' => [],
