@@ -8,6 +8,9 @@
   ],
   "type": "module",
   "scripts": {
+    "dev": "bun run --cwd apps/web dev",
+    "build": "bun run --cwd apps/web build",
+    "start": "bun run --cwd apps/web start",
     "lint": "bash scripts/frontend-gate.sh lint",
     "typecheck": "bash scripts/frontend-gate.sh typecheck",
     "test": "bash scripts/frontend-gate.sh test",
@@ -21,6 +24,8 @@
     "check": "bun run check:php && bun run lint && bun run typecheck && bun run test && bun run doctor && bun run check:schema && bun run check:workflows"
   },
   "devDependencies": {
+    "@f7t/api-client": "workspace:*",
+    "@f7t/design-system": "workspace:*",
     "@playwright/test": "1.62.1",
     "@types/node": "24.10.1",
     "@vitest/coverage-v8": "4.1.11",

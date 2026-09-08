@@ -3,5 +3,15 @@
   "cloud": true,
   "guidelines": true,
   "packages": ["funnysoft/boost-guidelines"],
-  "sail": false
+  "sail": false,
+  "skills": [
+    "infer-conventions",
+    "fortify-development",
+    "laravel-best-practices",
+    "testing-best-practices",
+    "configuring-horizon",
+    "octane-development",
+    "funnysoft-quality",
+    "deploying-laravel-cloud"
+  ]
 }

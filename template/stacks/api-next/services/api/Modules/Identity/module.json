@@ -1,0 +1,9 @@
+{
+  "name": "Identity",
+  "alias": "identity",
+  "description": "Individual account identity",
+  "keywords": [],
+  "priority": 0,
+  "providers": ["Modules\\Identity\\Providers\\IdentityServiceProvider"],
+  "files": []
+}

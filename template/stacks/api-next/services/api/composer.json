@@ -1,12 +1,19 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "funnysoft/__F7T_APP_NAME__-api",
+  "name": "funnysoft/api",
   "type": "project",
   "require": {
     "php": "^8.5",
     "dedoc/scramble": "^0.13.42",
     "dedoc/scramble-pro": "^0.9.15",
-    "laravel/framework": "^13.29"
+    "laravel/framework": "^13.29",
+    "laravel/fortify": "^1.39",
+    "laravel/horizon": "^5.48.3",
+    "laravel/octane": "^2.19.1",
+    "nunomaduro/essentials": "^1.2",
+    "nwidart/laravel-modules": "^13.0",
+    "spatie/laravel-data": "^4.23",
+    "spatie/laravel-permission": "^8.3"
   },
   "require-dev": {
     "driftingly/rector-laravel": "^2.6.1",
@@ -20,7 +27,9 @@
     "pestphp/pest-plugin-rector": "^5.0.4",
     "pestphp/pest-plugin-type-coverage": "^5.0.2",
     "phpstan/phpstan": "^2.1",
-    "rector/rector": "^2.6.4"
+    "rector/rector": "^2.6.4",
+    "mockery/mockery": "^1.6.12",
+    "nunomaduro/collision": "^8.8"
   },
   "repositories": [
     {
@@ -36,15 +45,34 @@
     }
   ],
   "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
     "post-update-cmd": [
       "@php artisan boost:update --ansi",
       "bash ../../scripts/boost-sync-opencode-skills.sh"
     ]
   },
   "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
     "sort-packages": true,
     "allow-plugins": {
-      "pestphp/pest-plugin": true
+      "pestphp/pest-plugin": true,
+      "wikimedia/composer-merge-plugin": true
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Modules\\": "Modules/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
     }
   },
   "minimum-stability": "stable",
