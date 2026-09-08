@@ -121,6 +121,11 @@ export async function startServers(port: number) {
   cpSync(join(root, "package.json"), join(directory, "package.json"));
   symlinkSync(join(root, "node_modules"), join(directory, "node_modules"));
   symlinkSync(join(root, "apps/web/node_modules"), join(web, "node_modules"));
+  for (const name of ["api-client", "design-system"]) {
+    const modules = join(root, "packages", name, "node_modules");
+    if (existsSync(modules))
+      symlinkSync(modules, join(directory, "packages", name, "node_modules"));
+  }
   symlinkSync(join(root, "services/api/vendor"), join(backend, "vendor"));
   for (const path of [
     "bootstrap/cache",

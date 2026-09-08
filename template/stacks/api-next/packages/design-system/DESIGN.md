@@ -1,6 +1,6 @@
 # Account design
 
-Status: composition_selected_visual_revision_ready_for_review. The owner selected B, Companion, on 2026-09-08. The subsequent owner request was to lead the visual foundation from `apex-scout-v2` and maximize useful shadcn/ui and shadcn.io reuse. The current `mocks/account/index.html` applies that request. The owner has not yet approved these revised screenshots; do not record screenshot sign-off or route comparison as complete.
+Status: production_implemented_owner_visual_review_pending. The owner selected B, Companion, on 2026-09-08. The subsequent owner request was to lead the visual foundation from `apex-scout-v2` and maximize useful shadcn/ui and shadcn.io reuse. The current `mocks/account/index.html` and U11 account routes apply that request. Agent route comparison is recorded in `mocks/account/U11-REVIEW.md`. The owner has not yet approved these revised screenshots; do not record screenshot sign-off.
 
 ## Decision provenance
 
@@ -48,6 +48,6 @@ Open `mocks/account/index.html` through a static server. Local preview: http://1
 
 Screens: home, login, register, forgot, reset, verification, confirmation, profile, security, passkeys, authenticator, challenge, recovery, deletion. States: default, loading, error, success, empty. Content adapts to each screen, including cancelled/unsupported passkeys, recovery alternatives, unverified email, and destructive confirmation.
 
-The required selected artifacts are `index.html`, `mock.png`, and `mock-mobile.png`. Desktop is 1440×900; phone is 390×844. No `route.png` or `route-mobile.png` is claimed because production implementation and route comparison belong to U10/U11. Revised screenshot review remains pending.
+The selected artifacts are `index.html`, `mock.png`, and `mock-mobile.png`. Production U11 profile captures are `route.png` and `route-mobile.png`, with other account routes in `routes/`. Desktop is 1440×900; phone is 390×844. The agent compared production with the selected mock. Owner screenshot review remains pending.
 
 Browser evidence and measured review are recorded in `mocks/account/REVIEW.md`. Both variant design homes carry the same current tokens, selected mock, decision record, and component reuse mapping.

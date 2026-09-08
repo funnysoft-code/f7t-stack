@@ -570,6 +570,8 @@ export interface components {
             name: string;
             email: string;
             email_verified: boolean;
+            two_factor_enabled: boolean;
+            two_factor_confirmed: boolean;
         };
     };
     responses: {

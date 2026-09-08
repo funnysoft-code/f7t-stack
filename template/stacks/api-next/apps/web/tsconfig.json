@@ -4,7 +4,7 @@
     "allowJs": true,
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "paths": { "@/*": ["./*"], "@/components/ui/*": ["../../packages/design-system/generated/*"] }
   },
   "include": [
     "next-env.d.ts",

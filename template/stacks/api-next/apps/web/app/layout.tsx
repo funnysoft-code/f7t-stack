@@ -1,4 +1,10 @@
 import type { ReactNode } from "react";
+import "./globals.css";
+
+export const metadata = {
+  title: { default: "Account", template: "%s | Account" },
+  robots: { index: false, follow: false },
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

@@ -1,0 +1,14 @@
+workflows:
+  - { id: registration, tag: "@registration" }
+  - { id: login, tag: "@login" }
+  - { id: password-reset, tag: "@password-reset" }
+  - { id: verification, tag: "@verification" }
+  - { id: profile, tag: "@profile" }
+  - { id: confirmation, tag: "@confirmation" }
+  - { id: dependency-failure, tag: "@dependency-failure" }
+  - { id: password-change, tag: "@password-change" }
+  - { id: account-deletion, tag: "@account-deletion" }
+  - { id: passkeys, tag: "@passkeys" }
+  - { id: authenticator, tag: "@authenticator" }
+  - { id: two-factor-challenge, tag: "@two-factor-challenge" }
+  - { id: recovery-codes, tag: "@recovery-codes" }

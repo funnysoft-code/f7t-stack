@@ -23,6 +23,8 @@ describe("account routing contract", () => {
       name: "One",
       email: "one@example.test",
       email_verified: verified,
+      two_factor_enabled: false,
+      two_factor_confirmed: false,
     };
     expect(await accountState(Response.json({ data: user }))).toEqual({
       kind: verified ? "verified" : "unverified",
@@ -94,6 +96,13 @@ describe("account routing contract", () => {
     expect(authDestination("/login", path)).toBe("/login?next=%2Fapp");
   });
   it("accepts only named local destinations", () => {
+    for (const path of [
+      "/settings/passkeys",
+      "/settings/authenticator",
+      "/settings/recovery",
+      "/settings/delete-account",
+    ])
+      expect(localDestination(path)).toBe(path);
     expect(authDestination("/login", "/settings/security")).toBe(
       "/login?next=%2Fsettings%2Fsecurity",
     );

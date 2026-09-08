@@ -17,9 +17,9 @@ final class UserResource extends JsonResource
         $response->setStatusCode(200);
     }
 
-    /** @return array{uuid: string, name: string, email: string, email_verified: bool} */
+    /** @return array{uuid: string, name: string, email: string, email_verified: bool, two_factor_enabled: bool, two_factor_confirmed: bool} */
     public function toArray(Request $request): array
     {
-        return ['uuid' => $this->uuid, 'name' => $this->name, 'email' => $this->email, 'email_verified' => $this->hasVerifiedEmail()];
+        return ['uuid' => $this->uuid, 'name' => $this->name, 'email' => $this->email, 'email_verified' => $this->hasVerifiedEmail(), 'two_factor_enabled' => $this->two_factor_secret !== null, 'two_factor_confirmed' => $this->two_factor_confirmed_at !== null];
     }
 }

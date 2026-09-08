@@ -10,6 +10,8 @@ Inspect `result.response.status` before reading `data`. Keep 401, 403, 419, 422,
 
 Use `serverAccount()` for request-scoped SSR gates. Only `kind: "verified"` permits protected content. `unverified` opens verification, `guest` opens login, and `unavailable` renders dependency failure. Laravel independently guards `/api/app`. Server reads reject account GETs that prime CSRF, create passkey challenges, or consume signed verification links; these must remain browser-visible.
 
+The generated `User` includes `two_factor_enabled` and `two_factor_confirmed`. Use these safe booleans for pending/enabled authenticator states. Passkey metadata still comes from its UUID-safe listing; do not invent a credential count when that list has not been loaded.
+
 Keep the validated `next` value through password and factor screens with `authDestination()`. On completion use `localDestination()`, never a raw `next` parameter or the passkey package's `redirect`. A verification notice carries `verification_url`; validate it with `verificationContinuation()` and submit that exact string with `browserRequest()`. Do not reconstruct its signed query.
 
 ## Passkeys 0.4.0

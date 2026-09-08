@@ -3893,13 +3893,21 @@
                     },
                     "email_verified": {
                         "type": "boolean"
+                    },
+                    "two_factor_enabled": {
+                        "type": "boolean"
+                    },
+                    "two_factor_confirmed": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "uuid",
                     "name",
                     "email",
-                    "email_verified"
+                    "email_verified",
+                    "two_factor_enabled",
+                    "two_factor_confirmed"
                 ],
                 "title": "UserResource"
             }

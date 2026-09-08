@@ -61,3 +61,11 @@ Verified docs:
 Also inspected registry `field-demo` and `alert-dialog-demo` examples. In particular, use FieldError adjacent to the control and preserve AlertDialog's named title/description structure.
 
 Install only missing primitives and selected registry blocks inside the actual generated app/package. Resolve imports against its aliases. Styling belongs in the shared tokens and existing component variants; page-level classes arrange layout. Motion is optional and must honor reduced motion. Do not transplant Apex branding, sports content, navigation labels, or data models.
+
+## U11 implementation
+
+The API + Next runtime reuses U10's Radix-based shadcn components in `generated/`, with upstream attribution in `generated/PROVENANCE.md`. `apps/web/components.json` maps the UI alias to this shared package. Authored account compositions live in `apps/web/components/account/` and `apps/web/components/screens/`; `account.css` supplies the selected responsive layout.
+
+Navigation uses Next links and real route state. Forms use generated API types and the browser-visible Laravel request transport. The password composition uses server policy and actual session-impact behavior. QR generation uses `qrcode` locally with an explicit quiet zone and setup-key fallback. Recovery feedback stays inline. Demo timers, fake session lists, invented credential counts, and the mock toolbar are absent from production.
+
+See `mocks/account/U11-REVIEW.md` for route captures, browser journeys, gate results, and outstanding owner review.

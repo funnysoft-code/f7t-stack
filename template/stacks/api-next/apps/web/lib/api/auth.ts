@@ -36,7 +36,9 @@ export async function accountState(response: Response): Promise<AccountState> {
       typeof data?.uuid !== "string" ||
       typeof data.name !== "string" ||
       typeof data.email !== "string" ||
-      typeof data.email_verified !== "boolean"
+      typeof data.email_verified !== "boolean" ||
+      typeof data.two_factor_enabled !== "boolean" ||
+      typeof data.two_factor_confirmed !== "boolean"
     )
       return { kind: "error" };
     return { kind: data.email_verified ? "verified" : "unverified", user: data };
@@ -62,7 +64,19 @@ export function localDestination(value: string | null): string {
   // Check the decoded mount too, so encoded names cannot reach Horizon's internal API.
   if (dashboard && dashboardContinuation(decodeURIComponent(dashboard.split("?")[0])))
     return dashboard;
-  if (value && ["/app", "/settings/profile", "/settings/security", "/verify-email"].includes(value))
+  if (
+    value &&
+    [
+      "/app",
+      "/settings/profile",
+      "/settings/security",
+      "/settings/passkeys",
+      "/settings/authenticator",
+      "/settings/recovery",
+      "/settings/delete-account",
+      "/verify-email",
+    ].includes(value)
+  )
     return value;
   if (value?.startsWith("/verify-email?verification_url=")) {
     const query = new URLSearchParams(value.slice(value.indexOf("?") + 1));

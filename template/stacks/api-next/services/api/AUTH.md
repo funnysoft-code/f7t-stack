@@ -14,26 +14,28 @@ Account routes always return JSON, including when Accept is absent. Success and 
 
 Paths below are relative to `/api/auth`.
 
-| Method | Path | Contract |
-| --- | --- | --- |
-| GET | `/capabilities` | Public `{ "data": { "registration": false } }`, from the single Laravel setting |
-| GET | `/csrf-cookie` | Public 204 with XSRF and session cookies |
-| POST | `/register` | Available only when enabled; name, email, password, password_confirmation; Fortify 201 |
-| POST | `/login` | email, password, optional remember; Fortify 200 `{ "two_factor": false }`, or `{ "two_factor": true }` for confirmed authenticator enrollment |
-| POST | `/forgot-password` | email; always 200 with the same message for existing, absent, throttled broker delivery, or mail failure |
-| POST | `/reset-password` | email, token, password, password_confirmation; Fortify 200 message or generic 422 email error |
-| GET | `/me` | Authenticated, unverified-safe user resource |
-| GET | `/email/verify` | Authenticated, unverified-safe user resource for the notice |
-| POST | `/email/verification-notification` | Authenticated resend; Fortify 202 status, or 204 if already verified |
-| GET | `/email/verify/{uuid}/{hash}` | Authenticated relative signed URL, current email hash; 200 user resource |
-| POST | `/logout` | Authenticated 204, session invalidation and CSRF rotation |
-| POST | `/confirm-password` | Authenticated password; Fortify 201 on success, 422 on failure |
-| GET | `/confirmed-password-status` | Authenticated Fortify `{ "confirmed": boolean }` |
-| PATCH | `/settings/profile` | Optional name/email fields; 200 user resource. Name-only updates require verification. Email changes additionally require recent confirmation. |
-| PUT | `/settings/password` | Verified and recently confirmed; password/password_confirmation, minimum 12 characters; 204 |
-| DELETE | `/settings/account` | Verified and recently confirmed; no raw password field; 204 and invalidated session |
+| Method | Path                               | Contract                                                                                                                                       |
+| ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/capabilities`                    | Public `{ "data": { "registration": false } }`, from the single Laravel setting                                                                |
+| GET    | `/csrf-cookie`                     | Public 204 with XSRF and session cookies                                                                                                       |
+| POST   | `/register`                        | Available only when enabled; name, email, password, password_confirmation; Fortify 201                                                         |
+| POST   | `/login`                           | email, password, optional remember; Fortify 200 `{ "two_factor": false }`, or `{ "two_factor": true }` for confirmed authenticator enrollment  |
+| POST   | `/forgot-password`                 | email; always 200 with the same message for existing, absent, throttled broker delivery, or mail failure                                       |
+| POST   | `/reset-password`                  | email, token, password, password_confirmation; Fortify 200 message or generic 422 email error                                                  |
+| GET    | `/me`                              | Authenticated, unverified-safe user resource                                                                                                   |
+| GET    | `/email/verify`                    | Authenticated, unverified-safe user resource for the notice                                                                                    |
+| POST   | `/email/verification-notification` | Authenticated resend; Fortify 202 status, or 204 if already verified                                                                           |
+| GET    | `/email/verify/{uuid}/{hash}`      | Authenticated relative signed URL, current email hash; 200 user resource                                                                       |
+| POST   | `/logout`                          | Authenticated 204, session invalidation and CSRF rotation                                                                                      |
+| POST   | `/confirm-password`                | Authenticated password; Fortify 201 on success, 422 on failure                                                                                 |
+| GET    | `/confirmed-password-status`       | Authenticated Fortify `{ "confirmed": boolean }`                                                                                               |
+| PATCH  | `/settings/profile`                | Optional name/email fields; 200 user resource. Name-only updates require verification. Email changes additionally require recent confirmation. |
+| PUT    | `/settings/password`               | Verified and recently confirmed; password/password_confirmation, minimum 12 characters; 204                                                    |
+| DELETE | `/settings/account`                | Verified and recently confirmed; no raw password field; 204 and invalidated session                                                            |
 
 The user resource is `{ "data": { "uuid": "...", "name": "...", "email": "...", "email_verified": false } }`. It never exposes database IDs, passwords, tokens, permission internals, or authenticator secrets. `/api/app` is the initial verified application boundary and returns this resource. New application routes must keep both `auth:web` and `verified`; escape routes stay outside that boundary.
+
+The resource also includes `two_factor_enabled` and `two_factor_confirmed` booleans. These distinguish unfinished authenticator enrollment from active two-factor protection after a page reload. They expose no secret or recovery-code content.
 
 Named rate limits apply to every route. Login and confirmation share five attempts per minute per email/IP key; reset submissions allow five per minute per IP; verification allows six per minute per account; the account mount has an additional sixty-per-minute IP limit.
 
@@ -57,26 +59,28 @@ Authenticator management and secret reads, and passkey registration/removal, req
 
 Pin PHP `laravel/passkeys` 0.2.1 and Fortify 1.39.0 with `@laravel/passkeys` 0.4.0. The WebAuthn relying party and allowed origin come from `FRONTEND_URL`, not the private API hostname. Use the browser package's `routes.options` and `routes.submit` overrides to preserve the `/api/auth` prefix. For confirmation call `Passkeys.verify` against the confirmation pair below. The browser client returns raw response JSON; its stock TypeScript registration return type assumes `id` and does not describe this API. Discard that return value and refetch the generated, UUID-safe list contract after enrollment, or validate it through the generated API response type. Never expose an integer alias to accommodate the stock type.
 
+Fortify copies `fortify.passkeys` into the passkeys package during boot. Keep its relying-party ID, allowed origins, timeout and handle secret aligned with `config/passkeys.php`; configuring only the latter is insufficient. `AccountSummaryTest` checks the post-boot frontend origin. When overriding local environment values on `artisan serve`, use `--no-reload` so its child process retains those overrides.
+
 Paths below are relative to `/api/auth`:
 
-| Method | Path | Body / success |
-| --- | --- | --- |
-| GET | `/user/passkeys/options` | 200 `{ "options": <creation options> }` |
-| POST | `/user/passkeys` | `name`, `credential`; 200 `{ "data": { "uuid": "<UUIDv7>", "name": "...", "created_at": "...", "last_used_at": null }, "status": "passkey-registered" }` |
-| GET | `/user/passkeys` | 200 `{ "data": [<same safe metadata>] }` |
-| DELETE | `/user/passkeys/{uuid}` | Public UUIDv7 only; 200 `{ "status": "passkey-deleted" }` |
-| GET | `/passkeys/login/options` | 200 `{ "options": <assertion options> }` |
-| POST | `/passkeys/login` | `credential`, optional `remember`; 200 package login response |
-| GET | `/passkeys/confirm/options` | 200 `{ "options": <assertion options> }` |
-| POST | `/passkeys/confirm` | `credential`; 200 package confirmation response |
-| POST | `/user/two-factor-authentication` | Enable pending enrollment; 200 |
-| POST | `/user/confirmed-two-factor-authentication` | `code`; confirm enrollment; 200 |
-| DELETE | `/user/two-factor-authentication` | Remove authenticator; 200 |
-| GET | `/user/two-factor-qr-code` | 200 `{ "svg": "...", "url": "..." }` |
-| GET | `/user/two-factor-secret-key` | 200 `{ "secretKey": "..." }` (native Fortify spelling) |
-| GET | `/user/two-factor-recovery-codes` | 200 array of strings |
-| POST | `/user/two-factor-recovery-codes` | Replace all recovery codes; 200 |
-| POST | `/two-factor-challenge` | `code` or `recovery_code`; 204 on completion, 422 invalid factor, 401 invalidated/expired password proof |
+| Method | Path                                        | Body / success                                                                                                                                           |
+| ------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/user/passkeys/options`                    | 200 `{ "options": <creation options> }`                                                                                                                  |
+| POST   | `/user/passkeys`                            | `name`, `credential`; 200 `{ "data": { "uuid": "<UUIDv7>", "name": "...", "created_at": "...", "last_used_at": null }, "status": "passkey-registered" }` |
+| GET    | `/user/passkeys`                            | 200 `{ "data": [<same safe metadata>] }`                                                                                                                 |
+| DELETE | `/user/passkeys/{uuid}`                     | Public UUIDv7 only; 200 `{ "status": "passkey-deleted" }`                                                                                                |
+| GET    | `/passkeys/login/options`                   | 200 `{ "options": <assertion options> }`                                                                                                                 |
+| POST   | `/passkeys/login`                           | `credential`, optional `remember`; 200 package login response                                                                                            |
+| GET    | `/passkeys/confirm/options`                 | 200 `{ "options": <assertion options> }`                                                                                                                 |
+| POST   | `/passkeys/confirm`                         | `credential`; 200 package confirmation response                                                                                                          |
+| POST   | `/user/two-factor-authentication`           | Enable pending enrollment; 200                                                                                                                           |
+| POST   | `/user/confirmed-two-factor-authentication` | `code`; confirm enrollment; 200                                                                                                                          |
+| DELETE | `/user/two-factor-authentication`           | Remove authenticator; 200                                                                                                                                |
+| GET    | `/user/two-factor-qr-code`                  | 200 `{ "svg": "...", "url": "..." }`                                                                                                                     |
+| GET    | `/user/two-factor-secret-key`               | 200 `{ "secretKey": "..." }` (native Fortify spelling)                                                                                                   |
+| GET    | `/user/two-factor-recovery-codes`           | 200 array of strings                                                                                                                                     |
+| POST   | `/user/two-factor-recovery-codes`           | Replace all recovery codes; 200                                                                                                                          |
+| POST   | `/two-factor-challenge`                     | `code` or `recovery_code`; 204 on completion, 422 invalid factor, 401 invalidated/expired password proof                                                 |
 
 The configured passkey model uses an integer database primary key and a UUIDv7 public route key. The registration-response binding explicitly uses `PasskeyResource`; neither registration nor listing returns stored credential JSON, database IDs, or credential IDs. `PasskeyOperationTransformer` corrects the vendor controller's enrollment response and removal parameter during backend schema generation. `PasskeySchemaTest` checks the generated contract. U9 still owns the full account-response schema and generated-client chain.
 
