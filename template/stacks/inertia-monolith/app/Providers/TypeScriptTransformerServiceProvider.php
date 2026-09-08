@@ -19,6 +19,7 @@ final class TypeScriptTransformerServiceProvider extends TypeScriptTransformerAp
             ->transformer(EnumTransformer::class)
             ->transformDirectories(app_path())
             ->outputDirectory(resource_path('js/types'))
+            ->withoutManifest()
             ->writer(new GlobalNamespaceWriter('generated.d.ts'));
     }
 }

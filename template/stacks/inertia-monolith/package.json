@@ -15,8 +15,14 @@
     "check": "bun run check:php && bun run lint && bun run typecheck && bun run test && bun run doctor"
   },
   "dependencies": {
+    "@fontsource-variable/space-grotesk": "5.3.0",
     "@inertiajs/react": "3.7.0",
     "@laravel/passkeys": "0.4.0",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.2.6",
+    "lucide-react": "^1.43.0",
+    "qrcode": "^1.5.4",
+    "radix-ui": "^1.6.7",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -25,6 +31,7 @@
     "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "4.2.2",
     "@types/node": "24.10.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.1.1",

@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { wayfinder } from "@laravel/vite-plugin-wayfinder";
 
 export default defineConfig({
+  resolve: { alias: { "@": new URL("./resources/js", import.meta.url).pathname } },
   lint: {
     ignorePatterns: [
       "resources/js/actions/**",

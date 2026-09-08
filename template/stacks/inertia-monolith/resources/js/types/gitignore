@@ -1,3 +1,4 @@
 *
 !.gitignore
 !generated.d.ts
+!account.ts

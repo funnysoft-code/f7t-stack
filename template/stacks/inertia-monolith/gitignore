@@ -12,4 +12,7 @@
 /coverage
 /test-results
 /playwright-report
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
 /.f7t-setup-state.json

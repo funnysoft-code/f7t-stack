@@ -51,3 +51,7 @@ Screens: home, login, register, forgot, reset, verification, confirmation, profi
 The required selected artifacts are `index.html`, `mock.png`, and `mock-mobile.png`. Desktop is 1440×900; phone is 390×844. No `route.png` or `route-mobile.png` is claimed because production implementation and route comparison belong to U10/U11. Revised screenshot review remains pending.
 
 Browser evidence and measured review are recorded in `mocks/account/REVIEW.md`. Both variant design homes carry the same current tokens, selected mock, decision record, and component reuse mapping.
+
+## U10 production review
+
+The Inertia implementation now has `mocks/account/route.png`, `route-mobile.png`, and per-route captures in `routes/`. `mocks/account/U10-REVIEW.md` records the comparison, corrections, component reuse, gates and real account journeys. These are implementation evidence. The revised screenshot approval described above remains pending, and the historical U17 artifacts remain unchanged.
