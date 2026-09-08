@@ -6,18 +6,21 @@ import { gen, trackTempDirs } from "./test-helpers";
 trackTempDirs();
 
 describe("github-actions extra", () => {
-  test("default yes writes ci.yml", async () => {
+  test("default yes leaves workflow ownership to standards", async () => {
     const dir = await gen({});
-    const yml = await readFile(path.join(dir, ".github/workflows/ci.yml"), "utf8");
-    expect(yml).toContain("bun run check");
-    expect(yml).not.toContain("test:e2e");
+    await expect(readFile(path.join(dir, ".github/workflows/ci.yml"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
-  test("playwright adds an e2e job", async () => {
+  test("playwright keeps its test command while standards owns browser CI", async () => {
     const dir = await gen({ playwright: true });
-    const yml = await readFile(path.join(dir, ".github/workflows/ci.yml"), "utf8");
-    expect(yml).toContain("test:e2e");
-    expect(yml).toContain("playwright install");
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    expect(pkg.scripts["test:e2e"]).toBe("playwright test");
+    expect(pkg.devDependencies["@playwright/test"]).toBe("1.62.1");
+    await expect(readFile(path.join(dir, ".github/workflows/ci.yml"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   test("--no-github-actions is rejected", async () => {

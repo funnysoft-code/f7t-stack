@@ -34,7 +34,7 @@ export const stacks: Record<StackId, StackDefinition> = {
   "api-next": {
     label: "Laravel API + Next.js",
     templateRoot: "stacks/api-next",
-    jsRoots: ["apps/web"],
+    jsRoots: ["apps/web", "packages/api-client", "packages/design-system"],
     phpRoot: "services/api",
     rejectedOptions: nextOnlyOptions,
     setupEntryPoint: "bun run setup",

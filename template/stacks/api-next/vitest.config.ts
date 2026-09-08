@@ -2,9 +2,15 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    include: ["apps/web/**/*.{test,spec}.{ts,tsx}", "packages/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      include: ["lib/**/*.{ts,tsx}", "src/lib/**/*.{ts,tsx}", "packages/*/**/*.{ts,tsx}"],
+      include: [
+        "apps/web/lib/**/*.{ts,tsx}",
+        "apps/web/src/lib/**/*.{ts,tsx}",
+        "packages/api-client/**/*.{ts,tsx}",
+        "packages/design-system/**/*.{ts,tsx}",
+      ],
       exclude: [
         "**/*.d.ts",
         "**/*.{test,spec}.{ts,tsx}",

@@ -4,6 +4,11 @@
   "generatorVersion": null,
   "templateRevision": null,
   "standards": null,
+  "standardsCompatibility": {
+    "commit": "8f3d7d67841c2ba094813c75697446068e6c3767",
+    "fixtureIdentity": "v0.0.0-u15-fixture",
+    "purpose": "U15 integration fixture only. U14 must assign and verify the public release pin and lock catalog."
+  },
   "templates": {
     "next-only": { "root": "base" },
     "inertia-monolith": { "root": "stacks/inertia-monolith" },

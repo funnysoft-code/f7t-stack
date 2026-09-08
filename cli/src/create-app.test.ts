@@ -70,9 +70,11 @@ describe("createApp", () => {
     const dir = await gen();
     const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
     expect(pkg.name).toBe("shop");
-    expect(pkg.scripts.check).toContain("oxlint");
-    expect(pkg.scripts.check).toContain("oxfmt --check");
-    expect(pkg.scripts.check).toContain("react-doctor");
+    expect(pkg.scripts.check).toContain("bun run lint");
+    expect(pkg.scripts.lint).toBe("bash scripts/frontend-gate.sh lint");
+    expect(pkg.devDependencies.oxfmt).toBeTruthy();
+    expect(pkg.scripts.check).toContain("bun run doctor");
+    expect(pkg.devDependencies["react-doctor"]).toBe("0.9.12");
     expect(pkg.packageManager).toBe("bun@1.4.0");
     expect(await readdir(dir)).toContain(".gitignore");
     expect(await readFile(path.join(dir, "src/app/page.tsx"), "utf8")).toContain("header");

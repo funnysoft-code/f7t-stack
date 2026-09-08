@@ -1,118 +1,59 @@
 import { writeFile } from "node:fs/promises";
-import path from "node:path";
 import type { CreateConfig } from "./config";
-import { landedExtras } from "./installers";
+import { regularPackagePath } from "./paths";
+import { stacks, type StackId } from "./stacks";
 
-const STACK_LABELS: Record<string, string> = {
-  sanity: "Sanity",
-  "drizzle-sqlite": "Drizzle (SQLite)",
-  "drizzle-postgres": "Drizzle (Postgres)",
-  "next-intl": "next-intl",
-  "shell-site": "Site shell",
-  "shell-app": "App shell",
-  shadcn: "ShadCN UI",
-  resend: "Resend",
-  playwright: "Playwright",
-  "harness-grok": "Grok harness",
-  "harness-cursor": "Cursor harness",
-  "github-actions": "GitHub Actions",
+export type ProjectBrief = {
+  target: string;
+  variant: StackId;
+  productBlurb: string;
 };
 
-function layoutLines(names: Set<string>): string[] {
-  const lines: string[] = [];
-  if (names.has("next-intl")) {
-    lines.push("- `src/app/[locale]/` pages");
-    lines.push("- `src/i18n/` next-intl routing");
-    lines.push("- `messages/` catalogs");
-  } else {
-    lines.push("- `src/app/` App Router pages");
-  }
-  lines.push("- `src/env.js` env schema");
-  if (names.has("shell-site") || names.has("shell-app")) {
-    lines.push("- `src/lib/site.ts` copy and nav");
-  }
-  if (names.has("sanity")) {
-    lines.push("- `src/app/studio/` Sanity Studio");
-    lines.push("- `src/sanity/` schema and client");
-  }
-  if (names.has("drizzle-sqlite") || names.has("drizzle-postgres")) {
-    lines.push("- `src/server/db/` Drizzle");
-  }
-  if (names.has("shadcn")) {
-    lines.push("- `src/components/ui/` ShadCN UI");
-    lines.push("- `src/lib/utils.ts` `cn` helper");
-  }
-  if (names.has("resend")) {
-    lines.push("- `src/app/api/contact/` Resend contact Route Handler");
-  }
-  if (names.has("playwright")) {
-    lines.push("- `e2e/` Playwright");
-  }
-  return lines;
+/** The brief activates policy because OpenCode V2 does not load instructions entries. */
+export async function writeProjectBrief(options: ProjectBrief): Promise<void> {
+  const definition = stacks[options.variant];
+  const php = definition.phpRoot;
+  const design =
+    options.variant === "next-only"
+      ? null
+      : options.variant === "api-next"
+        ? "packages/design-system/DESIGN.md"
+        : "design/DESIGN.md";
+  const lines = [
+    "# Project brief",
+    "",
+    options.productBlurb.replace(/[\r\n]+/g, " "),
+    "",
+    "Before work, read the applicable `.opencode/rules/*.md` files and the pinned `docs/playbook/README.md`.",
+    "",
+    `Stack: ${definition.label}. JS roots: ${definition.jsRoots.map((root) => `\`${root}\``).join(", ")}.`,
+    "Standards identity: `STANDARDS_VERSION` and `STANDARDS_MANIFEST.json`. Generator identity: `F7T_MANIFEST.json`.",
+    ...(design ? [`Design authority: \`${design}\`.`] : []),
+    "",
+    "Run `bun run check` from the repository root. Install the locked dependencies before running gates. Run `bun run hooks:install` after Git initialization.",
+    ...(php
+      ? [
+          `PHP root: \`${php}\`. Run Composer and Artisan there.`,
+          "After `php artisan boost:update --ansi`, run `bash scripts/boost-sync-opencode-skills.sh` from the repository root. Root `.opencode/skills` contains portable real files.",
+          "Boost may append guidelines to this brief; retain its policy-entry instruction.",
+        ]
+      : []),
+    ...(options.variant === "api-next"
+      ? [
+          "After API contract changes, run `bun run api:generate`. `bun run check:schema` compares a fresh Laravel export and generated types; `bun run check:workflows` validates `tests/workflows.yml` against tagged `e2e/` journeys.",
+        ]
+      : []),
+    "",
+    "Keep product decisions in repository docs. Never commit secrets or copy personal OpenCode providers, models, permissions, or global configuration.",
+    "",
+  ];
+  await writeFile(regularPackagePath(options.target, "AGENTS.md", true), lines.join("\n"));
 }
 
 export async function writeAgents(config: CreateConfig): Promise<void> {
-  const extras = landedExtras(config);
-  const names = new Set(extras.map((extra) => extra.name));
-  const shellLabel = config.shell === "site" ? "Site" : "App";
-  const stack = [
-    "- bun",
-    "- Next.js App Router, React 19, TypeScript strict",
-    "- Tailwind CSS v4",
-    "- oxlint, oxfmt, vitest, React Doctor",
-    "- `@t3-oss/env-nextjs`",
-    ...extras.map((extra) => `- ${STACK_LABELS[extra.name] ?? extra.name}`),
-  ];
-  const extraScripts = extras.flatMap((extra) =>
-    Object.keys(extra.manifest.package?.scripts ?? {}),
-  );
-  const commands = [
-    "- `bun install`",
-    "- `bun run dev`",
-    "- `bun run check`",
-    "- `bun run build`",
-    ...extraScripts.map((script) => `- \`bun run ${script}\``),
-  ];
-  const extraAgents = extras
-    .map((extra) => extra.manifest.agents?.trim())
-    .filter((block): block is string => Boolean(block));
-  const extraBlock = extraAgents.length > 0 ? `\n${extraAgents.join("\n\n")}\n` : "";
-  const doNot = [
-    "- Commit secrets or print them in logs",
-    "- Force-push",
-    "- Drive-by refactors",
-    "- Hand-edit ignored generated files",
-  ];
-  if (names.has("sanity")) {
-    doNot.push("- Hand-edit generated Sanity `schema.json` or types");
-  }
-
-  const markdown = `# ${config.appName}
-
-${config.appName} is a Next.js ${shellLabel}.
-
-## Stack
-
-${stack.join("\n")}
-
-## Commands
-
-${commands.join("\n")}
-${extraBlock}
-## src/
-
-${layoutLines(names).join("\n")}
-
-## Conventions
-
-- Import alias \`~/*\` maps to \`src/*\`
-- bun only. Do not add npm, pnpm, or yarn
-- APIs are Route Handlers plus Zod. no tRPC
-
-## Do not
-
-${doNot.join("\n")}
-`;
-
-  await writeFile(path.join(config.projectDir, "AGENTS.md"), markdown);
+  await writeProjectBrief({
+    target: config.projectDir,
+    variant: config.stack,
+    productBlurb: `${config.appName} application`,
+  });
 }

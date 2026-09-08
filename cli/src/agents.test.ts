@@ -14,6 +14,11 @@ describe("standards stamping and env.js rewrite", () => {
     expect(await readFile(path.join(dir, "docs/playbook/fixture.md"), "utf8")).toContain(
       "FunnySoft",
     );
+    const brief = await readFile(path.join(dir, "AGENTS.md"), "utf8");
+    expect(brief).toContain(
+      "Before work, read the applicable `.opencode/rules/*.md` files and the pinned `docs/playbook/README.md`.",
+    );
+    expect(brief).not.toMatch(/Composer|Boost|php artisan|\/Users\/|~\//);
   });
 
   test("env.js gains DATABASE_URL only for drizzle", async () => {

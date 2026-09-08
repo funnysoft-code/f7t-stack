@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, test } from "vitest";
@@ -49,6 +49,21 @@ test("verifies schema 1 and stamps shared runtime with generator receipt", async
     standards: release.standards,
   });
 });
+
+test.each(["directory", "symlink"])(
+  "rejects a %s project brief before any standards writes",
+  async (kind) => {
+    const { root, target } = await fixture();
+    await mkdir(target);
+    if (kind === "directory") await mkdir(path.join(target, "AGENTS.md"));
+    else await symlink(path.join(root, "outside.md"), path.join(target, "AGENTS.md"));
+    await expect(applyBundledStandards({ ...inputs, target }, root)).rejects.toThrow();
+    await expect(stat(path.join(target, "STANDARDS_VERSION"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    await expect(stat(path.join(root, "outside.md"))).rejects.toMatchObject({ code: "ENOENT" });
+  },
+);
 
 test.each(["runtime", "asset", "manifest", "pin", "extra", "symlink"])(
   "rejects %s tampering before runtime import or target writes",

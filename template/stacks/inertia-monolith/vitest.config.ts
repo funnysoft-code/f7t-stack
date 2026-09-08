@@ -2,9 +2,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    include: ["resources/js/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
-      include: ["lib/**/*.{ts,tsx}", "src/lib/**/*.{ts,tsx}", "packages/*/**/*.{ts,tsx}"],
+      include: ["resources/js/lib/**/*.{ts,tsx}"],
       exclude: [
         "**/*.d.ts",
         "**/*.{test,spec}.{ts,tsx}",

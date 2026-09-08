@@ -1,41 +1,27 @@
 {
   "name": "__F7T_APP_NAME__",
-  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
     "lint": "bash scripts/frontend-gate.sh lint",
-    "fmt": "oxfmt .",
-    "fmt:check": "oxfmt --check .",
     "typecheck": "bash scripts/frontend-gate.sh typecheck",
     "test": "bash scripts/frontend-gate.sh test",
     "doctor": "bash scripts/frontend-gate.sh doctor",
+    "test:e2e": "bash scripts/frontend-gate.sh e2e",
+    "check:php": "bash scripts/php-gate.sh all",
     "hooks:install": "lefthook install",
-    "check": "bun run lint && bun run typecheck && bun run test && bun run doctor"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "0.13.11",
-    "next": "16.3.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "zod": "4.4.3"
+    "check": "bun run check:php && bun run lint && bun run typecheck && bun run test && bun run doctor"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
-    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.10.1",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "4.1.11",
     "lefthook": "2.1.12",
-    "oxfmt": "0.65.0",
-    "oxlint": "1.80.0",
     "react-doctor": "0.9.12",
-    "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
+    "vite-plus": "0.3.1",
     "vitest": "4.1.11"
   },
   "packageManager": "bun@1.4.0"

@@ -3,6 +3,7 @@ import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { mkdir, writeFile, chmod } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { writeProjectBrief } from "./agents";
 import { assertDistributableContent, assertDistributablePath, isTemplateText } from "./fs";
 import { packageRoot, regularPackagePath, safeRelativePath } from "./paths";
 
@@ -304,7 +305,11 @@ export async function applyBundledStandards(
   const receipt = regularPackagePath(options.target, "F7T_MANIFEST.json", true);
   if (lstatSync(receipt, { throwIfNoEntry: false })?.isDirectory())
     throw new Error("Generator receipt destination is a directory");
+  const brief = regularPackagePath(options.target, "AGENTS.md", true);
+  if (lstatSync(brief, { throwIfNoEntry: false })?.isDirectory())
+    throw new Error("Project brief destination is a directory");
   runtime.applyExport({ ...options, exportRoot, expectedDigest: release.standards.assetDigest });
+  await writeProjectBrief(options);
   await writeFile(
     receipt,
     `${JSON.stringify({ schemaVersion: 1, generatorVersion: release.generatorVersion, templateRevision: release.templateRevision, standards: release.standards, variant: options.variant }, null, 2)}\n`,

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://getcomposer.org/schema.json",
+  "name": "funnysoft/__F7T_APP_NAME__-api",
+  "type": "project",
+  "require": {
+    "php": "^8.5",
+    "dedoc/scramble": "^0.13.42",
+    "dedoc/scramble-pro": "^0.9.15",
+    "laravel/framework": "^13.29"
+  },
+  "require-dev": {
+    "driftingly/rector-laravel": "^2.6.1",
+    "funnysoft/boost-guidelines": "@dev",
+    "larastan/larastan": "^3.10",
+    "laravel/boost": "^2.7.0",
+    "laravel/pint": "^1.30.5",
+    "pestphp/pest": "^5.1.3",
+    "pestphp/pest-plugin-laravel": "^5.0.1",
+    "pestphp/pest-plugin-phpstan": "^5.2.0",
+    "pestphp/pest-plugin-rector": "^5.0.4",
+    "pestphp/pest-plugin-type-coverage": "^5.0.2",
+    "phpstan/phpstan": "^2.1",
+    "rector/rector": "^2.6.4"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "packages/boost-guidelines",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "composer",
+      "url": "https://satis.dedoc.co"
+    }
+  ],
+  "scripts": {
+    "post-update-cmd": [
+      "@php artisan boost:update --ansi",
+      "bash ../../scripts/boost-sync-opencode-skills.sh"
+    ]
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

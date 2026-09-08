@@ -44,7 +44,9 @@ describe("fixture combos", () => {
     const page = await readFile(path.join(dir, "src/app/page.tsx"), "utf8");
     expect(page).toContain("header");
     await expect(stat(path.join(dir, "src/lib/site.ts"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".github/workflows/ci.yml"))).resolves.toBeTruthy();
+    await expect(stat(path.join(dir, ".github/workflows/ci.yml"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   test("site + sanity + resend + locale pt-PT", async () => {
