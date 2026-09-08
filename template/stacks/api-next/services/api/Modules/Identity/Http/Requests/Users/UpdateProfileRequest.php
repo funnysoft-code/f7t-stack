@@ -15,7 +15,6 @@ final class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        assert($user instanceof User);
 
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],

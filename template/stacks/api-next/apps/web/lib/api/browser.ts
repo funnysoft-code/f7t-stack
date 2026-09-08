@@ -1,6 +1,7 @@
 "use client";
 
 import { isApiPath } from "./paths";
+import { createApiClient } from "@f7t/api-client";
 
 /** Keep credentials and session rotations browser-visible. Never retry mutations automatically. */
 export async function browserRequest(path: string, init: RequestInit = {}): Promise<Response> {
@@ -25,3 +26,5 @@ export async function browserRequest(path: string, init: RequestInit = {}): Prom
 export function initializeCsrf(): Promise<Response> {
   return browserRequest("/api/auth/csrf-cookie");
 }
+
+export const browserApi = createApiClient(browserRequest);

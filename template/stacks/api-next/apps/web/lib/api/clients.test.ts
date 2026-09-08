@@ -5,7 +5,7 @@ const incoming = vi.hoisted(() => vi.fn());
 vi.mock("next/headers", () => ({ headers: incoming }));
 
 import { browserRequest, initializeCsrf } from "./browser";
-import { serverRead } from "./server";
+import { serverAccount, serverRead } from "./server";
 import { transportConfiguration } from "./proxy";
 
 afterEach(() => {
@@ -48,6 +48,16 @@ describe("browser session adapter", () => {
 });
 
 describe("server-only request-scoped reads", () => {
+  it.each([
+    "/api/auth/csrf-cookie",
+    "/api/auth/passkeys/login/options",
+    "/api/auth/passkeys/confirm/options",
+    "/api/auth/user/passkeys/options",
+    "/api/%61uth/user/passkeys/options",
+    "/api/auth/email/verify/uuid/hash?signature=abc",
+  ])("rejects session-writing GET %s", async (path) => {
+    await expect(serverRead(path)).rejects.toThrow("browser-visible");
+  });
   it("reads each request's cookie and configured frontend Origin instead of browser-controlled headers", async () => {
     vi.stubEnv("FRONTEND_URL", "https://frontend.test");
     vi.stubEnv("API_UPSTREAM_URL", "http://api.test:8000");
@@ -81,6 +91,7 @@ describe("server-only request-scoped reads", () => {
     expect(response.status).toBe(503);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ error: "backend_unavailable" });
+    expect(await serverAccount()).toEqual({ kind: "unavailable" });
     await expect(serverRead("/horizon")).rejects.toThrow("local /api/");
   });
   it.each([

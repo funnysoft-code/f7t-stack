@@ -6,6 +6,7 @@ export default defineConfig({
       "apps/web/**/*.{test,spec}.{ts,tsx}",
       "packages/**/*.{test,spec}.{ts,tsx}",
       "tests/integration/**/*.test.ts",
+      "tests/contracts/**/*.test.ts",
     ],
     coverage: {
       provider: "v8",

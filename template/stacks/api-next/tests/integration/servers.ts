@@ -146,6 +146,14 @@ export const dynamic = "force-dynamic";
 export default async function Page() { const [response, transport] = await Promise.all([serverRead("/api/auth/me"), serverRead("/api/transport/headers")]); const identity = await response.json(); return <pre>{JSON.stringify({status: response.status, identity, transport: await transport.json()})}</pre>; }
 `,
   );
+  mkdirSync(join(web, "app/transport-gate"), { recursive: true });
+  writeFileSync(
+    join(web, "app/transport-gate/page.tsx"),
+    `import { serverAccount } from "@/lib/api/server";
+export const dynamic = "force-dynamic";
+export default async function Page() { const account = await serverAccount(); return <pre>{account.kind === "verified" ? "PROTECTED_CONTENT" : account.kind}</pre>; }
+`,
+  );
 
   function php(code: string, extra: Record<string, string> = {}): string {
     const result = spawnSync("php", [], {
@@ -259,6 +267,23 @@ foreach (['first', 'second', 'unverified'] as $name) { $user = Modules\\Identity
         `$status = Illuminate\\Support\\Facades\\Artisan::call('funnysoft:horizon-permission', ['operation' => getenv('TRANSPORT_ACTION'), 'email' => getenv('TRANSPORT_EMAIL')]); if ($status !== 0) exit(1);`,
         { TRANSPORT_ACTION: grant ? "grant" : "revoke", TRANSPORT_EMAIL: emails[account] },
       );
+    },
+    confirm(session: CookieSession) {
+      return session.mutate("/api/auth/confirm-password", { password });
+    },
+    verificationPath(account: keyof typeof emails) {
+      return php(
+        `$user = Modules\\Identity\\Models\\Users\\User::where('email', getenv('TRANSPORT_EMAIL'))->firstOrFail(); echo Illuminate\\Support\\Facades\\URL::temporarySignedRoute('verification.verify', now()->addMinutes(10), ['id' => $user->uuid, 'hash' => sha1($user->email)], absolute: false);`,
+        { TRANSPORT_EMAIL: emails[account] },
+      ).split("\nTRANSPORT_OK")[0];
+    },
+    recoveryFactor(account: keyof typeof emails) {
+      const code = randomBytes(12).toString("hex");
+      php(
+        `$user = Modules\\Identity\\Models\\Users\\User::where('email', getenv('TRANSPORT_EMAIL'))->firstOrFail(); $user->forceFill(['two_factor_secret' => encrypt('JBSWY3DPEHPK3PXP'), 'two_factor_recovery_codes' => encrypt(json_encode([getenv('TRANSPORT_RECOVERY')])), 'two_factor_confirmed_at' => now()])->save();`,
+        { TRANSPORT_EMAIL: emails[account], TRANSPORT_RECOVERY: code },
+      );
+      return code;
     },
     async outage() {
       await stop(laravel);

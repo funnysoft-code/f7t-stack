@@ -13,7 +13,7 @@ final class AccountController
 {
     public function capabilities(): AuthCapabilitiesResource
     {
-        return new AuthCapabilitiesResource(null);
+        return new AuthCapabilitiesResource(config());
     }
 
     public function me(Request $request): UserResource
