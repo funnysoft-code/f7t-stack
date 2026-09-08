@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Passkey } from "@f7t/api-client";
 import { Shell } from "@/components/account/shell";
 import { useConfirmed } from "@/components/account/confirmation";
@@ -28,26 +28,29 @@ import type { AccountProps } from "@/types/account";
 function PasskeysForm() {
   const [keys, setKeys] = useState<Passkey[] | null>(null);
   const [loadError, setLoadError] = useState("");
+  const loadGeneration = useRef(0);
   const operation = useOperation();
   const confirmed = useConfirmed();
-  async function load() {
-    const result = await request(browserApi.GET("/auth/user/passkeys"));
-    setKeys(result.data);
-    setLoadError("");
-  }
-  useEffect(() => {
-    let active = true;
-    void request(browserApi.GET("/auth/user/passkeys"))
-      .then((result) => {
-        if (active) setKeys(result.data);
-      })
-      .catch((error: unknown) => {
-        if (active) setLoadError(failure(error).message);
-      });
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async () => {
+    const generation = ++loadGeneration.current;
+    try {
+      const result = await request(browserApi.GET("/auth/user/passkeys"));
+      if (generation !== loadGeneration.current) return;
+      setKeys(result.data);
+      setLoadError("");
+    } catch (error) {
+      if (generation !== loadGeneration.current) return;
+      setLoadError(failure(error).message);
+      throw error;
+    }
   }, []);
+  useEffect(() => {
+    // The loader owns feedback; initial reads have no mutation operation to report to.
+    void load().catch(() => {});
+    return () => {
+      loadGeneration.current++;
+    };
+  }, [load]);
   return (
     <Card className="form-card">
       <CardHeader>

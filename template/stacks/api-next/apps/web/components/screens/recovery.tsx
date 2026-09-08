@@ -20,6 +20,7 @@ import { browserApi } from "@/lib/api/browser";
 import type { AccountProps } from "@/types/account";
 function RecoveryForm({ account }: Pick<AccountProps, "account">) {
   const [codes, setCodes] = useState<string[] | null>(null);
+  const [codesInvalidated, setCodesInvalidated] = useState(false);
   const operation = useOperation();
   const confirmed = useConfirmed();
   return (
@@ -46,9 +47,11 @@ function RecoveryForm({ account }: Pick<AccountProps, "account">) {
           </ul>
         ) : (
           <p>
-            {account?.two_factor_confirmed
-              ? "Confirm your identity to reveal your recovery codes."
-              : "Finish setting up your authenticator before viewing recovery codes."}
+            {codesInvalidated
+              ? "Your old codes no longer work. Load the replacement codes to save them."
+              : account?.two_factor_confirmed
+                ? "Confirm your identity to reveal your recovery codes."
+                : "Finish setting up your authenticator before viewing recovery codes."}
           </p>
         )}
       </CardContent>
@@ -59,24 +62,26 @@ function RecoveryForm({ account }: Pick<AccountProps, "account">) {
             disabled={!account?.two_factor_confirmed || operation.pending}
             pending={operation.pending}
             onClick={() =>
-              void operation.run(async () =>
+              void operation.run(async () => {
                 setCodes(
                   await confirmed(() =>
                     request(browserApi.GET("/auth/user/two-factor-recovery-codes")),
                   ),
-                ),
-              )
+                );
+                setCodesInvalidated(false);
+              })
             }
           >
-            Show recovery codes
+            {codesInvalidated ? "Retry loading recovery codes" : "Show recovery codes"}
           </Submit>
         ) : (
           <>
-            <Button variant="outline" onClick={() => setCodes(null)}>
+            <Button variant="outline" disabled={operation.pending} onClick={() => setCodes(null)}>
               Hide codes
             </Button>
             <Button
               variant="outline"
+              disabled={operation.pending}
               onClick={() =>
                 void operation.run(async () => {
                   try {
@@ -101,11 +106,14 @@ function RecoveryForm({ account }: Pick<AccountProps, "account">) {
                   await confirmed(() =>
                     request(browserApi.POST("/auth/user/two-factor-recovery-codes")),
                   );
+                  setCodes(null);
+                  setCodesInvalidated(true);
                   setCodes(
                     await confirmed(() =>
                       request(browserApi.GET("/auth/user/two-factor-recovery-codes")),
                     ),
                   );
+                  setCodesInvalidated(false);
                 }, "New recovery codes generated. Your old codes no longer work.")
               }
             />
