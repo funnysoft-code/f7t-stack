@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "status": "pending-release",
+  "generatorVersion": null,
+  "templateRevision": null,
+  "standards": null,
+  "templates": {
+    "next-only": { "root": "base" },
+    "inertia-monolith": { "root": "stacks/inertia-monolith" },
+    "api-next": { "root": "stacks/api-next" }
+  },
+  "assets": [],
+  "locks": []
+}

@@ -21,7 +21,9 @@
   "type": "module",
   "scripts": {
     "build": "bun build cli/src/index.ts --outfile create-f7t-app.js --target node --format esm && chmod +x create-f7t-app.js",
-    "prepublishOnly": "bun run build",
+    "prepublishOnly": "bun run build && bun run verify:release",
+    "verify:package": "bun cli/src/package-build.ts",
+    "verify:release": "bun cli/src/package-build.ts --release",
     "test": "vitest run",
     "check": "oxlint cli && oxfmt --check cli package.json tsconfig.json vitest.config.ts && tsc --noEmit && vitest run"
   },
@@ -37,7 +39,7 @@
   },
   "engines": {
     "bun": ">=1.4.0",
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "bun@1.4.0"
 }

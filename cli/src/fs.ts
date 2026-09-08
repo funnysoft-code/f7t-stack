@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
-import { cp, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appPagesRoot } from "./app-root";
 import type { CreateConfig } from "./config";
-import { htmlLang, templateDir } from "./paths";
+import { htmlLang, regularPackagePath, safeRelativePath, templateDir } from "./paths";
 
 function applyReplacements(content: string, replacements: Record<string, string>): string {
   let next = content;
@@ -13,25 +13,147 @@ function applyReplacements(content: string, replacements: Record<string, string>
   return next;
 }
 
-async function replaceInTree(dir: string, replacements: Record<string, string>): Promise<void> {
-  const entries = await readdir(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const abs = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules") {
-        continue;
-      }
-      await replaceInTree(abs, replacements);
-      continue;
+const textExtensions = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".jsonc",
+  ".md",
+  ".txt",
+  ".css",
+  ".scss",
+  ".html",
+  ".svg",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".xml",
+  ".php",
+  ".sh",
+  ".bash",
+  ".lock",
+  ".sql",
+]);
+const textNames = new Set([
+  "gitignore",
+  ".gitignore",
+  ".gitattributes",
+  ".editorconfig",
+  ".env.example",
+  "LICENSE",
+  "NOTICE",
+  "artisan",
+  "Dockerfile",
+  "STANDARDS_VERSION",
+]);
+
+export function isTemplateText(relative: string): boolean {
+  return textNames.has(path.basename(relative)) || textExtensions.has(path.extname(relative));
+}
+
+export function assertDistributablePath(relative: string, isDirectory = false): void {
+  safeRelativePath(relative);
+  const forbidden = new Set([
+    "node_modules",
+    "vendor",
+    ".git",
+    ".next",
+    ".turbo",
+    ".cache",
+    "coverage",
+    "dist",
+    ".DS_Store",
+    "auth.json",
+    ".npmrc",
+    ".netrc",
+    ".ssh",
+    ".vercel",
+    ".envrc",
+    ".f7t-setup-state.json",
+  ]);
+  const runtimeFile =
+    !isDirectory &&
+    !["gitignore", ".gitignore"].includes(path.basename(relative)) &&
+    /(?:^|\/)(?:storage\/(?:logs|framework)|bootstrap\/cache|public\/build)\//.test(relative);
+  if (
+    relative
+      .split("/")
+      .some(
+        (part) =>
+          forbidden.has(part) ||
+          (part.startsWith(".env") && part !== ".env.example") ||
+          /\.(?:sqlite(?:3)?(?:-wal|-shm)?|db|tgz|zip|tar|gz|phar|pem|key|p12|log)$/i.test(part),
+      ) ||
+    runtimeFile
+  ) {
+    throw new Error(`Forbidden distributable path: ${relative}`);
+  }
+}
+
+export function assertDistributableContent(relative: string, bytes: Buffer): void {
+  if (/(?:^|\/)(?:composer\.(?:json|lock)|package\.json|bun\.lock)$/.test(relative)) {
+    const text = bytes.toString("utf8");
+    if (
+      /https?:\/\/[^\s/"@]+@|[?&](?:token|key|auth|password|signature)=|"(?:http-basic|bearer|github-oauth)"\s*:/i.test(
+        text,
+      )
+    )
+      throw new Error(`Credential-bearing dependency metadata: ${relative}`);
+  }
+}
+
+type CopyEntry = { relative: string; bytes: Buffer; mode: number };
+
+async function collectTemplate(
+  from: string,
+  replacements: Record<string, string>,
+  skip = new Set<string>(),
+  mapRoot: (name: string) => string = (name) => name,
+): Promise<CopyEntry[]> {
+  const writes: CopyEntry[] = [];
+  const seen = new Set<string>();
+  async function visit(relative: string) {
+    const source = regularPackagePath(from, relative);
+    const info = await lstat(source);
+    assertDistributablePath(relative, info.isDirectory());
+    if (info.isDirectory()) {
+      for (const name of (await readdir(source)).sort()) await visit(`${relative}/${name}`);
+      return;
     }
-    if (!entry.isFile()) {
-      continue;
+    const parts = relative.split("/");
+    parts[0] = mapRoot(parts[0]!);
+    if (parts.at(-1) === "gitignore") parts[parts.length - 1] = ".gitignore";
+    const destination = safeRelativePath(parts.join("/"));
+    if (seen.has(destination)) throw new Error(`Duplicate template destination: ${destination}`);
+    seen.add(destination);
+    let bytes = await readFile(source);
+    assertDistributableContent(relative, bytes);
+    if (isTemplateText(relative)) {
+      if (bytes.includes(0)) throw new Error(`Binary bytes in declared text: ${relative}`);
+      const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      bytes = Buffer.from(applyReplacements(text, replacements));
     }
-    const content = await readFile(abs, "utf8");
-    const next = applyReplacements(content, replacements);
-    if (next !== content) {
-      await writeFile(abs, next, "utf8");
-    }
+    writes.push({ relative: destination, bytes, mode: info.mode & 0o111 ? 0o755 : 0o644 });
+  }
+  for (const name of (await readdir(from)).sort()) if (!skip.has(name)) await visit(name);
+  return writes;
+}
+
+async function writeTemplate(target: string, writes: CopyEntry[]): Promise<void> {
+  for (const item of writes) {
+    const dest = regularPackagePath(target, item.relative, true);
+    if (existsSync(dest) && (await lstat(dest)).isDirectory())
+      throw new Error(`Target is a directory: ${item.relative}`);
+  }
+  for (const item of writes) {
+    const dest = path.join(target, item.relative);
+    await mkdir(path.dirname(dest), { recursive: true });
+    await writeFile(dest, item.bytes);
+    await chmod(dest, item.mode);
   }
 }
 
@@ -41,7 +163,7 @@ function extraRootSkip(fromAbs: string): Set<string> {
   if (!existsSync(manifestPath)) {
     return skip;
   }
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+  const manifest = JSON.parse(readFileSync(regularPackagePath(fromAbs, "extra.json"), "utf8")) as {
     globalsCss?: string;
     skip?: string[];
   };
@@ -75,38 +197,10 @@ export async function copyExtra(
   }
   const replacements = extraReplacements(config);
   const skip = extraRootSkip(fromAbs);
-  const entries = await readdir(fromAbs, { withFileTypes: true });
-  for (const entry of entries) {
-    if (skip.has(entry.name)) {
-      continue;
-    }
-    const src = path.join(fromAbs, entry.name);
-    const destRel =
-      options.appPrefix && entry.name === "__app__" ? appPagesRoot(config) : entry.name;
-    const dest = path.join(config.projectDir, destRel);
-    if (entry.isDirectory()) {
-      await copyTemplateDir(src, dest, replacements);
-      continue;
-    }
-    if (!entry.isFile()) {
-      continue;
-    }
-    await mkdir(path.dirname(dest), { recursive: true });
-    await cp(src, dest);
-    const content = await readFile(dest, "utf8");
-    const next = applyReplacements(content, replacements);
-    if (next !== content) {
-      await writeFile(dest, next, "utf8");
-    }
-  }
-}
-
-async function promoteGitignore(dir: string): Promise<void> {
-  const from = path.join(dir, "gitignore");
-  const to = path.join(dir, ".gitignore");
-  if (existsSync(from)) {
-    await rename(from, to);
-  }
+  const writes = await collectTemplate(fromAbs, replacements, skip, (name) =>
+    options.appPrefix && name === "__app__" ? appPagesRoot(config) : name,
+  );
+  await writeTemplate(config.projectDir, writes);
 }
 
 export async function copyTemplateDir(
@@ -114,12 +208,7 @@ export async function copyTemplateDir(
   toAbs: string,
   replacements: Record<string, string>,
 ): Promise<void> {
-  await cp(fromAbs, toAbs, {
-    recursive: true,
-    filter: (src) => path.basename(src) !== "node_modules",
-  });
-  await replaceInTree(toAbs, replacements);
-  await promoteGitignore(toAbs);
+  await writeTemplate(toAbs, await collectTemplate(fromAbs, replacements));
 }
 
 export async function mergePackageJson(
