@@ -1,0 +1,18 @@
+<?php
+
+namespace Laravel\Fortify\Events;
+
+use Illuminate\Contracts\Auth\Authenticatable;
+
+abstract class TwoFactorAuthenticationEvent
+{
+    /** @var Authenticatable */
+    public $user;
+
+    /** @param Authenticatable $user */
+    public function __construct($user) {}
+}
+
+namespace Illuminate\Contracts\Auth;
+
+interface Authenticatable {}

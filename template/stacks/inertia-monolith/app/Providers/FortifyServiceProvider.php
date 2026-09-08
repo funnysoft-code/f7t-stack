@@ -9,12 +9,15 @@ use App\Http\Fortify\ResetUserPassword;
 use App\Http\Responses\AccountPageResponse;
 use App\Http\Responses\InvalidPasswordResetResponse;
 use App\Http\Responses\PasswordResetLinkResponse;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts;
+use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -39,6 +42,13 @@ final class FortifyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(Login::class, function (Login $event): void {
+            session()->put('password_hash_'.$event->guard, $event->user->getAuthPassword());
+            session()->forget(['auth.password_confirmed_at', 'login', 'passkey']);
+        });
+        Event::listen(TwoFactorAuthenticationChallenged::class, function (TwoFactorAuthenticationChallenged $event): void {
+            session()->put(['login.credential_hash' => $event->user->getAuthPassword(), 'login.issued_at' => time()]);
+        });
         if (config('funnysoft.registration_enabled')) {
             config(['fortify.features' => [...config()->array('fortify.features'), Features::registration()]]);
         }
