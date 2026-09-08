@@ -26,3 +26,13 @@ it('describes native account statuses and security failures in the fresh schema'
         ->and(data_get($schema, 'paths./auth/user/two-factor-recovery-codes.get.responses.200.content.application/json.schema.items.type'))->toBe('string')
         ->and(data_get($schema, 'paths./auth/register.post.requestBody.content.application/json.schema.required'))->toBe(['name', 'email', 'password', 'password_confirmation']);
 });
+
+it('requires every reset credential in the fresh schema', function (): void {
+    $schema = app(Generator::class)->generate(Scramble::configure())->spec();
+    $body = data_get($schema, 'paths./auth/reset-password.post.requestBody.content.application/json.schema');
+    expect(data_get($body, 'required'))->toBe(['token', 'email', 'password', 'password_confirmation']);
+    foreach (['token', 'email', 'password', 'password_confirmation'] as $field) {
+        expect(data_get($body, "properties.$field.type"))->toBe('string');
+    }
+    expect(data_get($body, 'properties.email.format'))->toBe('email');
+});

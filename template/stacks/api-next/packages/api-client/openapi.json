@@ -876,9 +876,12 @@
                   },
                   "password": {
                     "type": "string"
+                  },
+                  "password_confirmation": {
+                    "type": "string"
                   }
                 },
-                "required": ["token", "email", "password"]
+                "required": ["token", "email", "password", "password_confirmation"]
               }
             }
           }

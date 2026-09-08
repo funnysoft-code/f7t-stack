@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use App\Http\Controllers\Users\PasskeyController;
+use App\Http\Controllers\Users\PasswordResetLinkController;
 use App\Http\Middleware\PasskeyCeremony;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,7 @@ Route::get('/user/passkeys', PasskeyController::class)->middleware(['web', 'auth
 
 // Keep vendor factor mutations and secret reads inside the same account boundary.
 Route::getRoutes()->refreshNameLookups();
+Route::getRoutes()->getByName('password.email')?->uses([PasswordResetLinkController::class, '__invoke']);
 foreach ([
     'two-factor.enable', 'two-factor.confirm', 'two-factor.disable',
     'two-factor.qr-code', 'two-factor.secret-key', 'two-factor.recovery-codes',

@@ -6,10 +6,13 @@ use App\Http\Middleware\EnsureRegistrationEnabled;
 use App\Models\Users\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 
@@ -84,6 +87,46 @@ test('password reset validates replaces credentials and rejects expired and reus
     $payload['token'] = Password::createToken($user);
     $this->travel(61)->minutes();
     $this->postJson('/reset-password', $payload)->assertUnprocessable();
+});
+
+test('reset delivery failures conceal account existence and are reported', function (bool $json): void {
+    Exceptions::fake();
+    $failure = new RuntimeException('transport unavailable');
+    Notification::shouldReceive('send')->once()->andThrow($failure);
+    $user = User::factory()->create(['email' => 'reset@example.test']);
+    $known = $json
+        ? $this->postJson('/forgot-password', ['email' => 'RESET@example.test'])
+        : $this->from('/forgot-password')->post('/forgot-password', ['email' => 'RESET@example.test']);
+    $status = session('status');
+    $unknown = $json
+        ? $this->postJson('/forgot-password', ['email' => 'missing@example.test'])
+        : $this->from('/forgot-password')->post('/forgot-password', ['email' => 'missing@example.test']);
+    if ($json) {
+        $body = $unknown->assertOk()->json();
+        assert(is_array($body));
+        $known->assertOk()->assertExactJson($body);
+    } else {
+        $known->assertRedirect('/forgot-password')->assertSessionHasNoErrors();
+        $unknown->assertRedirect('/forgot-password')->assertSessionHas('status', $status)->assertSessionHasNoErrors();
+        expect($known->getContent())->toBe($unknown->getContent());
+    }
+    Exceptions::assertReported(fn (RuntimeException $exception): bool => $exception === $failure);
+    expect(Password::getRepository()->recentlyCreatedToken($user))->toBeTrue();
+})->with([true, false]);
+
+test('reset link requests retain the route rate limit before delivery', function (): void {
+    Notification::fake();
+    RateLimiter::for('web', fn (): Limit => Limit::perMinute(1)->by('reset-link-test'));
+    $this->postJson('/forgot-password', ['email' => 'missing@example.test'])->assertOk();
+    $this->postJson('/forgot-password', ['email' => 'missing@example.test'])->assertTooManyRequests();
+    Notification::assertNothingSent();
+});
+
+test('reset link requests retain CSRF protection before delivery', function (): void {
+    Notification::fake();
+    app()->instance('env', 'local');
+    $this->postJson('/forgot-password', ['email' => 'missing@example.test'])->assertStatus(419);
+    Notification::assertNothingSent();
 });
 
 test('invalid reset submissions do not reveal account existence', function (): void {

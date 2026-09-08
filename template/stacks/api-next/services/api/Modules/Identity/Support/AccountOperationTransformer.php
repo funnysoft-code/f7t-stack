@@ -28,6 +28,7 @@ final readonly class AccountOperationTransformer implements OperationTransformer
         $body = match ($name) {
             'register.store' => $this->object(['name' => new StringType, 'email' => new StringType()->format('email'), 'password' => new StringType, 'password_confirmation' => new StringType]),
             'password.email' => $this->object(['email' => $resetEmail]),
+            'password.update' => $this->object(['token' => new StringType, 'email' => new StringType()->format('email'), 'password' => new StringType, 'password_confirmation' => new StringType]),
             'login.store' => $this->object(['email' => new StringType()->format('email'), 'password' => new StringType, 'remember' => new BooleanType]),
             'password.confirm.store' => $this->object(['password' => new StringType]),
             'two-factor.confirm' => $this->object(['code' => new StringType]),

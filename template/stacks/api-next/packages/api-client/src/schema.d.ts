@@ -1232,6 +1232,7 @@ export interface operations {
           /** Format: email */
           email: string;
           password: string;
+          password_confirmation: string;
         };
       };
     };
