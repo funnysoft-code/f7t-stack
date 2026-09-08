@@ -47,6 +47,7 @@ export async function gen(
   const template = path.join(bundleRoot, "template");
   await cp(templateDir("base"), path.join(template, "base"), { recursive: true });
   await cp(templateDir("extras"), path.join(template, "extras"), { recursive: true });
+  await cp(templateDir("shared"), path.join(template, "shared"), { recursive: true });
   const pkg = JSON.parse(await readFile(path.join(template, "base/package.json"), "utf8"));
   for (const { manifest } of landedExtras(config)) {
     for (const field of ["dependencies", "devDependencies"] as const) {

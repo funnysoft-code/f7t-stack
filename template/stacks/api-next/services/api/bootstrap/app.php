@@ -26,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->dontFlash(['credential', 'code', 'recovery_code']);
+        $exceptions->dontFlash(['credential', 'code', 'recovery_code', 'turnstile_token']);
         $exceptions->dontReport([AuthenticatorResponseVerificationException::class]);
         $exceptions->render(fn (AuthenticatorResponseVerificationException $exception): JsonResponse => response()->json(['message' => 'Unable to verify passkey. Start again.', 'errors' => ['credential' => ['Unable to verify passkey. Start again.']]], 422));
         $exceptions->shouldRenderJsonWhen(fn (Request $request): bool => $request->is('api/*', 'horizon/api', 'horizon/api/*') || $request->expectsJson());

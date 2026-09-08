@@ -23,14 +23,20 @@ final readonly class AccountOperationTransformer implements OperationTransformer
     public function handle(Operation $operation, RouteInfo $routeInfo): void
     {
         $name = $routeInfo->route->getName();
+        $resetEmail = new StringType()->format('email');
+        $resetEmail->setMax(255);
         $body = match ($name) {
             'register.store' => $this->object(['name' => new StringType, 'email' => new StringType()->format('email'), 'password' => new StringType, 'password_confirmation' => new StringType]),
+            'password.email' => $this->object(['email' => $resetEmail]),
             'login.store' => $this->object(['email' => new StringType()->format('email'), 'password' => new StringType, 'remember' => new BooleanType]),
             'password.confirm.store' => $this->object(['password' => new StringType]),
             'two-factor.confirm' => $this->object(['code' => new StringType]),
             default => null,
         };
         if ($body !== null) {
+            if (in_array($name, ['register.store', 'password.email'], true)) {
+                $body->addProperty('turnstile_token', new StringType()->setDescription('Required when Turnstile is enabled. Single-use token from the public form widget.'));
+            }
             if ($name === 'login.store') {
                 $body->setRequired(['email', 'password']);
             }

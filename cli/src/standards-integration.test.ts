@@ -60,6 +60,7 @@ test.skipIf(!source).each(STACK_IDS)(
     const pending = JSON.parse(await readFile(path.resolve("template/manifest.json"), "utf8"));
     expect(pending.standardsCompatibility).toMatchObject({ commit, fixtureIdentity: identity });
     release.standards = { ...exported.standards, assetDigest: exported.assetDigest };
+    await cp(path.resolve("template/shared"), path.join(template, "shared"), { recursive: true });
     for (const variant of STACK_IDS) {
       const root = stacks[variant].templateRoot;
       // U17's design artifacts are outside this tooling fixture.

@@ -9,10 +9,12 @@
     "laravel/framework": "^13.29",
     "laravel/fortify": "1.39.0",
     "laravel/horizon": "^5.48.3",
+    "laravel/nightwatch": "1.30.0",
     "laravel/octane": "^2.19.1",
     "laravel/passkeys": "0.2.1",
     "nunomaduro/essentials": "^1.2",
     "nwidart/laravel-modules": "^13.0",
+    "resend/resend-php": "1.13.0",
     "spatie/laravel-data": "^4.23",
     "spatie/laravel-permission": "^8.3"
   },
@@ -69,6 +71,13 @@
       "App\\": "app/",
       "Modules\\": "Modules/",
       "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": [
+        "laravel/nightwatch"
+      ]
     }
   },
   "autoload-dev": {

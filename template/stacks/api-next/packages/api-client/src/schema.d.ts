@@ -1866,6 +1866,8 @@ export interface operations {
                 "application/json": {
                     /** Format: email */
                     email: string;
+                    /** @description Required when Turnstile is enabled. Single-use token from the public form widget. */
+                    turnstile_token?: string;
                 };
             };
         };
@@ -2083,6 +2085,8 @@ export interface operations {
                     email: string;
                     password: string;
                     password_confirmation: string;
+                    /** @description Required when Turnstile is enabled. Single-use token from the public form widget. */
+                    turnstile_token?: string;
                 };
             };
         };

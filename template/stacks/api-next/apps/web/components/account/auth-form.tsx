@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TurnstileCheck } from "./turnstile-check";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
@@ -50,6 +51,10 @@ const copy: Record<AuthMode, [string, string, string]> = {
 export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) {
   const [recovery, setRecovery] = useState(false);
   const [remember, setRemember] = useState(false);
+  const protectedForm =
+    ["register", "forgot"].includes(mode) && process.env.NEXT_PUBLIC_TURNSTILE_ENABLED === "true";
+  const [token, setToken] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const operation = useOperation();
   const passkey = useOperation();
   const [title, description, action] = copy[mode];
@@ -69,77 +74,93 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
           onSubmit={(event) => {
             // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
             event.preventDefault();
+            if (operation.pending || (protectedForm && !token)) return;
             const form = event.currentTarget;
             const data = new FormData(form);
+            const security = protectedForm ? { turnstile_token: token } : {};
+            if (protectedForm) setToken("");
             const email = String(data.get("email") ?? "");
             const password = String(data.get("password") ?? "");
             const password_confirmation = String(data.get("password_confirmation") ?? "");
-            void operation.run(
-              async () => {
-                if (["login", "register", "forgot", "reset", "challenge"].includes(mode)) {
-                  const csrf = await initializeCsrf();
-                  if (!csrf.ok) throw new AccountError(csrf.status);
-                }
-                if (mode === "login") {
-                  const result = await request(
-                    browserApi.POST("/auth/login", { body: { email, password, remember } }),
-                  );
-                  window.location.assign(
-                    result?.two_factor
-                      ? authDestination("/two-factor-challenge", props.returnTo ?? null)
-                      : localDestination(props.returnTo ?? null),
-                  );
-                }
-                if (mode === "register") {
-                  await request(
-                    browserApi.POST("/auth/register", {
-                      body: {
-                        name: String(data.get("name") ?? ""),
-                        email,
-                        password,
-                        password_confirmation,
-                      },
-                    }),
-                  );
-                  window.location.assign("/verify-email");
-                }
-                if (mode === "forgot") {
-                  await request(browserApi.POST("/auth/forgot-password", { body: { email } }));
-                }
-                if (mode === "reset") {
-                  await request(
-                    browserApi.POST("/auth/reset-password", {
-                      body: { email, password, password_confirmation, token: props.token ?? "" },
-                    }),
-                  );
-                  form.reset();
-                }
-                if (mode === "confirm") {
-                  await request(browserApi.POST("/auth/confirm-password", { body: { password } }));
-                  window.location.assign(localDestination(props.returnTo ?? null));
-                }
-                if (mode === "challenge") {
-                  await request(
-                    browserApi.POST("/auth/two-factor-challenge", {
-                      body: recovery
-                        ? { recovery_code: String(data.get("recovery_code") ?? "") }
-                        : { code: String(data.get("code") ?? "") },
-                    }),
-                  );
-                  window.location.assign(localDestination(props.returnTo ?? null));
-                }
-              },
-              mode === "forgot"
-                ? "If an account uses that address, a reset link is on its way. Check your inbox."
-                : mode === "reset"
-                  ? "Password reset. You can now sign in with your new password."
-                  : "",
-            );
+            void operation
+              .run(
+                async () => {
+                  if (["login", "register", "forgot", "reset", "challenge"].includes(mode)) {
+                    const csrf = await initializeCsrf();
+                    if (!csrf.ok) throw new AccountError(csrf.status);
+                  }
+                  if (mode === "login") {
+                    const result = await request(
+                      browserApi.POST("/auth/login", { body: { email, password, remember } }),
+                    );
+                    window.location.assign(
+                      result?.two_factor
+                        ? authDestination("/two-factor-challenge", props.returnTo ?? null)
+                        : localDestination(props.returnTo ?? null),
+                    );
+                  }
+                  if (mode === "register") {
+                    await request(
+                      browserApi.POST("/auth/register", {
+                        body: {
+                          ...security,
+                          name: String(data.get("name") ?? ""),
+                          email,
+                          password,
+                          password_confirmation,
+                        },
+                      }),
+                    );
+                    window.location.assign("/verify-email");
+                  }
+                  if (mode === "forgot") {
+                    await request(
+                      browserApi.POST("/auth/forgot-password", { body: { email, ...security } }),
+                    );
+                  }
+                  if (mode === "reset") {
+                    await request(
+                      browserApi.POST("/auth/reset-password", {
+                        body: { email, password, password_confirmation, token: props.token ?? "" },
+                      }),
+                    );
+                    form.reset();
+                  }
+                  if (mode === "confirm") {
+                    await request(
+                      browserApi.POST("/auth/confirm-password", { body: { password } }),
+                    );
+                    window.location.assign(localDestination(props.returnTo ?? null));
+                  }
+                  if (mode === "challenge") {
+                    await request(
+                      browserApi.POST("/auth/two-factor-challenge", {
+                        body: recovery
+                          ? { recovery_code: String(data.get("recovery_code") ?? "") }
+                          : { code: String(data.get("code") ?? "") },
+                      }),
+                    );
+                    window.location.assign(localDestination(props.returnTo ?? null));
+                  }
+                },
+                mode === "forgot"
+                  ? "If an account uses that address, a reset link is on its way. Check your inbox."
+                  : mode === "reset"
+                    ? "Password reset. You can now sign in with your new password."
+                    : "",
+              )
+              .finally(() => {
+                if (protectedForm) setAttempt((value) => value + 1);
+              });
           }}
         >
           <FieldGroup>
             <Feedback error message={operation.error} />
             <Feedback message={operation.success} />
+            {protectedForm ? (
+              <TurnstileCheck attempt={attempt} ready={!!token} onToken={setToken} />
+            ) : null}
+            <Feedback error message={operation.fields.turnstile_token?.[0]} />
             {mode === "register" ? (
               <InputField
                 label="Full name"
@@ -213,7 +234,11 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
         </form>
       </CardContent>
       <CardFooter className="form-actions">
-        <Submit form="auth-form" pending={operation.pending || passkey.pending}>
+        <Submit
+          form="auth-form"
+          pending={operation.pending || passkey.pending}
+          disabled={operation.pending || passkey.pending || (protectedForm && !token)}
+        >
           {action}
         </Submit>
         {mode === "login" ? (

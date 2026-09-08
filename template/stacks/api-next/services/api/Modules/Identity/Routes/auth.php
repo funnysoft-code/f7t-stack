@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\ValidatePublicTurnstile;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
@@ -14,7 +15,7 @@ use Modules\Identity\Http\Controllers\RegisterController;
 use Modules\Identity\Http\Controllers\VerifyEmailController;
 use Modules\Identity\Http\Middleware\JsonAccountResponse;
 
-Route::middleware([JsonAccountResponse::class, 'web', 'throttle:auth'])->prefix('api')->group(function (): void {
+Route::middleware([JsonAccountResponse::class, 'web', 'throttle:auth', ValidatePublicTurnstile::class])->prefix('api')->group(function (): void {
     Route::get('app', [AccountController::class, 'me'])->middleware(['auth:web', 'verified']);
     Route::prefix('auth')->group(function (): void {
         require __DIR__.'/factors.php';
@@ -23,7 +24,8 @@ Route::middleware([JsonAccountResponse::class, 'web', 'throttle:auth'])->prefix(
         Route::post('login', [AuthenticatedSessionController::class, 'store'])->middleware(['guest:web', 'throttle:login'])->name('login.store');
         Route::post('forgot-password', [PasswordResetLinkController::class, '__invoke'])->middleware(['guest:web', 'throttle:password-reset'])->name('password.email');
         Route::post('reset-password', [NewPasswordController::class, 'store'])->middleware(['guest:web', 'throttle:password-reset'])->name('password.update');
-        if (config()->boolean('funnysoft.registration_enabled')) {
+        // Export the complete configurable contract without enabling public registration.
+        if (config()->boolean('funnysoft.registration_enabled') || app()->runningConsoleCommand('scramble:export')) {
             Route::post('register', RegisterController::class)->middleware('guest:web')->name('register.store');
         }
         Route::middleware('auth:web')->group(function (): void {

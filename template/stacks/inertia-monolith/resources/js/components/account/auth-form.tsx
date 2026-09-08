@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TurnstileCheck } from "./turnstile-check";
 import { Link } from "@inertiajs/react";
 import { Button } from "@/components/ui/button";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
@@ -54,6 +55,10 @@ const copy: Record<AuthMode, [string, string, string]> = {
 export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) {
   const [recovery, setRecovery] = useState(false);
   const [remember, setRemember] = useState(false);
+  const protectedForm =
+    ["register", "forgot"].includes(mode) && import.meta.env.VITE_TURNSTILE_ENABLED === "true";
+  const [token, setToken] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const operation = useOperation();
   const passkey = useOperation();
   const [title, description, action] = copy[mode];
@@ -75,50 +80,66 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
           id="auth-form"
           onSubmit={(event) => {
             event.preventDefault();
+            if (operation.pending || (protectedForm && !token)) return;
             const form = event.currentTarget;
             const data = Object.fromEntries(new FormData(form));
-            void operation.run(
-              async () => {
-                if (mode === "login") {
-                  const result = await request<{ two_factor?: boolean } | null>(signIn(), {
-                    ...data,
-                    remember,
-                  });
-                  window.location.assign(
-                    result?.two_factor ? challenge.url() : localDestination(props.returnTo),
-                  );
-                }
-                if (mode === "register" && props.capabilities.registrationUrl) {
-                  await request({ url: props.capabilities.registrationUrl, method: "post" }, data);
-                  window.location.assign(notice.url());
-                }
-                if (mode === "forgot") {
-                  await request(resetLink(), data);
-                }
-                if (mode === "reset") {
-                  await request(reset(), { ...data, token: props.token });
-                  form.reset();
-                }
-                if (mode === "confirm") {
-                  await request(confirmPassword(), data);
-                  window.location.assign(localDestination(props.returnTo));
-                }
-                if (mode === "challenge") {
-                  await request(challengeLogin(), data);
-                  window.location.assign(localDestination(props.returnTo));
-                }
-              },
-              mode === "forgot"
-                ? "If an account uses that address, a reset link is on its way. Check your inbox."
-                : mode === "reset"
-                  ? "Password reset. You can now sign in with your new password."
-                  : "",
-            );
+            if (protectedForm) {
+              data.turnstile_token = token;
+              setToken("");
+            }
+            void operation
+              .run(
+                async () => {
+                  if (mode === "login") {
+                    const result = await request<{ two_factor?: boolean } | null>(signIn(), {
+                      ...data,
+                      remember,
+                    });
+                    window.location.assign(
+                      result?.two_factor ? challenge.url() : localDestination(props.returnTo),
+                    );
+                  }
+                  if (mode === "register" && props.capabilities.registrationUrl) {
+                    await request(
+                      { url: props.capabilities.registrationUrl, method: "post" },
+                      data,
+                    );
+                    window.location.assign(notice.url());
+                  }
+                  if (mode === "forgot") {
+                    await request(resetLink(), data);
+                  }
+                  if (mode === "reset") {
+                    await request(reset(), { ...data, token: props.token });
+                    form.reset();
+                  }
+                  if (mode === "confirm") {
+                    await request(confirmPassword(), data);
+                    window.location.assign(localDestination(props.returnTo));
+                  }
+                  if (mode === "challenge") {
+                    await request(challengeLogin(), data);
+                    window.location.assign(localDestination(props.returnTo));
+                  }
+                },
+                mode === "forgot"
+                  ? "If an account uses that address, a reset link is on its way. Check your inbox."
+                  : mode === "reset"
+                    ? "Password reset. You can now sign in with your new password."
+                    : "",
+              )
+              .finally(() => {
+                if (protectedForm) setAttempt((value) => value + 1);
+              });
           }}
         >
           <FieldGroup>
             <Feedback error message={operation.error} />
             <Feedback message={operation.success} />
+            {protectedForm ? (
+              <TurnstileCheck attempt={attempt} ready={!!token} onToken={setToken} />
+            ) : null}
+            <Feedback error message={operation.fields.turnstile_token?.[0]} />
             {mode === "register" ? (
               <InputField
                 label="Full name"
@@ -192,7 +213,11 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
         </form>
       </CardContent>
       <CardFooter className="form-actions">
-        <Submit form="auth-form" pending={operation.pending || passkey.pending}>
+        <Submit
+          form="auth-form"
+          pending={operation.pending || passkey.pending}
+          disabled={operation.pending || passkey.pending || (protectedForm && !token)}
+        >
           {action}
         </Submit>
         {mode === "login" ? (

@@ -10,6 +10,7 @@ import { compositionKey, dependencyDigest, sha256 } from "./standards";
 import { dependencyComposition, stacks } from "./stacks";
 import { gen, trackTempDirs } from "./test-helpers";
 import { runCli } from "./index";
+import * as prerequisites from "./prerequisites";
 
 trackTempDirs();
 
@@ -46,6 +47,18 @@ async function fixture(flags: FlagInput = {}) {
 }
 
 describe("createApp", () => {
+  test("detectable missing prerequisites fail before target writes", async () => {
+    const { config, options } = await fixture({ skipInstall: false });
+    const check = vi
+      .spyOn(prerequisites, "checkPrerequisites")
+      .mockRejectedValueOnce(new Error("Install bun >=1.4 before rerunning setup."));
+    try {
+      await expect(createApp(config, options)).rejects.toThrow(/Install bun/);
+      await expect(readdir(config.projectDir)).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      check.mockRestore();
+    }
+  });
   test.each(["next-only", "inertia-monolith", "api-next"] as const)(
     "%s unattended CLI runs the verified generation chain",
     async (stack) => {
@@ -79,6 +92,7 @@ describe("createApp", () => {
     expect(await readdir(dir)).toContain(".gitignore");
     expect(await readFile(path.join(dir, "src/app/page.tsx"), "utf8")).toContain("header");
     expect(await readFile(path.join(dir, "src/app/layout.tsx"), "utf8")).toContain("shop");
+    expect(await readFile(path.join(dir, "README.md"), "utf8")).not.toContain("F7T_APP_NAME");
     const env = await readFile(path.join(dir, "src/env.js"), "utf8");
     expect(env).toContain("NEXT_PUBLIC_SITE_URL");
     expect(env).not.toContain("DATABASE_URL");
@@ -206,10 +220,12 @@ describe("createApp", () => {
     );
   });
 
-  test("unavailable Laravel setup fails preflight with files-only guidance before writes", async () => {
+  test("Laravel invokes its setup runner after copying verified files", async () => {
     const { config, options } = await fixture({ stack: "api-next", skipInstall: false });
-    await expect(createApp(config, options)).rejects.toThrow(/--skip-install/);
-    await expect(readdir(config.projectDir)).rejects.toMatchObject({ code: "ENOENT" });
+    const setup = vi.fn(async () => {});
+    await createApp(config, { ...options, setup });
+    expect(setup).toHaveBeenCalledWith(config);
+    expect(await readdir(config.projectDir)).toContain("scripts");
   });
 
   test("setup failures retain an incomplete stage with a recovery entry point", async () => {

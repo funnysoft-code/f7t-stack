@@ -2107,6 +2107,10 @@
                                         "type": "string",
                                         "format": "email",
                                         "maxLength": 255
+                                    },
+                                    "turnstile_token": {
+                                        "type": "string",
+                                        "description": "Required when Turnstile is enabled. Single-use token from the public form widget."
                                     }
                                 },
                                 "required": [
@@ -2464,6 +2468,10 @@
                                     },
                                     "password_confirmation": {
                                         "type": "string"
+                                    },
+                                    "turnstile_token": {
+                                        "type": "string",
+                                        "description": "Required when Turnstile is enabled. Single-use token from the public form widget."
                                     }
                                 },
                                 "required": [

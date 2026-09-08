@@ -4,9 +4,10 @@ import { resolveConfig, type CreateConfig, type NextConfig } from "./config";
 import { writeEnv } from "./env-file";
 import { copyTemplateDir } from "./fs";
 import { initGit } from "./git";
-import { installDeps } from "./install";
+import { initializeProject, type SetupResult } from "./setup";
 import { runInstallers } from "./installers";
 import { packageRoot, regularPackagePath } from "./paths";
+import { checkPrerequisites } from "./prerequisites";
 import {
   applyBundledStandards,
   applyReleaseLock,
@@ -15,9 +16,15 @@ import {
 } from "./standards";
 import { dependencyComposition, stacks, type StackId } from "./stacks";
 
-export type GenerationStage = "validation" | "preflight" | "copy" | "dependencies" | "setup";
+export type GenerationStage =
+  | "validation"
+  | "preflight"
+  | "copy"
+  | "dependencies"
+  | "setup"
+  | string;
 export type GenerationResult = {
-  status: "setup-pending" | "incomplete";
+  status: "initialized" | "setup-pending" | "incomplete";
   stack: StackId | null;
   failedStage: GenerationStage | null;
   pendingSteps: string[];
@@ -30,8 +37,7 @@ export class GenerationError extends Error {
   }
 }
 
-/** U12 owns initialization. A successful dependency install alone cannot mean local-ready. */
-export type SetupRunner = (config: CreateConfig) => Promise<void>;
+export type SetupRunner = (config: CreateConfig) => Promise<void | SetupResult>;
 export type CreateAppOptions = {
   bundleRoot?: string;
   composeNext?: (config: NextConfig) => Promise<void>;
@@ -73,9 +79,7 @@ export async function createApp(
   options: CreateAppOptions = {},
 ): Promise<GenerationResult> {
   let stage: GenerationStage = "validation";
-  const setupRecovery = options.setup
-    ? (stacks[config.stack]?.setupEntryPoint ?? "Rerun setup")
-    : "Local setup runner is pending U12. Preserve these files and complete setup when the runner is available";
+  const setupRecovery = stacks[config.stack]?.setupEntryPoint ?? "bun run setup";
   try {
     // Revalidate programmatic callers without treating fixed Laravel defaults as flags.
     const { stack, appName, projectDir, git, skipInstall, force } = config;
@@ -106,10 +110,10 @@ export async function createApp(
     const choices = dependencyComposition(config);
     selectReleaseLock(release, choices);
     const source = regularPackagePath(path.join(root, "template"), definition.templateRoot);
-    if (!skipInstall && stack !== "next-only" && !options.install)
-      throw new Error(
-        "Laravel dependency setup is pending U12; use --skip-install for files-only generation",
-      );
+    if (!skipInstall && !options.install && !options.setup) {
+      // Check detectable tool failures before copying; the runner rechecks the actual site.
+      await checkPrerequisites(stack, path.dirname(projectDir));
+    }
 
     stage = "copy";
     await mkdir(projectDir, { recursive: true });
@@ -130,18 +134,24 @@ export async function createApp(
       root,
     );
     await applyReleaseLock(projectDir, choices, root);
+    await copyTemplateDir(
+      regularPackagePath(path.join(root, "template"), "shared"),
+      path.join(projectDir, "scripts"),
+      {},
+    );
     if (git) await initGit(projectDir);
 
     if (!skipInstall) {
       stage = "dependencies";
       if (options.install) await options.install(config);
-      else if (stack === "next-only") await installDeps(projectDir);
-      else
-        throw new Error(
-          "Laravel dependency setup is pending U12; use --skip-install for files-only generation",
-        );
       stage = "setup";
-      if (options.setup) await options.setup(config);
+      const setup = options.setup
+        ? await options.setup(config)
+        : !options.install
+          ? await initializeProject(projectDir, stack)
+          : undefined;
+      if (setup?.status === "incomplete") throw new GenerationError(setup);
+      if (setup) return setup;
     }
     return {
       status: "setup-pending",

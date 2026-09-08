@@ -1,6 +1,7 @@
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot } from "react-dom/client";
 import type { ComponentType } from "react";
+import { analytics } from "@/lib/analytics/client";
 
 void createInertiaApp({
   resolve: (name) => {
@@ -10,6 +11,7 @@ void createInertiaApp({
     return page().then((module) => module.default);
   },
   setup({ el, App, props }) {
+    void analytics.capture("app_loaded");
     createRoot(el).render(<App {...props} />);
   },
 });

@@ -57,12 +57,18 @@ describe("Laravel to OpenAPI to TypeScript freshness", () => {
             APP_URL: "http://localhost:8000",
             DB_DATABASE: process.env.F7T_TRANSPORT_DATABASE ?? "f7t_transport_test",
             DB_USERNAME: process.env.DB_USERNAME ?? "postgres",
-            FUNNYSOFT_REGISTRATION_ENABLED: "true",
+            FUNNYSOFT_REGISTRATION_ENABLED: "false",
             NIGHTWATCH_ENABLED: "false",
           },
         });
       const artifacts = ["packages/api-client/openapi.json", "packages/api-client/src/schema.d.ts"];
       const before = artifacts.map((path) => readFileSync(join(directory, path), "utf8"));
+      const schema = JSON.parse(before[0]!);
+      for (const path of ["/auth/register", "/auth/forgot-password"]) {
+        const body = schema.paths[path].post.requestBody.content["application/json"].schema;
+        expect(body.properties.turnstile_token.type).toBe("string");
+        expect(body.required).not.toContain("turnstile_token");
+      }
       const clean = run();
       expect(clean.status, clean.stdout + clean.stderr).toBe(0);
       const resource = join(

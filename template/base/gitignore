@@ -5,3 +5,6 @@ node_modules
 tsconfig.tsbuildinfo
 test-results
 playwright-report
+.f7t/
+.env.local
+*.db

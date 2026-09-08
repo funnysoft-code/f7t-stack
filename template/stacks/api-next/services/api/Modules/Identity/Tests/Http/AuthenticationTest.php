@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -33,7 +34,15 @@ it('registers an ordinary user and rejects stale cached registration routes', fu
 });
 
 it('guards a real enabled route cache after registration is disabled', function (): void {
-    putenv('FUNNYSOFT_REGISTRATION_ENABLED=true');
+    $key = 'FUNNYSOFT_REGISTRATION_ENABLED';
+    $previousEnvironment = array_intersect_key($_ENV, [$key => true]);
+    $previousServer = array_intersect_key($_SERVER, [$key => true]);
+    $previousProcess = getenv($key);
+    // Forget dotenv's loaded-key marker so the fresh cache application cannot reload false.
+    Env::getRepository()->clear($key);
+    // Laravel reads server and environment adapters before the process environment.
+    $_ENV[$key] = $_SERVER[$key] = 'true';
+    putenv($key.'=true');
     try {
         expect(Artisan::call('route:cache'))->toBe(0);
         require app()->getCachedRoutesPath();
@@ -43,9 +52,18 @@ it('guards a real enabled route cache after registration is disabled', function 
         $this->postJson('/api/auth/register', ['name' => 'User', 'email' => 'user@example.test', 'password' => 'test-password', 'password_confirmation' => 'test-password'])->assertNotFound();
         expect(User::query()->count())->toBe(0);
     } finally {
-        Artisan::call('route:clear');
-        putenv('FUNNYSOFT_REGISTRATION_ENABLED');
+        try {
+            Artisan::call('route:clear');
+        } finally {
+            unset($_ENV[$key], $_SERVER[$key]);
+            $_ENV += $previousEnvironment;
+            $_SERVER += $previousServer;
+            putenv($previousProcess === false ? $key : $key.'='.$previousProcess);
+        }
     }
+    expect(array_intersect_key($_ENV, [$key => true]))->toBe($previousEnvironment)
+        ->and(array_intersect_key($_SERVER, [$key => true]))->toBe($previousServer)
+        ->and(getenv($key))->toBe($previousProcess);
 });
 
 it('rotates the session on login and invalidates the old session on logout', function (): void {

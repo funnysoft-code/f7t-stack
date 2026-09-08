@@ -113,6 +113,7 @@ export async function releaseFixture(root: string): Promise<ReleaseManifest> {
       mode: 0o644,
     },
     { path: "locks/next.lock", bytes: lock, text: true, mode: 0o644 },
+    { path: "shared/fixture.ts", bytes: "// Synthetic setup asset\n", text: true, mode: 0o644 },
   ];
   for (const entry of entries)
     await writeFixtureFile(template, entry.path, entry.bytes, entry.mode);

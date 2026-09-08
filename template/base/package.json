@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "setup": "bun scripts/setup.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
