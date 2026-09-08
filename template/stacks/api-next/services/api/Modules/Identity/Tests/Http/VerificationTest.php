@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Modules\Identity\Models\Users\User;
@@ -27,11 +28,15 @@ it('rejects expired tampered wrong-user wrong-hash and old-email verification li
     $valid = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), ['id' => $user->uuid, 'hash' => sha1($user->email)], absolute: false);
     $expired = URL::temporarySignedRoute('verification.verify', now()->subMinute(), ['id' => $user->uuid, 'hash' => sha1($user->email)], absolute: false);
     $wrongHash = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), ['id' => $user->uuid, 'hash' => sha1('wrong@example.test')], absolute: false);
-    $this->actingAs($other)->getJson($valid)->assertForbidden();
-    $this->actingAs($user)->getJson($expired)->assertForbidden();
+    $this->postJson('/api/auth/login', ['email' => $other->email, 'password' => 'test-password'])->assertOk();
+    $this->getJson($valid)->assertForbidden();
+    $this->postJson('/api/auth/logout')->assertNoContent();
+    $this->postJson('/api/auth/login', ['email' => $user->email, 'password' => 'test-password'])->assertOk();
+    $this->getJson($expired)->assertForbidden();
     $this->getJson($valid.'&tampered=1')->assertForbidden();
     $this->getJson($wrongHash)->assertForbidden();
     $user->update(['email' => 'corrected@example.test']);
+    Auth::forgetGuards();
     $this->getJson($valid)->assertForbidden();
     expect($user->fresh()?->hasVerifiedEmail())->toBeFalse();
 });

@@ -6,6 +6,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\AuthenticateSession;
+use Modules\Identity\Http\Middleware\ValidatePendingLogin;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -15,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Register the framework's web group and standard middleware aliases.
+        $middleware->redirectGuestsTo(fn (): string => rtrim(config()->string('funnysoft.frontend_url'), '/').'/login');
+        $middleware->web(append: [
+            ValidatePendingLogin::class,
+            AuthenticateSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn (Request $request): bool => $request->is('api/*', 'horizon/api', 'horizon/api/*') || $request->expectsJson());

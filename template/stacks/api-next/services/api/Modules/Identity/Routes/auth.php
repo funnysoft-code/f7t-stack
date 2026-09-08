@@ -26,6 +26,7 @@ Route::middleware([JsonAccountResponse::class, 'web', 'throttle:auth'])->prefix(
             Route::post('register', RegisterController::class)->middleware('guest:web')->name('register.store');
         }
         Route::middleware('auth:web')->group(function (): void {
+            require __DIR__.'/settings.php';
             Route::get('me', [AccountController::class, 'me']);
             Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
             Route::get('email/verify', [AccountController::class, 'me'])->name('verification.notice');

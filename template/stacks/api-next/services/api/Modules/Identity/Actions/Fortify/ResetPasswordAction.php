@@ -7,6 +7,8 @@ namespace Modules\Identity\Actions\Fortify;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
+use Modules\Identity\Actions\Users\UpdatePasswordAction;
+use Modules\Identity\Data\Users\UpdatePasswordData;
 use Modules\Identity\Models\Users\User;
 
 final class ResetPasswordAction implements ResetsUserPasswords
@@ -18,6 +20,6 @@ final class ResetPasswordAction implements ResetsUserPasswords
     {
         /** @var array<string, mixed> $data */
         $data = Validator::make($input, ['password' => ['required', 'string', Password::min(12), 'confirmed']])->validate();
-        $user->forceFill($data)->save();
+        app(UpdatePasswordAction::class)->execute(user: $user, data: UpdatePasswordData::from($data));
     }
 }

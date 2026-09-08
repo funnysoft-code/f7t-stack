@@ -29,10 +29,29 @@ Paths below are relative to `/api/auth`.
 | POST | `/logout` | Authenticated 204, session invalidation and CSRF rotation |
 | POST | `/confirm-password` | Authenticated password; Fortify 201 on success, 422 on failure |
 | GET | `/confirmed-password-status` | Authenticated Fortify `{ "confirmed": boolean }` |
+| PATCH | `/settings/profile` | Optional name/email fields; 200 user resource. Name-only updates require verification. Email changes additionally require recent confirmation. |
+| PUT | `/settings/password` | Verified and recently confirmed; password/password_confirmation, minimum 12 characters; 204 |
+| DELETE | `/settings/account` | Verified and recently confirmed; no raw password field; 204 and invalidated session |
 
 The user resource is `{ "data": { "uuid": "...", "name": "...", "email": "...", "email_verified": false } }`. It never exposes database IDs, passwords, tokens, permission internals, or authenticator secrets. `/api/app` is the initial verified application boundary and returns this resource. New application routes must keep both `auth:web` and `verified`; escape routes stay outside that boundary.
 
 Named rate limits apply to every route. Login and confirmation share five attempts per minute per email/IP key; reset submissions allow five per minute per IP; verification allows six per minute per account; the account mount has an additional sixty-per-minute IP limit.
+
+## Settings and confirmation
+
+Sensitive requests return JSON 423 before validation or mutation when confirmation is missing or expired. Use `/confirm-password`, then retry the intended request once. Fortify stores proof in `auth.password_confirmed_at` and uses `auth.password_timeout`. No settings mutation asks for `current_password`. U8 must use the supported passkey confirmation ceremony that writes this same timestamp. Login alone does not confirm a sensitive action, including login through a remember cookie.
+
+An unverified user may correct a changed email after confirmation. That exception permits no name change, password change, or deletion. Escape routes for notice, resend, confirmation, and logout remain reachable. Changing email clears verification, removes the old email's reset token, sends verification to the new address, and immediately blocks app access from other sessions. Delivery failure retains the corrected unverified account, which can resend. Name/email validation completes before either field is saved.
+
+The web middleware checks Laravel's session password fingerprint on authenticated requests, including Horizon. The login event seeds that fingerprint immediately, so even a second session idle since login is revoked after password change or reset. Password updates rotate the remember token and remove reset tokens. The changing session remains authenticated through Laravel's post-response fingerprint update. Deletion logs out before removing the account, deletes reset tokens, and removes the row holding authenticator credentials. Spatie's deletion hook removes role and permission grants. Other sessions and remember cookies can no longer resolve the account.
+
+Fortify's `TwoFactorAuthenticationChallenged` event binds pending `login.id` to `login.credential_hash`, a server-side digest of the password hash. `ValidatePendingLogin` rejects missing, changed, or deleted credential state with 401 and clears the pending login. Tests exercise a real password challenge with the feature temporarily enabled and invalidate its proof through reset, change, and deletion. U8 still owns enabling the factor routes, rechecking this binding at factor completion, single-use challenge consumption, and real passkey login/confirmation/deletion evidence. No passkey schema exists yet; U8 must add account-deletion cascade ownership for it.
+
+### Vendor route inventory
+
+`Fortify::ignoreRoutes()` disables the vendor route file. The only registered account mutations are the routes listed above. Both the original and `/api/auth`-prefixed `/user/profile-information` and `/user/password` routes are absent. Route-cache tests confirm there is no alternate profile/password bypass.
+
+The inspected Fortify 1.39 routes also define authenticator enable, confirm and disable; QR-code, manual-secret and recovery-code reads; recovery-code regeneration; passkey registration options, enrollment and removal. None is registered in U7. U8 must mount all authenticator management and secret reads behind `auth:web`, `verified` and `password.confirm`, and use the same confirmation boundary for passkey management. Passkey login and confirmation ceremonies have their own supported authentication/throttle rules. Retain `JsonAccountResponse`, session middleware and private no-store handling on every new API route, including exception responses. The cached-route inventory test must be updated with the deliberately enabled factor routes and prove each management/read route rejects missing and expired proof.
 
 ## Mail and frontend continuations
 

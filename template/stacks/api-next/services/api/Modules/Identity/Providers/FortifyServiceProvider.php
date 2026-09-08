@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Identity\Providers;
 
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\FailedPasswordResetResponse;
+use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Modules\Identity\Actions\Fortify\CreateUserAction;
@@ -27,6 +30,15 @@ final class FortifyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(Login::class, function (Login $event): void {
+            session()->put('password_hash_'.$event->guard, $event->user->getAuthPassword());
+            session()->forget(['auth.password_confirmed_at', 'login']);
+        });
+        Event::listen(TwoFactorAuthenticationChallenged::class, function (TwoFactorAuthenticationChallenged $event): void {
+            /** @var User $user Fortify's event PHPDoc hardcodes App\\Models\\User. */
+            $user = $event->user;
+            session()->put('login.credential_hash', hash('sha256', $user->password));
+        });
         Fortify::createUsersUsing(CreateUserAction::class);
         Fortify::resetUserPasswordsUsing(ResetPasswordAction::class);
         if (config()->boolean('funnysoft.registration_enabled')) {
