@@ -1,0 +1,15 @@
+/.env
+/.env.*
+!/.env.example
+/vendor
+/node_modules
+/public/build
+/public/hot
+/auth.json
+/.phpunit.cache
+/.phpunit.result.cache
+/.phpstan-cache
+/coverage
+/test-results
+/playwright-report
+/.f7t-setup-state.json

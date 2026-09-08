@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Http\FormRequest;
+
+final class {{ class }} extends FormRequest
+{
+    public function authorize(): bool
+    {
+        // Replace with the owner-scoped policy check before exposing a route.
+        return false;
+    }
+
+    /** @return array<string, list<string>> */
+    public function rules(): array
+    {
+        return [];
+    }
+}

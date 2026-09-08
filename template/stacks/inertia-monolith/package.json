@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "vp dev",
+    "build": "vp build",
     "lint": "bash scripts/frontend-gate.sh lint",
     "typecheck": "bash scripts/frontend-gate.sh typecheck",
     "test": "bash scripts/frontend-gate.sh test",
@@ -12,14 +14,24 @@
     "hooks:install": "lefthook install",
     "check": "bun run check:php && bun run lint && bun run typecheck && bun run test && bun run doctor"
   },
+  "dependencies": {
+    "@inertiajs/react": "3.7.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
   "devDependencies": {
+    "@laravel/vite-plugin-wayfinder": "0.1.10",
     "@playwright/test": "1.62.1",
+    "@tailwindcss/vite": "4.2.2",
     "@types/node": "24.10.1",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.1.1",
     "@vitest/coverage-v8": "4.1.11",
+    "laravel-vite-plugin": "3.2.0",
     "lefthook": "2.1.12",
     "react-doctor": "0.9.12",
+    "tailwindcss": "4.2.2",
     "typescript": "7.0.2",
     "vite-plus": "0.3.1",
     "vitest": "4.1.11"

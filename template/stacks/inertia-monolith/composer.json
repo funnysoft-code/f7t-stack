@@ -1,13 +1,25 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "funnysoft/__F7T_APP_NAME__",
+  "name": "funnysoft/inertia",
   "type": "project",
+  "description": "A FunnySoft Laravel and Inertia application.",
+  "license": "MIT",
   "require": {
     "php": "^8.5",
+    "inertiajs/inertia-laravel": "^3.0",
+    "laravel/fortify": "^1.39",
     "laravel/framework": "^13.29",
-    "laravel/wayfinder": "^0.1.21"
+    "laravel/horizon": "^5.0",
+    "laravel/octane": "^2.0",
+    "laravel/wayfinder": "^0.1.21",
+    "nunomaduro/essentials": "^1.0",
+    "spatie/laravel-data": "^4.0",
+    "spatie/laravel-permission": "^7.0"
   },
   "require-dev": {
+    "fakerphp/faker": "^1.24",
+    "mockery/mockery": "^1.6",
+    "nunomaduro/collision": "^8.0",
     "driftingly/rector-laravel": "^2.6.1",
     "funnysoft/boost-guidelines": "@dev",
     "larastan/larastan": "^3.10",
@@ -32,10 +44,26 @@
     }
   ],
   "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
     "post-update-cmd": [
       "@php artisan boost:update --ansi",
       "bash scripts/boost-sync-opencode-skills.sh"
     ]
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
   },
   "config": {
     "sort-packages": true,
