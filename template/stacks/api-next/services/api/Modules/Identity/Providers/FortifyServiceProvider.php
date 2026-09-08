@@ -15,8 +15,11 @@ use Laravel\Fortify\Contracts\FailedPasswordResetResponse;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Contracts\PasskeyRegistrationResponse;
+use Laravel\Passkeys\Passkeys;
 use Modules\Identity\Actions\Fortify\CreateUserAction;
 use Modules\Identity\Actions\Fortify\ResetPasswordAction;
+use Modules\Identity\Models\Users\Passkey;
 use Modules\Identity\Models\Users\User;
 
 final class FortifyServiceProvider extends ServiceProvider
@@ -25,19 +28,24 @@ final class FortifyServiceProvider extends ServiceProvider
     {
         // Identity owns the complete route surface, including UUID verification.
         Fortify::ignoreRoutes();
+        Passkeys::ignoreRoutes();
+        $this->app->bind(PasskeyRegistrationResponse::class, \Modules\Identity\Http\Responses\PasskeyRegistrationResponse::class);
         $this->app->singleton(FailedPasswordResetResponse::class, \Modules\Identity\Http\Responses\FailedPasswordResetResponse::class);
     }
 
     public function boot(): void
     {
+        Passkeys::useUserModel(User::class);
+        Passkeys::usePasskeyModel(Passkey::class);
         Event::listen(Login::class, function (Login $event): void {
             session()->put('password_hash_'.$event->guard, $event->user->getAuthPassword());
-            session()->forget(['auth.password_confirmed_at', 'login']);
+            session()->forget(['auth.password_confirmed_at', 'login', 'passkey']);
         });
         Event::listen(TwoFactorAuthenticationChallenged::class, function (TwoFactorAuthenticationChallenged $event): void {
             /** @var User $user Fortify's event PHPDoc hardcodes App\\Models\\User. */
             $user = $event->user;
             session()->put('login.credential_hash', hash('sha256', $user->password));
+            session()->put('login.issued_at', now()->timestamp);
         });
         Fortify::createUsersUsing(CreateUserAction::class);
         Fortify::resetUserPasswordsUsing(ResetPasswordAction::class);
@@ -52,6 +60,8 @@ final class FortifyServiceProvider extends ServiceProvider
         });
         RateLimiter::for('verification', fn (Request $request): Limit => Limit::perMinute(6)->by($request->user() instanceof User ? $request->user()->uuid : $request->ip()));
         RateLimiter::for('password-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
+        RateLimiter::for('passkeys', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+        RateLimiter::for('two-factor', fn (Request $request): Limit => Limit::perMinute(5)->by($request->session()->getId().'|'.$request->ip()));
         ResetPassword::createUrlUsing(function (mixed $user, string $token): string {
             assert($user instanceof User);
 

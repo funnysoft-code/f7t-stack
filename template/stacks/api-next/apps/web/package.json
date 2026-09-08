@@ -11,6 +11,7 @@
   "dependencies": {
     "@f7t/api-client": "workspace:*",
     "@f7t/design-system": "workspace:*",
+    "@laravel/passkeys": "0.4.0",
     "next": "16.3.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",

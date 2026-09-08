@@ -8,7 +8,7 @@ The native Fortify confirmation endpoints remain authoritative:
 - `GET /user/confirmed-password-status` returns `{ "confirmed": true|false }`.
 - The server session key is `auth.password_confirmed_at`, written by Laravel's `session()->passwordConfirmed()`. The lifetime is `auth.password_timeout`.
 - Sensitive JSON requests return 423 when confirmation is missing or expired. HTML requests redirect to the native confirmation page. U10 should preserve the intended local action, perform confirmation, then retry that action once.
-- A future supported passkey confirmation ceremony must use the package controller, which verifies the credential before calling `passwordConfirmed()`. Merely logging in with a passkey must not set this timestamp. U7 tests the shared timestamp boundary, not a WebAuthn ceremony.
+- Passkey confirmation uses the package controller, which verifies the credential before calling `passwordConfirmed()`. Passkey login does not set this timestamp, including for accounts with confirmed authenticator enrollment.
 
 | Method and path | Input | Boundary | Success |
 | --- | --- | --- | --- |
@@ -20,7 +20,22 @@ No mutation requires `current_password`. A valid passkey confirmation will there
 
 Unverified email correction is restricted to changing the email while retaining the current name. Other profile edits and application content remain blocked. Email addresses are normalized to lowercase, uniqueness and all other fields are validated before mutation, and verification is cleared atomically with the email write. Tokens issued to the former address are removed. The new verification notification is sent after the database transaction commits. A mail failure leaves the saved address unverified; resend remains available. Old signed links fail their current-email hash check.
 
-## Route inventory and U8 integration
+## Factor integration contract
+
+The pinned pair is PHP `laravel/passkeys` 0.2.1 with Fortify 1.39.0, and browser `@laravel/passkeys` 0.4.0. Use `Passkeys.register({ name })` for enrollment, `Passkeys.verify()` for login, and `Passkeys.verify({ routes: { options: '/passkeys/confirm/options', submit: '/passkeys/confirm' } })` for confirmation. A 423 response requires confirmation and a fresh options request before retrying the intended ceremony. Cancellation or unsupported WebAuthn leaves password login available. Never retain credential payloads, QR/manual secrets, or recovery codes in logs, analytics, or persistent frontend storage.
+
+| Method and path | Success |
+| --- | --- |
+| GET `/user/passkeys/options` | `{ "options": <WebAuthn creation options> }` |
+| POST `/user/passkeys` | Input `name`, `credential`; 200 `{ "status": "passkey-registered", "id": "<UUIDv7>", "name": "..." }` |
+| GET `/user/passkeys` | 200 `{ "data": [{ "id": "<UUIDv7>", "name": "...", "createdAt": "...", "lastUsedAt": null }] }`; authenticated and verified, no recent proof needed for safe metadata |
+| DELETE `/user/passkeys/{UUIDv7}` | 200 `{ "status": "passkey-deleted" }` |
+| GET `/passkeys/login/options`, `/passkeys/confirm/options` | `{ "options": <WebAuthn assertion options> }` |
+| POST `/passkeys/login`, `/passkeys/confirm` | Input `credential`, optional `remember`; 200 package status response |
+
+All ceremonies require user verification. Options expire after 60 seconds server-side and are bound to the session, purpose, and current user. A submission reaching the ceremony middleware consumes state even when malformed or invalid. Each new options request replaces any older ceremony. Session blocking serializes competing options/submissions. Verification failures return generic 422 `credential` errors without reporting credential-bearing exceptions. Request a fresh challenge to restart.
+
+Authenticator routes use native Fortify bodies: enable with POST `/user/two-factor-authentication`, confirm with POST `/user/confirmed-two-factor-authentication` and `code`, remove with DELETE `/user/two-factor-authentication`. Each returns 200. QR GET `/user/two-factor-qr-code` returns `svg` and `url`; manual-secret GET `/user/two-factor-secret-key` returns `secretKey`. GET `/user/two-factor-recovery-codes` returns an array of strings; POST at the same path replaces them and returns 200. Pending enrollment does not challenge password login. Confirmed enrollment makes POST `/login` return `{ "two_factor": true }`; POST `/two-factor-challenge` accepts `code` or `recovery_code`, returning 204 on completion. Recovery codes are single-use; regeneration invalidates the old set. Invalid factor input is 422, invalidated or expired pending password proof is 401.
 
 Fortify's superseded `user-profile-information.update` and `user-password.update` features remain disabled. Do not enable them alongside settings routes.
 
@@ -31,7 +46,7 @@ Fortify's superseded `user-profile-information.update` and `user-password.update
 - `two-factor.recovery-codes`, `two-factor.regenerate-recovery-codes`
 - `passkey.registration-options`, `passkey.store`, `passkey.destroy`
 
-QR codes, manual secrets, and recovery-code reads are sensitive disclosures. Login, confirmation, verification notice/resend, reset, and logout stay outside a blanket verified/confirmation requirement. U8 owns factor enablement, real ceremonies, safe passkey metadata listing, and the factor-completion integration tests. Any additional factor mutation or secret-read endpoint must use the same boundary.
+QR codes, manual secrets, and recovery-code reads are sensitive disclosures. Login, confirmation, verification notice/resend, reset, and logout stay outside a blanket verified/confirmation requirement. Every factor mutation and secret-read endpoint uses the same boundary.
 
 ## Credential and session invalidation
 
@@ -39,6 +54,6 @@ Every native Login event seeds `password_hash_<guard>` immediately, including se
 
 The `TwoFactorAuthenticationChallenged` event binds pending password proof to the actual accepted user's credential hash using server-only `login.credential_hash` and `login.issued_at`, alongside Fortify's `login.id` and `login.remember`. The proof expires after 300 seconds. `ValidatePendingPasswordProof` checks the current stored credential on subsequent web requests, including factor completion. Missing, malformed, expired, changed/reset, and deleted-account proof is cleared; factor endpoints return 401 and require fresh password login. U8 must retain this event and middleware when enabling its package pipeline, and prove that valid TOTP/recovery input cannot complete an old password challenge. No client-supplied hash is accepted.
 
-Deletion removes reset tokens, default `passkeys.user_id` rows when that table exists, the account, and its Spatie permission/role pivots in one database transaction. U8's factor secrets on the user row disappear with that row. If U8 changes the package table/model storage, adapt this cleanup transaction. Other sessions, pending factors and remember cookies cannot resolve the deleted identity. After commit, `logoutCurrentDevice()` clears current authentication and the session is invalidated. Do not replace it with `logout()` after model deletion: remember-token cycling can save and reinsert an already deleted Eloquent user. A database deletion failure rolls back cleanup and retains the current session.
+Deletion removes reset tokens, the configured user's passkey relation, the account, and its Spatie permission/role pivots in one database transaction. Factor secrets on the user row disappear with that row. The default passkey foreign key also cascades. Other sessions, pending factors and remember cookies cannot resolve the deleted identity. After commit, `logoutCurrentDevice()` clears current authentication and the session is invalidated. Do not replace it with `logout()` after model deletion: remember-token cycling can save and reinsert an already deleted Eloquent user. A database deletion failure rolls back cleanup and retains the current session.
 
-The test browser helper uses separate cookie jars and Laravel's array-backed session handler, not shared Redis flushes. Real WebAuthn verification and production UI remain U8/U10 work.
+HTTP integration uses an ephemeral test authenticator with genuine signatures and the unmodified package verifier. The account-browser helper uses separate cookie jars and Laravel's array-backed session handler. This does not replace the mandatory U10-U14 live browser ceremony on the generated application.

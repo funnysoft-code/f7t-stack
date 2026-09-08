@@ -41,8 +41,8 @@ final readonly class SettingsController
     {
         $user = $request->user();
         assert($user instanceof User);
-        Auth::guard('web')->logout();
         $action->execute(user: $user);
+        Auth::guard('web')->logoutCurrentDevice();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

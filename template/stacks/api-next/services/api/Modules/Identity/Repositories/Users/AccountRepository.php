@@ -36,8 +36,7 @@ final readonly class AccountRepository
     public function removeAccount(User $user): void
     {
         Password::deleteToken($user);
-        // Spatie detaches grants on deletion. Authenticator credentials live on this row.
-        // U8 adds passkey cascade ownership.
+        // Spatie detaches grants; the passkeys foreign key cascades in this transaction.
         $user->delete();
     }
 }

@@ -9,6 +9,8 @@ use App\Http\Fortify\ResetUserPassword;
 use App\Http\Responses\AccountPageResponse;
 use App\Http\Responses\InvalidPasswordResetResponse;
 use App\Http\Responses\PasswordResetLinkResponse;
+use App\Models\Users\Passkey;
+use App\Models\Users\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ use Laravel\Fortify\Contracts;
 use Laravel\Fortify\Events\TwoFactorAuthenticationChallenged;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkeys;
 
 final class FortifyServiceProvider extends ServiceProvider
 {
@@ -35,6 +38,7 @@ final class FortifyServiceProvider extends ServiceProvider
             Contracts\ResetPasswordViewResponse::class => 'auth/reset-password',
             Contracts\VerifyEmailViewResponse::class => 'auth/verify-email',
             Contracts\ConfirmPasswordViewResponse::class => 'auth/confirm-password',
+            Contracts\TwoFactorChallengeViewResponse::class => 'auth/two-factor-challenge',
         ] as $contract => $component) {
             $this->app->bind($contract, fn (): AccountPageResponse => new AccountPageResponse($component));
         }
@@ -42,12 +46,14 @@ final class FortifyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Passkeys::useUserModel(User::class);
+        Passkeys::usePasskeyModel(Passkey::class);
         Event::listen(Login::class, function (Login $event): void {
             session()->put('password_hash_'.$event->guard, $event->user->getAuthPassword());
             session()->forget(['auth.password_confirmed_at', 'login', 'passkey']);
         });
         Event::listen(TwoFactorAuthenticationChallenged::class, function (TwoFactorAuthenticationChallenged $event): void {
-            session()->put(['login.credential_hash' => $event->user->getAuthPassword(), 'login.issued_at' => time()]);
+            session()->put(['login.credential_hash' => $event->user->getAuthPassword(), 'login.issued_at' => now()->timestamp]);
         });
         if (config('funnysoft.registration_enabled')) {
             config(['fortify.features' => [...config()->array('fortify.features'), Features::registration()]]);
@@ -56,5 +62,7 @@ final class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(5)->by(Str::lower($request->string('email')->toString()).'|'.$request->ip()));
         RateLimiter::for('verification', fn (Request $request): Limit => Limit::perMinute(6)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+        RateLimiter::for('passkeys', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+        RateLimiter::for('two-factor', fn (Request $request): Limit => Limit::perMinute(5)->by($request->session()->getId().'|'.$request->ip()));
     }
 }

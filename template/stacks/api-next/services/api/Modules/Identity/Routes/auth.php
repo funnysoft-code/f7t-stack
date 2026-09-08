@@ -17,6 +17,7 @@ use Modules\Identity\Http\Middleware\JsonAccountResponse;
 Route::middleware([JsonAccountResponse::class, 'web', 'throttle:auth'])->prefix('api')->group(function (): void {
     Route::get('app', [AccountController::class, 'me'])->middleware(['auth:web', 'verified']);
     Route::prefix('auth')->group(function (): void {
+        require __DIR__.'/factors.php';
         Route::get('capabilities', [AccountController::class, 'capabilities']);
         Route::get('csrf-cookie', [AccountController::class, 'csrf']);
         Route::post('login', [AuthenticatedSessionController::class, 'store'])->middleware(['guest:web', 'throttle:login'])->name('login.store');

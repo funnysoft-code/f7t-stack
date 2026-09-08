@@ -22,7 +22,7 @@ final readonly class ValidatePendingPasswordProof
             $proof = $request->session()->get('login.credential_hash');
             $issued = $request->session()->get('login.issued_at');
             if ($user === null || ! is_string($proof) || ! hash_equals($user->getAuthPassword(), $proof)
-                || ! is_int($issued) || time() - $issued > 300) {
+                || ! is_int($issued) || now()->getTimestamp() - $issued > 300 || $issued > now()->getTimestamp()) {
                 $request->session()->forget('login');
                 if ($request->routeIs('two-factor.login', 'two-factor.login.store')) {
                     abort(401, 'Please sign in again.');

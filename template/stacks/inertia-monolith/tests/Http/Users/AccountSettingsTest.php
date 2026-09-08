@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\URL;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\Support\AccountBrowser;
+use Tests\Support\TestAuthenticator;
 
 pest()->use(RefreshDatabase::class);
 
@@ -131,13 +132,9 @@ test('an email change blocks the other active session and reset revokes all pass
     $second->request('GET', '/')->assertUnauthorized();
 });
 
-test('deletion removes future passkey rows', function (): void {
-    Schema::create('passkeys', function (Blueprint $table): void {
-        $table->id();
-        $table->uuid('user_id');
-    });
+test('deletion removes passkey rows', function (): void {
     $user = User::factory()->create();
-    DB::table('passkeys')->insert(['user_id' => $user->id]);
+    $user->passkeys()->create(['name' => 'Device', 'credential_id' => 'test-credential', 'credential' => []]);
     Password::createToken($user);
     $this->actingAs($user)->withSession(['auth.password_confirmed_at' => time()]);
     $this->deleteJson('/settings/account')->assertNoContent();
@@ -153,8 +150,12 @@ test('a failed deletion rolls back credential and permission cleanup and retains
     $user->givePermissionTo(Permission::create(['name' => 'viewHorizon', 'guard_name' => 'web']));
     $token = Password::createToken($user);
     $this->actingAs($user)->withSession(['auth.password_confirmed_at' => time()]);
+    config(['passkeys.relying_party_id' => 'account.test', 'passkeys.allowed_origins' => ['https://account.test']]);
+    $authenticator = new TestAuthenticator;
+    $options = $this->getJson('/user/passkeys/options')->assertOk()->json('options');
+    $this->postJson('/user/passkeys', ['name' => 'Device', 'credential' => $authenticator->register($options)])->assertOk();
     $this->deleteJson('/settings/account')->assertServerError();
     expect(User::find($user->id))->not->toBeNull()->and(Password::tokenExists($user, $token))->toBeTrue()
-        ->and(DB::table('model_has_permissions')->count())->toBe(1);
+        ->and(DB::table('model_has_permissions')->count())->toBe(1)->and($user->passkeys()->count())->toBe(1);
     $this->getJson('/')->assertOk();
 });

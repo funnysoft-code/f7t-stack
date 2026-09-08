@@ -10,7 +10,6 @@ use App\Data\Users\UpdateProfileData;
 use App\Models\Users\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use SensitiveParameter;
 
@@ -52,9 +51,7 @@ final readonly class UserRepository
     {
         DB::transaction(function () use ($user): void {
             Password::deleteToken($user);
-            if (Schema::hasTable('passkeys')) {
-                DB::table('passkeys')->where('user_id', $user->getKey())->delete();
-            }
+            $user->passkeys()->delete();
             $user->delete();
         });
     }

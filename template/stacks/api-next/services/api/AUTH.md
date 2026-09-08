@@ -19,7 +19,7 @@ Paths below are relative to `/api/auth`.
 | GET | `/capabilities` | Public `{ "data": { "registration": false } }`, from the single Laravel setting |
 | GET | `/csrf-cookie` | Public 204 with XSRF and session cookies |
 | POST | `/register` | Available only when enabled; name, email, password, password_confirmation; Fortify 201 |
-| POST | `/login` | email, password, optional remember; Fortify 200 `{ "two_factor": false }` in U6 |
+| POST | `/login` | email, password, optional remember; Fortify 200 `{ "two_factor": false }`, or `{ "two_factor": true }` for confirmed authenticator enrollment |
 | POST | `/forgot-password` | email; always 200 with the same message for existing, absent, throttled broker delivery, or mail failure |
 | POST | `/reset-password` | email, token, password, password_confirmation; Fortify 200 message or generic 422 email error |
 | GET | `/me` | Authenticated, unverified-safe user resource |
@@ -43,15 +43,46 @@ Sensitive requests return JSON 423 before validation or mutation when confirmati
 
 An unverified user may correct a changed email after confirmation. That exception permits no name change, password change, or deletion. Escape routes for notice, resend, confirmation, and logout remain reachable. Changing email clears verification, removes the old email's reset token, sends verification to the new address, and immediately blocks app access from other sessions. Delivery failure retains the corrected unverified account, which can resend. Name/email validation completes before either field is saved.
 
-The web middleware checks Laravel's session password fingerprint on authenticated requests, including Horizon. The login event seeds that fingerprint immediately, so even a second session idle since login is revoked after password change or reset. Password updates rotate the remember token and remove reset tokens. The changing session remains authenticated through Laravel's post-response fingerprint update. Deletion logs out before removing the account, deletes reset tokens, and removes the row holding authenticator credentials. Spatie's deletion hook removes role and permission grants. Other sessions and remember cookies can no longer resolve the account.
+The web middleware checks Laravel's session password fingerprint on authenticated requests, including Horizon. The login event seeds that fingerprint immediately, so even a second session idle since login is revoked after password change or reset. Password updates rotate the remember token and remove reset tokens. The changing session remains authenticated through Laravel's post-response fingerprint update. Deletion removes reset tokens, the account, authenticator secrets, passkeys through their cascading foreign key, and Spatie role/permission grants in one transaction. Only after commit does `logoutCurrentDevice()` clear authentication and invalidate the session. Failure rolls back cleanup and preserves the current session. Other sessions and remember cookies can no longer resolve a deleted account.
 
-Fortify's `TwoFactorAuthenticationChallenged` event binds pending `login.id` to `login.credential_hash`, a server-side digest of the password hash. `ValidatePendingLogin` rejects missing, changed, or deleted credential state with 401 and clears the pending login. Tests exercise a real password challenge with the feature temporarily enabled and invalidate its proof through reset, change, and deletion. U8 still owns enabling the factor routes, rechecking this binding at factor completion, single-use challenge consumption, and real passkey login/confirmation/deletion evidence. No passkey schema exists yet; U8 must add account-deletion cascade ownership for it.
+Fortify's `TwoFactorAuthenticationChallenged` event binds pending `login.id` to `login.credential_hash`, a server-side digest of the password hash, and `login.issued_at`. `ValidatePendingLogin` rejects missing, changed, deleted, or older-than-300-second credential state with 401 and clears the pending login, including at factor completion. HTTP tests submit valid TOTP and recovery codes after reset, change, deletion, and expiry, then prove fresh login remains usable where the account survives.
 
 ### Vendor route inventory
 
-`Fortify::ignoreRoutes()` disables the vendor route file. The only registered account mutations are the routes listed above. Both the original and `/api/auth`-prefixed `/user/profile-information` and `/user/password` routes are absent. Route-cache tests confirm there is no alternate profile/password bypass.
+`Fortify::ignoreRoutes()` and `Passkeys::ignoreRoutes()` disable vendor route registration. Identity owns the account mount, including `Routes/factors.php`. Both the original and `/api/auth`-prefixed `/user/profile-information` and `/user/password` routes are absent. Route-cache tests confirm there is no alternate profile/password bypass.
 
-The inspected Fortify 1.39 routes also define authenticator enable, confirm and disable; QR-code, manual-secret and recovery-code reads; recovery-code regeneration; passkey registration options, enrollment and removal. None is registered in U7. U8 must mount all authenticator management and secret reads behind `auth:web`, `verified` and `password.confirm`, and use the same confirmation boundary for passkey management. Passkey login and confirmation ceremonies have their own supported authentication/throttle rules. Retain `JsonAccountResponse`, session middleware and private no-store handling on every new API route, including exception responses. The cached-route inventory test must be updated with the deliberately enabled factor routes and prove each management/read route rejects missing and expired proof.
+Authenticator management and secret reads, and passkey registration/removal, require `auth:web`, `verified`, and `password.confirm`. Missing or expired confirmation returns 423. Safe passkey metadata listing requires authentication and verification but no recent proof. Login ceremonies are guest-only; passkey confirmation is authenticated and available to unverified users. `JsonAccountResponse`, session middleware, and private no-store handling apply to every factor route and error response.
+
+### U9/U11 factor adapter and schema contract
+
+Pin PHP `laravel/passkeys` 0.2.1 and Fortify 1.39.0 with `@laravel/passkeys` 0.4.0. The WebAuthn relying party and allowed origin come from `FRONTEND_URL`, not the private API hostname. Use the browser package's `routes.options` and `routes.submit` overrides to preserve the `/api/auth` prefix. For confirmation call `Passkeys.verify` against the confirmation pair below. The browser client returns raw response JSON; its stock TypeScript registration return type assumes `id` and does not describe this API. Discard that return value and refetch the generated, UUID-safe list contract after enrollment, or validate it through the generated API response type. Never expose an integer alias to accommodate the stock type.
+
+Paths below are relative to `/api/auth`:
+
+| Method | Path | Body / success |
+| --- | --- | --- |
+| GET | `/user/passkeys/options` | 200 `{ "options": <creation options> }` |
+| POST | `/user/passkeys` | `name`, `credential`; 200 `{ "data": { "uuid": "<UUIDv7>", "name": "...", "created_at": "...", "last_used_at": null }, "status": "passkey-registered" }` |
+| GET | `/user/passkeys` | 200 `{ "data": [<same safe metadata>] }` |
+| DELETE | `/user/passkeys/{uuid}` | Public UUIDv7 only; 200 `{ "status": "passkey-deleted" }` |
+| GET | `/passkeys/login/options` | 200 `{ "options": <assertion options> }` |
+| POST | `/passkeys/login` | `credential`, optional `remember`; 200 package login response |
+| GET | `/passkeys/confirm/options` | 200 `{ "options": <assertion options> }` |
+| POST | `/passkeys/confirm` | `credential`; 200 package confirmation response |
+| POST | `/user/two-factor-authentication` | Enable pending enrollment; 200 |
+| POST | `/user/confirmed-two-factor-authentication` | `code`; confirm enrollment; 200 |
+| DELETE | `/user/two-factor-authentication` | Remove authenticator; 200 |
+| GET | `/user/two-factor-qr-code` | 200 `{ "svg": "...", "url": "..." }` |
+| GET | `/user/two-factor-secret-key` | 200 `{ "secretKey": "..." }` (native Fortify spelling) |
+| GET | `/user/two-factor-recovery-codes` | 200 array of strings |
+| POST | `/user/two-factor-recovery-codes` | Replace all recovery codes; 200 |
+| POST | `/two-factor-challenge` | `code` or `recovery_code`; 204 on completion, 422 invalid factor, 401 invalidated/expired password proof |
+
+The configured passkey model uses an integer database primary key and a UUIDv7 public route key. The registration-response binding explicitly uses `PasskeyResource`; neither registration nor listing returns stored credential JSON, database IDs, or credential IDs. `PasskeyOperationTransformer` corrects the vendor controller's enrollment response and removal parameter during backend schema generation. `PasskeySchemaTest` checks the generated contract. U9 still owns the full account-response schema and generated-client chain.
+
+Options expire after 60 seconds server-side. Each new options request replaces any earlier ceremony; options/submissions are session-locked and bound to purpose and current identity. A submission reaching the ceremony middleware consumes state even when malformed or invalid. Wrong RP/origin, missing user verification, expired options, competing challenges, and replay return generic 422 credential errors and require fresh options. These expected verification exceptions are not reported. Cancellation and unsupported browsers preserve password fallback. All passkey assertions require user verification; passkey login bypasses TOTP but never sets recent confirmation. Pending authenticator enrollment preserves ordinary password login. Recovery codes are single-use; regeneration invalidates the old set.
+
+HTTP tests use ephemeral test-authenticator signatures with the unmodified package verifier. Mandatory live browser ceremonies remain U10-U14 work. Never log, persist in frontend storage, or send analytics containing credential payloads, QR/manual secrets, TOTP codes, or recovery codes.
 
 ## Mail and frontend continuations
 

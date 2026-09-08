@@ -11,11 +11,14 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\PasskeyAuthenticatable;
 use Override;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Hidden(['password', 'remember_token'])]
-final class User extends Authenticatable implements MustVerifyEmail
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+final class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
@@ -23,10 +26,12 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasRoles;
     use HasUuids;
     use Notifiable;
+    use PasskeyAuthenticatable;
+    use TwoFactorAuthenticatable;
 
     /** @var array<string, null> */
     #[Override]
-    protected $attributes = ['email_verified_at' => null, 'remember_token' => null];
+    protected $attributes = ['email_verified_at' => null, 'remember_token' => null, 'two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_confirmed_at' => null];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -34,6 +39,7 @@ final class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'immutable_datetime',
             'password' => 'hashed',
+            'two_factor_confirmed_at' => 'immutable_datetime',
         ];
     }
 
