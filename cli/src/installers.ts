@@ -168,16 +168,6 @@ export const installers: Installer[] = [
     run: (config) => runExtra("playwright", config),
   },
   {
-    name: "harness-grok",
-    shouldRun: (config) => config.harness === "grok" || config.harness === "both",
-    run: (config) => runExtra("harness-grok", config),
-  },
-  {
-    name: "harness-cursor",
-    shouldRun: (config) => config.harness === "cursor" || config.harness === "both",
-    run: (config) => runExtra("harness-cursor", config),
-  },
-  {
     name: "github-actions",
     shouldRun: (config) => config.githubActions,
     run: (config) => runGithubActions(config),
@@ -196,6 +186,7 @@ export function landedExtras(
 }
 
 export async function runInstallers(config: CreateConfig): Promise<void> {
+  if (config.stack !== "next-only") throw new Error("Next installers require the next-only stack");
   for (const installer of installers) {
     if (installer.shouldRun(config)) {
       await installer.run(config);

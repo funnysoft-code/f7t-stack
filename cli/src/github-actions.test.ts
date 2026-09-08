@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { gen, trackTempDirs } from "./test-helpers";
@@ -20,8 +20,7 @@ describe("github-actions extra", () => {
     expect(yml).toContain("playwright install");
   });
 
-  test("--no-github-actions skips the workflow", async () => {
-    const dir = await gen({ githubActions: false });
-    await expect(stat(path.join(dir, ".github"))).rejects.toMatchObject({ code: "ENOENT" });
+  test("--no-github-actions is rejected", async () => {
+    await expect(gen({ githubActions: false })).rejects.toThrow(/mandatory/);
   });
 });

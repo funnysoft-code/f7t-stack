@@ -16,23 +16,19 @@ describe("installer order and gates", () => {
     expect(names({})).toEqual(["shell-site", "github-actions"]);
   });
 
-  test("drizzle postgres + app + both harness", () => {
+  test("drizzle postgres + app retains mandatory quality workflow", () => {
     expect(
       names({
         data: "drizzle",
         db: "postgres",
         shell: "app",
-        harness: "both",
-        githubActions: false,
+        harness: "opencode",
       }),
-    ).toEqual(["drizzle-postgres", "shell-app", "harness-grok", "harness-cursor"]);
+    ).toEqual(["drizzle-postgres", "shell-app", "github-actions"]);
   });
 
   test("sanity and drizzle are mutually exclusive gates", () => {
-    expect(names({ data: "sanity", githubActions: false })).toEqual(["sanity", "shell-site"]);
-    expect(names({ data: "drizzle", githubActions: false })).toEqual([
-      "drizzle-sqlite",
-      "shell-site",
-    ]);
+    expect(names({ data: "sanity" })).toEqual(["sanity", "shell-site", "github-actions"]);
+    expect(names({ data: "drizzle" })).toEqual(["drizzle-sqlite", "shell-site", "github-actions"]);
   });
 });

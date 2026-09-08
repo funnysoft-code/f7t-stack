@@ -71,12 +71,12 @@ describe("fixture combos", () => {
     expect(page).toContain("<main");
   });
 
-  test("site + intl + playwright + harness both", async () => {
-    const dir = await gen({ intl: true, playwright: true, harness: "both" });
+  test("site + intl + playwright + mandatory OpenCode selection", async () => {
+    const dir = await gen({ intl: true, playwright: true, harness: "opencode" });
     await expect(stat(path.join(dir, "src/app/[locale]/page.tsx"))).resolves.toBeTruthy();
     await expect(stat(path.join(dir, "e2e/smoke.spec.ts"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".grok"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".cursor"))).resolves.toBeTruthy();
+    await expect(stat(path.join(dir, ".grok"))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(path.join(dir, ".cursor"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
 

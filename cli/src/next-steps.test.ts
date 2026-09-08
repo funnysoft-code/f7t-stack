@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { resolveConfig } from "./config";
-import { logNextSteps } from "./next-steps";
+import { formatResult, logNextSteps } from "./next-steps";
+import type { GenerationResult } from "./create-app";
 
 function captureStdout(fn: () => void): string {
   const chunks: string[] = [];
@@ -39,5 +40,42 @@ describe("logNextSteps", () => {
     const out = captureStdout(() => logNextSteps(config));
     expect(out).toContain("bun run dev");
     expect(out).toContain("bun run check");
+  });
+
+  test.each(["inertia-monolith", "api-next"] as const)(
+    "%s reports Laravel setup and no Next data commands",
+    (stack) => {
+      const config = resolveConfig({ appName: "shop", stack, skipInstall: true });
+      const out = captureStdout(() => logNextSteps(config));
+      expect(out).toContain("PostgreSQL, Redis and local mail");
+      expect(out).not.toContain("db:migrate");
+      expect(out).not.toContain("typegen");
+      if (stack === "api-next") {
+        expect(out).toContain("apps/web");
+        expect(out).toContain("services/api");
+      }
+    },
+  );
+
+  test("human output carries the same fields as structured results", () => {
+    const result: GenerationResult = {
+      status: "incomplete",
+      stack: "api-next",
+      failedStage: "dependencies",
+      pendingSteps: ["dependencies", "local-setup"],
+      recovery: "bun run setup",
+      message: "Installation failed.",
+    };
+    const out = formatResult(result);
+    for (const value of [
+      result.status,
+      result.stack,
+      result.failedStage,
+      result.recovery,
+      result.message,
+      ...result.pendingSteps,
+    ])
+      expect(out).toContain(value);
+    expect(captureStdout(() => logNextSteps(resolveConfig({ appName: "shop" }), result))).toBe("");
   });
 });

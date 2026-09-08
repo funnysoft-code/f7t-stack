@@ -5,15 +5,15 @@ import { gen, trackTempDirs } from "./test-helpers";
 
 trackTempDirs();
 
-describe("AGENTS.md and env.js rewrite", () => {
-  test("AGENTS.md lists sanity and not drizzle", async () => {
+describe("standards stamping and env.js rewrite", () => {
+  test("generation delegates policy assets to the verified standards export", async () => {
     const dir = await gen({ data: "sanity" });
-    const agents = await readFile(path.join(dir, "AGENTS.md"), "utf8");
-    expect(agents).toContain("Sanity");
-    expect(agents).not.toContain("Drizzle");
-    expect(agents).toContain("bun run check");
-    expect(agents).toContain("~/*");
-    expect(agents).toContain("no tRPC");
+    const manifest = JSON.parse(await readFile(path.join(dir, "STANDARDS_MANIFEST.json"), "utf8"));
+    expect(manifest.variant).toBe("next-only");
+    expect(manifest.standards.release).toBe("v0.0.0-fixture");
+    expect(await readFile(path.join(dir, "docs/playbook/fixture.md"), "utf8")).toContain(
+      "FunnySoft",
+    );
   });
 
   test("env.js gains DATABASE_URL only for drizzle", async () => {

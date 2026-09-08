@@ -6,22 +6,22 @@ function runBunInstall(projectDir: string): Promise<number> {
       Bun?: {
         spawn: (
           cmd: string[],
-          opts: { cwd: string; stdout?: "inherit"; stderr?: "inherit" },
+          opts: { cwd: string; stdout?: "ignore"; stderr?: "ignore" },
         ) => { exited: Promise<number> };
       };
     }
   ).Bun;
   if (bunGlobal) {
-    return bunGlobal.spawn(["bun", "install"], {
+    return bunGlobal.spawn(["bun", "install", "--frozen-lockfile"], {
       cwd: projectDir,
-      stdout: "inherit",
-      stderr: "inherit",
+      stdout: "ignore",
+      stderr: "ignore",
     }).exited;
   }
   return new Promise((resolve, reject) => {
-    const child = spawn("bun", ["install"], {
+    const child = spawn("bun", ["install", "--frozen-lockfile"], {
       cwd: projectDir,
-      stdio: "inherit",
+      stdio: "ignore",
       env: process.env,
     });
     child.on("error", reject);
