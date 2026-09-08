@@ -9,16 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Fortify\Fortify;
 
 final class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        // U6 registers the installed Fortify account flows in Identity.
-        Fortify::ignoreRoutes();
-    }
-
     public function boot(): void
     {
         Model::unguard();

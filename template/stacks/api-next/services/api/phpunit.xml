@@ -4,7 +4,10 @@
         <testsuite name="Application"><directory>tests/Feature</directory></testsuite>
         <testsuite name="Identity"><directory>Modules/Identity/Tests</directory></testsuite>
     </testsuites>
-    <source><include><directory>Modules/Identity/Models</directory></include></source>
+    <source>
+        <include><directory>app</directory><directory>Modules/Identity</directory></include>
+        <exclude><directory>Modules/Identity/Tests</directory><directory>Modules/Identity/Database</directory></exclude>
+    </source>
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

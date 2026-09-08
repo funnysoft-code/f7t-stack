@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Modules\Identity\Notifications\VerifyEmail;
 use Override;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -30,6 +31,11 @@ final class User extends Authenticatable implements MustVerifyEmail
     use HasRoles;
     use Notifiable;
     use TwoFactorAuthenticatable;
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmail);
+    }
 
     /** @var array<string, null> */
     #[Override]

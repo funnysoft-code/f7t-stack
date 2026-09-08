@@ -18,7 +18,7 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // U6 installs account actions, views and route policy together.
+        // Own the route group while retaining Fortify's supported controllers.
         Fortify::ignoreRoutes();
     }
 
@@ -27,6 +27,7 @@ final class AppServiceProvider extends ServiceProvider
         Model::unguard();
         Model::shouldBeStrict(! $this->app->isProduction());
         Gate::policy(User::class, UserPolicy::class);
+        Gate::define('viewHorizon', fn (User $user): bool => $user->hasVerifiedEmail() && $user->checkPermissionTo('view-horizon'));
         RateLimiter::for('web', fn (Request $request): Limit => Limit::perMinute(120)->by($request->ip()));
         RateLimiter::for('horizon', fn (Request $request): Limit => Limit::perMinute(120)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
     }

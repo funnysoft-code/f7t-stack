@@ -42,12 +42,12 @@ test('Horizon denies guests and requires verification and an explicit revocable 
     $user = User::factory()->create();
     $request->setUserResolver(fn (): User => $user);
     expect(Horizon::check($request))->toBeFalse();
-    Permission::findOrCreate('viewHorizon', 'web');
-    $user->givePermissionTo('viewHorizon');
+    Permission::findOrCreate('view-horizon', 'web');
+    $user->givePermissionTo('view-horizon');
     expect(Horizon::check($request))->toBeFalse();
     $user->markEmailAsVerified();
     expect(Horizon::check($request))->toBeTrue();
-    $user->revokePermissionTo('viewHorizon');
+    $user->revokePermissionTo('view-horizon');
     expect(Horizon::check($request))->toBeFalse();
     $this->getJson('/horizon/api/stats')->assertForbidden();
     $this->get('/horizon')->assertForbidden();
