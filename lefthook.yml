@@ -1,0 +1,11 @@
+# Generator quality hooks. Generated apps use the standards copy.
+
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: scripts/lint-commit-msg.sh --file {1}
+
+pre-commit:
+  jobs:
+    - name: check
+      run: bun run check
