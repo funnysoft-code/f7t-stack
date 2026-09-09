@@ -3058,7 +3058,7 @@
     },
     {
       "path": "stacks/api-next/services/api/tests/Feature/TrustedProxyTest.php",
-      "sha256": "b289be5ac67783085d1d121fc6ee2d124421021ec1f699aeadb006d077af0140",
+      "sha256": "d4c5a941ff1d54be3d17383395830a2af3526f7f1efd57c5b15ff128e6f4438f",
       "mode": 420,
       "text": true
     },
@@ -4954,13 +4954,13 @@
     },
     {
       "path": "stacks/inertia-monolith/tests/Feature/TrustedProxyTest.php",
-      "sha256": "b289be5ac67783085d1d121fc6ee2d124421021ec1f699aeadb006d077af0140",
+      "sha256": "d4c5a941ff1d54be3d17383395830a2af3526f7f1efd57c5b15ff128e6f4438f",
       "mode": 420,
       "text": true
     },
     {
       "path": "stacks/inertia-monolith/tests/Http/Users/AccountPagesTest.php",
-      "sha256": "9879fb19705723b76af2f81128463359b69c89b855524aae87a2a5f2d00239ca",
+      "sha256": "07b636f4573b5c52aa249ad53361a189d61e1bc18118a95ef65f7d47f632c01e",
       "mode": 420,
       "text": true
     },
