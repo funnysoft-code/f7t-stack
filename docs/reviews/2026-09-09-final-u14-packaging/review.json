@@ -1,0 +1,83 @@
+{
+  "status": "complete",
+  "verdict": "Ready to merge",
+  "verdict_scope": "Clear for the reviewed packaging delta only. This does not accept the whole release or certify CI.",
+  "scope": {
+    "base": "HEAD plus requested uncommitted packaging delta",
+    "branch": "feat/f7t-158-multi-stack-generator",
+    "head_sha": "e87f4be5f131b4b9f967fe3e7c0f7a19c7e77467",
+    "pr_url": null,
+    "mode": "local-aligned",
+    "includes": "release-candidate, release-matrix, packed-matrix, package-build, standards identity change, related tests, package.json, CI, README, manifest, export, lock inventory and notices",
+    "excludes": "Application behavior, database prerequisites, Wayfinder UUID diagnosis, application fixtures, global setup, lifecycle and publication"
+  },
+  "intent": "Verify that U14 prepares and packages the pinned standards export with complete templates and compatible locks, verifies export bytes before executing its runtime, and retains identifiable packed evidence.",
+  "intent_confidence": "explicit",
+  "reviewers": ["inline-packaging"],
+  "findings": [],
+  "actionable_findings": [],
+  "triage_groups": [],
+  "pre_existing_findings": [],
+  "requirements_completeness": {
+    "plan_source": "inferred from original review",
+    "plan": "docs/plans/2026-09-08-1207-feat-multi-stack-generator-plan.md",
+    "scope": "U14 packaging subset only",
+    "result": "Implementation present for immutable export consumption, inventory, lock catalog, packed generation and CI gates. Whole U14 completion remains coordinator-owned."
+  },
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [],
+  "residual_risks": [
+    "The supplied standards digest is a trust input. Matching hashes prove integrity against that pin, not authenticity of a caller-selected export. Source comments and provenance explicitly leave tag/commit validation with the coordinator.",
+    "Release preparation uses a new external output directory for each run. It does not resume a failed directory. Complete preparation with network-dependent lock resolution was inspected but not rerun here.",
+    "CI checks out and repacks the same source in separate jobs. This review proves the supplied local archive matches the current source, not that Blacksmith has executed or published that archive.",
+    "License entitlement, live browser acceptance and application/database diagnoses remain outside this review. Notices and dependency-tree exclusion are packaging evidence, not a legal entitlement finding."
+  ],
+  "testing_gaps": [
+    "Three optional standards source integration tests skipped because F7T_STANDARDS_FIXTURE_SOURCE was not supplied.",
+    "The 194-output, 66-frozen-key matrix was inspected through its existing receipt, not executed again. The caller's 401-pass, 7-skip whole suite was not rerun.",
+    "Review-local test runtime was Node 26.8.1 and Bun 1.4.2. The caller reports Node 22.23.2 and Bun 1.4.0 for the existing matrix; this review did not independently rerun that runtime combination."
+  ],
+  "coverage": {
+    "mode": "agent report-only, inline lenses as explicitly requested",
+    "artifact_root": "docs, default because .compound-engineering/config.yaml is absent",
+    "lenses": ["correctness", "security and supply chain", "reliability", "testing", "maintainability", "CLI contract"],
+    "independent_reviewers": [],
+    "cross_model": "Not run, explicitly excluded by caller. No peer corroboration claimed.",
+    "validator": "No retained findings required validation. No independent validator ran or shortcut was claimed.",
+    "mechanics": {"malformed_findings": 0, "malformed_returns": 0, "suppressed_findings": 0},
+    "verified": [
+      "bun run verify:release passed and reported 962 package files with the complete release bundle.",
+      "Targeted Vitest run passed 42 tests across release-candidate, release-matrix, package, standards and README; 3 optional standards integration tests skipped.",
+      "Independently hashed the supplied tgz and compared every one of its 962 regular file payloads against the current checkout. No byte drift.",
+      "Existing matrix.json binds the same archive SHA-256 and records 194 receipts, 66 installed keys, 66 unique receipt keys, and omitted-asset, standards-digest and incompatible-lock negatives.",
+      "verifyStandardsBundle validates the supplied digest, runtime and asset bytes before prepareBundle imports apply.mjs. applyBundledStandards also verifies before import. Tampered-runtime and no-target-write tests passed.",
+      "Catalog completeness derives from the shared stack registry. Template version must equal generator version when a full commit is not supplied. Both paths have passing rejection tests.",
+      "Preparation and matrix commands reject an existing output directory. Composer locks are validated and copied; frozen matrix installs compare lock bytes afterward. Package audits reject omitted assets and dependency/runtime payloads."
+    ],
+    "archive": {
+      "path": "/private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/u14-release-031-final/packed/create-f7t-app-0.2.0.tgz",
+      "sha256": "a52c1dee34680c80ed9ee9c535717667ba7522f067931dea1dd899254906921c",
+      "files": 962,
+      "current_source_byte_drift": []
+    },
+    "standards": {
+      "release": "v0.3.1",
+      "commit": "13889e25ab3df8a06307156722dc08377183b356",
+      "assetDigest": "9617fb25af0eab734dd99ac5fc4d1b8d186b9b5214b6ae4ec5cce70263d9aa42"
+    },
+    "source_sha256": {
+      "cli/src/release-candidate.ts": "dbd19a01e299f5bfc28a15678b02afcb503d252a8a0e7ab285eec17bf0991b5d",
+      "cli/src/release-matrix.ts": "2fb2a933e0230d36dad618fe5363b426f7dc1008a4a726fe7c335258b97ebb50",
+      "cli/src/packed-matrix.ts": "3dbdd3f6e63eb7c4147b4e63c541606ab0b461a37122f1933a4883e3a1c9de7e",
+      "cli/src/package-build.ts": "03217999dde6a7add58d589eeefb5933c323f8dfa540034267262f506992b8c9",
+      "cli/src/standards.ts": "11191f850904dc04379a8bc2fd1691ecf97f3d46e87ed3a0081661f786a90334",
+      ".github/workflows/ci.yml": "4c9d10608b6ab36fd1aea8934f9a9c9ba24571bcd7703581669fb57bbbd64917",
+      "template/manifest.json": "094029c4cbc93ba6b99e94f5d77ac6195892c5c777adefafd8be692934c90d30",
+      "template/standards/manifest.json": "a939bdd121e5c9a49a4ad27126aed4552810f688fa985ad1dc11fdb9e1b53c11",
+      "create-f7t-app.js": "ea633635827c57f7a9859932d2308c218eb2b5533b9ed57c1f4d9be28b3bf02c"
+    }
+  },
+  "artifact_path": "docs/reviews/2026-09-09-final-u14-packaging/review.json",
+  "run_id": "2026-09-09-final-u14-packaging"
+}

@@ -1,0 +1,71 @@
+{
+  "status": "complete",
+  "verdict": "Ready to merge",
+  "verdict_scope": "Only the 20 frontend files identified by SHA-256 in metadata.json. This is not approval of the complete working tree.",
+  "scope": {
+    "base": "d340a330e614ce5a21a4fcfe95d81e4bb2636124",
+    "branch": "feat/f7t-158-multi-stack-generator",
+    "head_sha": "d340a330e614ce5a21a4fcfe95d81e4bb2636124",
+    "pr_url": null,
+    "files_changed": 20
+  },
+  "intent": "Prevent account credentials from entering native GET query strings before hydration. Preserve hydrated JSON mutations, CSRF transport, field validation and external submit controls in both stacks.",
+  "intent_confidence": "explicit",
+  "reviewers": ["inline-targeted-review"],
+  "findings": [],
+  "actionable_findings": [],
+  "triage_groups": [],
+  "pre_existing_findings": [],
+  "requirements_completeness": null,
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [],
+  "residual_risks": [],
+  "testing_gaps": [
+    "Existing evidence covers JavaScript disabled, scripts blocked, native requestSubmit, and normal hydration. It does not directly exercise a deliberately paused and resumed selective-hydration boundary.",
+    "No fresh browser, accessibility, typecheck or lint execution was performed by this reviewer. Browser and gate results below belong to the implementation worker."
+  ],
+  "coverage": {
+    "lenses": ["correctness", "security", "testing", "maintainability", "hydration reliability", "validation and accessibility semantics"],
+    "independent_reviewers": [],
+    "cross_model_outcome": "Not run, caller explicitly required inline lenses and no delegation.",
+    "validator_outcome": "No surviving findings required validation. No independent validator ran.",
+    "findings_mechanics": "Executed the skill helper against the inline empty return: complete, zero malformed returns, zero malformed findings, zero suppressed findings.",
+    "plan_settlements": "No separate plan was supplied; settlement suppression was not evaluated.",
+    "own_checks": [
+      "Read both SafeForm implementations and all 12 migrated form components, reviewed all 20 scoped diffs including the four E2E files.",
+      "Searched stack TSX for raw forms, SafeForm, formMethod, submit and requestSubmit. Exactly six migrated form sites per stack remain; the only raw form tags are inside SafeForm.",
+      "Confirmed all 20 scoped files match the worker's current generated copies byte-for-byte and recorded exact working-tree SHA-256 identities in metadata.json.",
+      "Queried current React documentation through Context7. getServerSnapshot runs during server rendering and initial client hydration; this supports the false initial snapshot used by both wrappers."
+    ],
+    "security_reasoning": [
+      "api-next SafeForm lines 20-24 and Inertia SafeForm lines 18-22 explicitly set method=post after spreading props and wrap all children in a disabled fieldset until hydrated. No first-legend exception or out-of-fieldset named input exists at these call sites.",
+      "The fieldset excludes credentials from native form serialization before hydration, including programmatic submission that bypasses ordinary user interaction. Explicit POST independently prevents native serialization into a GET query.",
+      "Submit combines !hydrated, pending and caller-disabled state after spreading props. External footer controls retain their form IDs. Callers can no longer override the hydration or pending guard with disabled=false.",
+      "All migrated onSubmit handlers synchronously preventDefault before their existing JSON operations. The diff does not change endpoint selection, CSRF initialization, confirmation retries or payload construction.",
+      "Once hydrated, direct form.submit would bypass React and use native POST. That remains distinct from normal JSON submission and does not reintroduce credential GET serialization. No application call site uses this bypass.",
+      "The wrapper keeps native input constraints, labels and error associations intact. The no-JavaScript message is present in server-rendered Next forms. Client-rendered Inertia has no form before JavaScript renders it."
+    ],
+    "form_inventory_per_stack": ["auth-form", "profile-form", "account-change-password", "confirmation", "authenticator", "passkeys"],
+    "worker_evidence_root": "/private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/form-safety-worker",
+    "worker_evidence_inspected": {
+      "api-final.log": "32 browser passes across desktop and mobile, including the native submission check and both fail-closed variants.",
+      "api-prehydration-final.log": "6 prehydration passes across desktop and mobile.",
+      "api-native-red.log": "Baseline native submission test failed with expected POST, received GET. Green test source asserts no query keys and no sentinel value in the request body.",
+      "inertia-final.log": "12 passes. This run preceded the additional authenticator test.",
+      "inertia-security-final.log": "5 passes, including the added authenticator JSON POST and field-error case. These overlap earlier security tests; they are not 17 distinct tests.",
+      "api-typecheck.log": "Frontend typecheck command output, with no error shown. The file does not itself record an exit code.",
+      "inertia-typecheck.log": "Frontend typecheck and Wayfinder generation output, with no error shown. The file does not itself record an exit code.",
+      "api-lint.log": "Zero warnings and errors on 10 files.",
+      "inertia-lint.log": "Zero warnings and errors on 10 files."
+    },
+    "evidence_limitations": [
+      "Current worker-copy identity does not prove historical test-time byte identity because the logs do not embed a hash manifest.",
+      "The caller reports an actual dev-browser check. A Chrome profile directory exists, but I did not inspect a recorded dev-browser transcript or screenshot and do not count that claim as independently verified evidence.",
+      "Backend proxy and cache changes, release inventory, locks, CLI, root lefthook, index and lifecycle work were outside this review."
+    ],
+    "source_mutations": "None. Only this review's own docs/reviews directory was added."
+  },
+  "artifact_path": "docs/reviews/2026-09-09-prehydration-targeted",
+  "run_id": "2026-09-09-prehydration-targeted"
+}

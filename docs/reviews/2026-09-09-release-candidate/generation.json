@@ -1,0 +1,60 @@
+{
+  "reviewer": "generation",
+  "findings": [
+    {
+      "title": "Prepare Next environment before generated browser CI builds",
+      "severity": "P1",
+      "file": "template/standards/variants/next-only/files/.github/workflows/quality.yml",
+      "line": 64,
+      "why_it_matters": "A generated Next-only project with --playwright fails its browser quality job after being committed and checked out on CI: bun run build loads the required NEXT_PUBLIC_SITE_URL schema, but the workflow neither supplies that variable nor copies .env.example. Generation creates an ignored .env locally, so the generator's own generated-gates job preserves a file that a real project checkout does not contain and masks the failure. Preparing the nonsecret example environment before the build makes the checked-out application match the intended credential-free CI setup.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "In the standards-owned Next-only browser workflow, copy .env.example to .env before bun run build, or explicitly provide its required nonsecret environment values. Publish and rebundle a new immutable standards export rather than modifying the frozen export in place. Add a generated-project CI proof that starts from tracked files only, without generation's ignored .env, and runs the browser job for --playwright and the maximal Next composition.",
+      "confidence": 75,
+      "evidence": [
+        "template/standards/variants/next-only/files/.github/workflows/quality.yml:64:           bun run build",
+        "template/standards/variants/next-only/files/.github/workflows/quality.yml:52-65 sets only E2E_MODE=stub and installs dependencies/browser before building; it has no environment-copy step or NEXT_PUBLIC_SITE_URL.",
+        "template/base/next.config.ts:1: import \"./src/env.js\";",
+        "cli/src/env-file.ts:9-11: key: \"NEXT_PUBLIC_SITE_URL\", side: \"client\", zod: \"z.url()\"; lines 31-35 place this required schema into the generated client environment.",
+        "cli/src/env-file.ts:89-90 writes both .env.example and .env during generation; template/base/gitignore:3 ignores .env.",
+        ".github/workflows/ci.yml:142 generates directly into the application used by subsequent gates, retaining the ignored .env that will be absent from a generated repository checkout.",
+        "Repro: generate a Next-only project with --playwright --skip-install --no-git, then reproduce the generated browser job from a tracked-files-only copy with no NEXT_PUBLIC_SITE_URL in the process environment. After frozen dependencies and Chromium are installed, bun run build imports the environment validator and rejects the missing URL before Playwright can run. This review traced the code path; it did not run installs or mutate a fixture."
+      ],
+      "pre_existing": false
+    },
+    {
+      "title": "Install Chromium for the API Vitest quality job",
+      "severity": "P1",
+      "file": "template/standards/variants/api-next/files/.github/workflows/quality.yml",
+      "line": 178,
+      "why_it_matters": "The generated API+Next frontend-test matrix job runs the native Horizon browser integration test without installing Playwright's Chromium. The browser installation is restricted to the separate e2e matrix job, and matrix jobs do not share that installation. On a clean runner the test reaches chromium.launch and fails with a missing browser executable even though the generator's own quality gate passes, because that outer gate installs Chromium unconditionally.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "Separate browser installation from the e2e production-build step. Install Chromium for matrix.gate == 'test' as well as 'e2e' in the API+Next workflow, keeping the explicit build conditional on e2e if desired. Apply this in standards and rebundle a new immutable export. Verify the generated frontend-test job on a fresh runner with no Playwright cache, using the transport suite's documented dedicated database configuration.",
+      "confidence": 75,
+      "evidence": [
+        "template/standards/variants/api-next/files/.github/workflows/quality.yml:178:         if: matrix.gate == 'e2e'",
+        "template/standards/variants/api-next/files/.github/workflows/quality.yml:180:           ./node_modules/.bin/playwright install --with-deps chromium",
+        "template/standards/variants/api-next/files/.github/workflows/quality.yml:135 includes gate: [lint, typecheck, test, doctor, e2e], and line 184 invokes scripts/frontend-gate.sh for each matrix gate.",
+        "template/standards/variants/api-next/files/scripts/frontend-gate.sh:48 invokes vitest run --coverage for the test gate; template/stacks/api-next/vitest.config.ts:8 includes \"tests/integration/**/*.test.ts\".",
+        "template/stacks/api-next/tests/integration/horizon-transport.test.ts:121:     const browser = await chromium.launch({ executablePath: process.env.F7T_CHROMIUM_EXECUTABLE });",
+        ".github/workflows/ci.yml:166:           ./node_modules/.bin/playwright install --with-deps chromium",
+        "Repro: execute the generated API+Next frontend-test job on a clean runner without a Playwright browser cache or F7T_CHROMIUM_EXECUTABLE. Supply the documented transport test database if necessary to reach the browser assertion. The job skips the e2e-only browser installation, then Vitest's native Horizon test attempts the default Chromium executable. This review verified workflow-to-test reachability without running service or browser lifecycle actions."
+      ],
+      "pre_existing": false
+    }
+  ],
+  "residual_risks": [
+    "Read-only inspection covered CLI normalization/wizard parity, target validation, copy and composition, setup/preflight/recovery, dependency installation boundaries, packaging and U14 candidate/matrix source, inventory and lock validation, standards application and generated global-configuration policy, and root/generated workflows. No additional reproducible defect was confirmed in these paths.",
+    "Executed only the non-mutating release/catalog verifier: current working tree verifies 827 inventoried template assets, 66 complete composition locks, generator 0.2.0 and standards v0.3.0. The coordinator's 401 CLI tests and 194 generated outputs/66 frozen installs were supplied evidence, not rerun or independently claimed here.",
+    "The API transport helper selects F7T_TRANSPORT_DATABASE or f7t_transport_test, while the generated quality workflow provisions testing and does not set F7T_TRANSPORT_DATABASE. This needs explicit job-level verification; no separate finding is asserted because Laravel's missing-database creation behavior was not established in this review.",
+    "Generated workflow execution on Blacksmith, live Herd setup/resumption, external package entitlement and stable HTTPS journeys remain coordinator-owned release evidence. UI and backend account correctness were outside this slice. Root lefthook.yml and docs/verification/u14-packed-live.md were excluded."
+  ],
+  "testing_gaps": [
+    "The generator's generated-gates workflow is not a faithful clean-checkout execution of the generated Next workflow: it retains generation's ignored environment file. Existing workflow tests check script ownership/content rather than this missing-environment behavior.",
+    "The generator's generated-gates workflow installs Chromium before every generated check, masking the generated API workflow's e2e-only installation condition. A fresh per-matrix-job execution would surface the missing browser in frontend-test.",
+    "Service failure integration tests in cli/src/setup-runtime.integration.test.ts are opt-in through F7T_SETUP_LARAVEL_FIXTURE and were not executed in this read-only review. Setup unit tests mock service commands, so their green status alone does not establish live resumability."
+  ]
+}

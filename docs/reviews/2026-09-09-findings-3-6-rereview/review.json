@@ -1,0 +1,100 @@
+{
+  "status": "complete",
+  "verdict": "Ready to merge within the targeted findings 3-6 scope",
+  "scope": {
+    "head_sha": "ea1f53c9241494e0151fa0d7cfb4b6d71c36e612",
+    "files_changed": 13,
+    "description": "Seven backend files in ea1f53c plus four working-tree settings screens and two explicitly included untracked settings-requests browser specs.",
+    "original_review": "docs/reviews/2026-09-09-release-candidate/review.json",
+    "exclusions": ["Findings 1-2 and standards", "docs/verification/u14-packed-live.md", "lefthook.yml", "Git/index/lifecycle actions"]
+  },
+  "intent": "Verify that reset contracts include confirmation, Inertia conceals reset-delivery failures, passkey reads reject stale responses, and recovery rotation invalidates displayed codes before replacement retrieval.",
+  "intent_confidence": "explicit",
+  "reviewers": ["targeted-inline"],
+  "findings": [],
+  "actionable_findings": [],
+  "triage_groups": [],
+  "pre_existing_findings": [],
+  "requirements_completeness": null,
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [],
+  "resolved_findings": [
+    {
+      "original_number": 3,
+      "verdict": "Resolved",
+      "evidence": [
+        "template/stacks/api-next/services/api/Modules/Identity/Support/AccountOperationTransformer.php:31 defines all four reset credentials; object() at line 118 marks each required.",
+        "template/stacks/api-next/packages/api-client/openapi.json:884 requires password_confirmation and src/schema.d.ts:1235 exposes it as a required string.",
+        "template/stacks/api-next/services/api/Modules/Identity/Tests/Http/AccountSchemaTest.php:30 generates a fresh schema and checks required fields, property types and email format."
+      ]
+    },
+    {
+      "original_number": 4,
+      "verdict": "Resolved in both stacks",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:34-53 uses the same generation-guarded loader for reads and rejects both stale success and stale failure. Cleanup increments the generation.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/passkeys.tsx:33-52 has the equivalent guard. Retry, enrollment refresh and removal refresh all call that loader.",
+        "Both e2e/settings-requests.spec.ts files hold the initial response until enrollment refresh has rendered the new key, then release either 200 or 503 and assert the key remains with no retry error."
+      ]
+    },
+    {
+      "original_number": 5,
+      "verdict": "Resolved in both stacks",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:109-116 clears codes immediately after successful POST, marks them invalidated, and only clears that marker after GET succeeds. Copy is disabled at line 84 while an operation is pending.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/recovery.tsx:100-104 implements equivalent invalidation. Its read-only retry is at lines 63-69.",
+        "API browser spec lines 87-130 and Inertia lines 88-133 defer POST and replacement GET, verify Copy is disabled, verify old codes disappear before GET completes, fail GET, then retry and assert one POST and three GETs total."
+      ]
+    },
+    {
+      "original_number": 6,
+      "verdict": "Resolved",
+      "evidence": [
+        "template/stacks/inertia-monolith/app/Http/Controllers/Users/PasswordResetLinkController.php:16-28 retains Fortify request validation and username normalization, reports broker exceptions, and returns the generic response.",
+        "template/stacks/inertia-monolith/routes/auth.php:16 replaces only the existing named route action, preserving vendor middleware. PasswordResetLinkResponse.php:17-21 returns the same JSON message or HTML flash response.",
+        "template/stacks/inertia-monolith/tests/Http/Users/AuthenticationTest.php:92-115 tests thrown delivery for known uppercase and unknown addresses in JSON and HTML, verifies reporting and token creation. Lines 117-129 cover retained throttling and CSRF. Existing lines 68-89 cover validation and normal reset behavior."
+      ]
+    }
+  ],
+  "content_identity": {
+    "algorithm": "sha256",
+    "all_seven_backend_files_match_ea1f53c": true,
+    "all_six_frontend_files_match_review_45_fixture_copies": true,
+    "files": {
+      "template/stacks/api-next/packages/api-client/openapi.json": "f567d15498dba9ede86995842fe66420b830735a09d6d4e576cfaa10691b164c",
+      "template/stacks/api-next/packages/api-client/src/schema.d.ts": "5b9414cc2e4ec496597586c3356dd613cebbfbbe3cc139bf33d332cbc85a1a6b",
+      "template/stacks/api-next/services/api/Modules/Identity/Support/AccountOperationTransformer.php": "38e4ce59c15bdb0ece050580ae3b74b6be8a550c7bc57e61c0d20fc1d7bff994",
+      "template/stacks/api-next/services/api/Modules/Identity/Tests/Http/AccountSchemaTest.php": "a07468c436e1f4ebbde18941571cc5e1d626b682de6d944edda164d1cf9d3f53",
+      "template/stacks/inertia-monolith/app/Http/Controllers/Users/PasswordResetLinkController.php": "da2cb3ea9fc2f5d53ddf599fc4a2a9b69318b6d8528d09488b51d5803bdad17a",
+      "template/stacks/inertia-monolith/routes/auth.php": "c50d4a65da9814b2794975700a5acded013412753811fc866a6752d148405e7f",
+      "template/stacks/inertia-monolith/tests/Http/Users/AuthenticationTest.php": "a4c089668561c8c618f085fdff6e04ca4de76096089a50ac3d0320f19281796f",
+      "template/stacks/api-next/apps/web/components/screens/passkeys.tsx": "3a671323c9c9ae2d5f2e7fa608505112950a1ef4ad9c8e585b485abf4b8a2eaf",
+      "template/stacks/api-next/apps/web/components/screens/recovery.tsx": "d2ad6732fb2f32f1a2884f568fd1ba6878024b74ca2380b59c6a0091799062f5",
+      "template/stacks/api-next/e2e/settings-requests.spec.ts": "0dbf682f77ff1af993e86a7b24fbe0236d708df94519de8dbec0bb35b2542da4",
+      "template/stacks/inertia-monolith/resources/js/pages/settings/passkeys.tsx": "09ded56f13eea345071408b21e8c21b87cd00f1a17025175855a7bb22ba8ea8d",
+      "template/stacks/inertia-monolith/resources/js/pages/settings/recovery.tsx": "441bc23b2f4ae7324c2f5f0e512a4ff1574a3c2bc906b4f9aa2adef6f8d1e4ff",
+      "template/stacks/inertia-monolith/e2e/settings-requests.spec.ts": "d087fec380bf94e2b0e3377588bb771df161729d8e6aa57a74432df04923fead"
+    }
+  },
+  "coverage": {
+    "mode": "agent report-only, bounded leaf re-review",
+    "lenses": ["correctness", "security", "API contract", "async ordering", "regression coverage"],
+    "independence": "Lenses ran inline in one agent under depth 0 and descendant budget 0. No separate persona or cross-model corroboration claimed.",
+    "mechanics": {"findings": 0, "malformed_findings": 0, "malformed_returns": 0},
+    "validator": "No new findings requiring a validator batch.",
+    "inspected_execution_evidence": {
+      "root": "/private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/review-45",
+      "api-green.log": "3 passed",
+      "inertia-green.log": "3 passed",
+      "api-red.log": "3 failed on original stale-key and enabled-copy assertions. Earlier spec revision uses hard copy assertion.",
+      "inertia-red.log": "3 failed, including stale key loss, enabled Copy and old-code list remaining after POST."
+    },
+    "supplied_execution_evidence": "Coordinator reports independent backend regression rerun passed; backend workers report full PHP gates passed; frontend worker reports types, lint, doctor and build passed. Those broader checks were not rerun here.",
+    "limitations": "Source review and existing browser-log inspection only. No new browser run or visual audit. Existing fixture copies match reviewed frontend bytes, but this review does not attest historical build provenance. No standards, HTTPS, full release or whole-plan verdict."
+  },
+  "residual_risks": [],
+  "testing_gaps": ["No dedicated unmount or retry-versus-retry deferred browser cases were added. Generation cleanup and shared loader were inspected directly."],
+  "artifact_path": "docs/reviews/2026-09-09-findings-3-6-rereview/review.json",
+  "run_id": "2026-09-09-findings-3-6-rereview"
+}
