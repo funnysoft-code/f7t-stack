@@ -221,10 +221,13 @@ foreach (['first', 'second', 'unverified'] as $name) { $user = Modules\\Identity
     const build = spawnSync(process.execPath, [nextCli, "build", "--webpack"], {
       cwd: web,
       env,
-      stdio: "ignore",
+      encoding: "utf8",
       timeout: 120_000,
     });
-    if (build.status !== 0) throw new Error("Transport fixture Next production build failed");
+    if (build.status !== 0) {
+      const detail = `${build.stderr}\n${build.stdout}`.replace(/\s+/g, " ").trim().slice(-500);
+      throw new Error(`Transport fixture Next production build failed: ${detail}`);
+    }
     next = launch(
       process.execPath,
       [nextCli, "start", "--hostname", "127.0.0.1", "--port", String(port)],

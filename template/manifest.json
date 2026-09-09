@@ -1096,7 +1096,7 @@
     },
     {
       "path": "stacks/api-next/apps/web/components/account/feedback.tsx",
-      "sha256": "830954b1719be5ae3e5debf4e64de23b5f6a6006c24b9de9385bb8cb6759280d",
+      "sha256": "1ea451a23e51ef880dbb5e98d6963d28e7f88137ec50c7ab56d670bb50063d0c",
       "mode": 420,
       "text": true
     },
@@ -3112,7 +3112,7 @@
     },
     {
       "path": "stacks/api-next/tests/integration/servers.ts",
-      "sha256": "15ae83924e64106cdf065a8eccde2eb0220e5b7df2f8cff63bf8254764631488",
+      "sha256": "7b13fb76c693b42946a30ba55f751cbfa0ede16ec8aeb41dd0ae6d6d2a1ab66c",
       "mode": 420,
       "text": true
     },
