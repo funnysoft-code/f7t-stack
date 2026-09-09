@@ -1,5 +1,95 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 
+test("native submission never serializes credentials into a query @prehydration", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("http://localhost:3052/login");
+  const submissions: { method: string; queryKeys: string[]; body: string | null }[] = [];
+  // Intercept before reaching any server. All values are public test sentinels.
+  await page.route("**/login*", (route) => {
+    submissions.push({
+      method: route.request().method(),
+      queryKeys: [...new URL(route.request().url()).searchParams.keys()],
+      body: route.request().postData(),
+    });
+    return route.fulfill({ status: 204 });
+  });
+  await page.locator("form").evaluate((form: HTMLFormElement) => {
+    for (const input of form.querySelectorAll<HTMLInputElement>("input[name]")) {
+      input.value = input.type === "email" ? "sentinel@example.test" : "prehydration-sentinel";
+    }
+    form.noValidate = true;
+    form.requestSubmit();
+  });
+  await expect.poll(() => submissions.length).toBe(1);
+  expect(submissions[0].method).toBe("POST");
+  expect(submissions[0].queryKeys).toEqual([]);
+  expect(submissions[0].body ?? "").not.toContain("sentinel");
+  expect(new URL(page.url()).search).toBe("");
+  await context.close();
+});
+
+for (const javascript of ["disabled", "blocked"] as const) {
+  test(`sensitive forms fail closed with JavaScript ${javascript} @prehydration`, async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ javaScriptEnabled: javascript !== "disabled" });
+    await cookies(context, { registration: "enabled" });
+    const page = await context.newPage();
+    if (javascript === "blocked") {
+      await page.route("**/*", (route) =>
+        route.request().resourceType() === "script" ? route.abort() : route.continue(),
+      );
+    }
+    const attempts: string[] = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (
+        !["GET", "HEAD", "OPTIONS"].includes(request.method()) ||
+        ["password", "password_confirmation", "code", "recovery_code", "email", "name"].some(
+          (key) => url.searchParams.has(key),
+        )
+      ) {
+        attempts.push(request.method());
+      }
+    });
+    for (const path of [
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/reset-password",
+      "/two-factor-challenge",
+      "/confirm-password",
+      "/settings/profile",
+      "/settings/security",
+      "/settings/passkeys",
+    ]) {
+      await cookies(context, {
+        account: path.startsWith("/settings") || path === "/confirm-password" ? "verified" : "",
+      });
+      await page.goto(`http://localhost:3052${path}`);
+      const form = page.locator("form").first();
+      await expect(form).toBeAttached();
+      await expect(form).toHaveAttribute("method", "post");
+      const input = form.locator("input[name]").first();
+      await expect(input).toBeDisabled();
+      // Nonsecret sentinel only, including in the deliberately vulnerable red run.
+      await input.evaluate((element: HTMLInputElement) => {
+        element.value = "prehydration-sentinel";
+      });
+      const submit = page.locator('button[type="submit"]').first();
+      await expect(submit).toBeDisabled();
+      if (await submit.isVisible()) await submit.click({ force: true });
+      await page.keyboard.press("Enter");
+      expect(new URL(page.url()).search).toBe("");
+      expect(attempts).toEqual([]);
+    }
+    await context.close();
+  });
+}
+
 test("capability outages do not invent registration policy @dependency-failure", async ({
   page,
   context,
@@ -26,6 +116,7 @@ test("an expired confirmation retries the intended mutation only once @confirmat
   await page.goto("/settings/profile");
   await page.getByRole("textbox", { name: "Email address" }).fill("pending@example.test");
   await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("dialog").locator("form")).toHaveAttribute("method", "post");
   await page
     .getByRole("dialog")
     .getByRole("textbox", { name: "Current password", exact: true })

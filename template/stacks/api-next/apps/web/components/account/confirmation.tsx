@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { SafeForm } from "./safe-form";
 import {
   Dialog,
   DialogContent,
@@ -73,7 +74,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
             </DialogDescription>
           </DialogHeader>
           <Feedback error message={operation.error} />
-          <form
+          <SafeForm
             onSubmit={(event) => {
               // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
               event.preventDefault();
@@ -106,7 +107,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                 <Submit pending={operation.pending}>Confirm and continue</Submit>
               </DialogFooter>
             </FieldGroup>
-          </form>
+          </SafeForm>
           <Button
             variant="outline"
             disabled={operation.pending}

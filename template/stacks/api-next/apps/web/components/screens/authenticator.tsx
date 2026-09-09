@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SafeForm } from "@/components/account/safe-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Shell } from "@/components/account/shell";
@@ -80,7 +81,7 @@ function AuthenticatorForm({ account }: Pick<AccountProps, "account">) {
                   </InputGroupAddon>
                 </InputGroup>
               </Field>
-              <form
+              <SafeForm
                 id="authenticator-form"
                 onSubmit={(event) => {
                   // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
@@ -108,7 +109,7 @@ function AuthenticatorForm({ account }: Pick<AccountProps, "account">) {
                   pattern="[0-9]{6}"
                   error={operation.fields.code}
                 />
-              </form>
+              </SafeForm>
             </>
           ) : null}
         </FieldGroup>

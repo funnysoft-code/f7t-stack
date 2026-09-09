@@ -2,6 +2,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { ComponentProps } from "react";
+import { useHydrated } from "./safe-form";
 
 export function Feedback({ message, error = false }: { message?: string; error?: boolean }) {
   if (!message) return null;
@@ -21,10 +22,17 @@ export function Feedback({ message, error = false }: { message?: string; error?:
 export function Submit({
   pending,
   children,
+  disabled,
   ...props
 }: ComponentProps<typeof Button> & { pending: boolean }) {
+  const hydrated = useHydrated();
   return (
-    <Button type="submit" disabled={pending} aria-busy={pending} {...props}>
+    <Button
+      type="submit"
+      aria-busy={pending}
+      {...props}
+      disabled={!hydrated || pending || disabled}
+    >
       {pending ? <Spinner data-icon="inline-start" /> : null}
       {pending ? "Working…" : children}
     </Button>

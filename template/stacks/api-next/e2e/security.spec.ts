@@ -39,6 +39,7 @@ test("authenticator setup, recovery and removal @authenticator @recovery-codes",
   await page.goto("/settings/authenticator");
   await page.getByRole("button", { name: "Set up authenticator", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Manual setup key" })).toBeVisible();
+  await expect(page.locator("#authenticator-form")).toHaveAttribute("method", "post");
   await expect(
     page.getByRole("img", { name: "Scan this QR code with your authenticator app" }),
   ).toBeVisible();

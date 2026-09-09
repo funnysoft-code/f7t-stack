@@ -1,6 +1,7 @@
 // Adapted from shadcn.io/account-change-password. Confirmation is a separate
 // password-or-passkey step; validation and session invalidation belong to Laravel.
 import { useState } from "react";
+import { SafeForm } from "./safe-form";
 import {
   Card,
   CardHeader,
@@ -33,7 +34,7 @@ export function AccountChangePassword() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="password-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -78,7 +79,7 @@ export function AccountChangePassword() {
               }
             />
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter>
         <Submit form="password-form" pending={operation.pending}>

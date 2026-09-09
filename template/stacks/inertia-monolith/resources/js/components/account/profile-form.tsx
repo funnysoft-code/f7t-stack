@@ -1,4 +1,5 @@
 import { router } from "@inertiajs/react";
+import { SafeForm } from "./safe-form";
 import {
   Card,
   CardHeader,
@@ -42,7 +43,7 @@ export function ProfileForm({ account }: Pick<AccountProps, "account">) {
         <Separator />
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="profile-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -80,7 +81,7 @@ export function ProfileForm({ account }: Pick<AccountProps, "account">) {
               hint="Changing your email requires confirmation. We will send a new verification link."
             />
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter>
         <Submit form="profile-form" pending={operation.pending}>

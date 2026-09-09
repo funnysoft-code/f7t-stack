@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SafeForm } from "./safe-form";
 import { TurnstileCheck } from "./turnstile-check";
 import { Link } from "@inertiajs/react";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="auth-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -210,7 +211,7 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
               </Field>
             ) : null}
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter className="form-actions">
         <Submit

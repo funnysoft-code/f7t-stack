@@ -1,6 +1,40 @@
 import { test, expect } from "@playwright/test";
 import { accountPage } from "./account-fixture";
 
+test("sensitive forms use POST even before a submit handler runs @prehydration", async ({
+  page,
+}) => {
+  for (const [path, component] of [
+    ["/login", "auth/login"],
+    ["/register", "auth/register"],
+    ["/forgot-password", "auth/forgot-password"],
+    ["/reset-password", "auth/reset-password"],
+    ["/confirm-password", "auth/confirm-password"],
+    ["/two-factor-challenge", "auth/two-factor-challenge"],
+    ["/settings/profile", "settings/profile"],
+    ["/settings/security", "settings/security"],
+    ["/settings/passkeys", "settings/passkeys"],
+  ]) {
+    await accountPage(page, path, component, {
+      capabilities: { registrationEnabled: true, registrationUrl: "/register" },
+    });
+    await expect(page.locator("form").first()).toHaveAttribute("method", "post");
+  }
+});
+
+test("JavaScript-disabled Inertia cannot submit account data @prehydration", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
+  const page = await context.newPage();
+  await page.goto("/login");
+  // This stack is client-rendered. No form exists until its handlers are installed.
+  await expect(page.locator("form")).toHaveCount(0);
+  expect(new URL(page.url()).search).toBe("");
+  await context.close();
+});
+
 test("registration entry follows the server capability and handles a stale denial", async ({
   page,
 }) => {

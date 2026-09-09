@@ -3,6 +3,7 @@
 "use client";
 
 import { useState } from "react";
+import { SafeForm } from "./safe-form";
 import {
   Card,
   CardHeader,
@@ -35,7 +36,7 @@ export function AccountChangePassword() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="password-form"
           onSubmit={(event) => {
             // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
@@ -85,7 +86,7 @@ export function AccountChangePassword() {
               }
             />
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter className="form-actions">
         <Submit form="password-form" pending={operation.pending}>

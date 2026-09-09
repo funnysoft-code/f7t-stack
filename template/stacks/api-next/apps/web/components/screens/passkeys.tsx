@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SafeForm } from "@/components/account/safe-form";
 import type { Passkey } from "@f7t/api-client";
 import { Shell } from "@/components/account/shell";
 import { useConfirmed } from "@/components/account/confirmation";
@@ -113,7 +114,7 @@ function PasskeysForm() {
               </Item>
             ))
           )}
-          <form
+          <SafeForm
             id="passkey-form"
             onSubmit={(event) => {
               // eslint-disable-next-line react-doctor/no-prevent-default -- WebAuthn is a browser ceremony followed by a Laravel JSON mutation.
@@ -142,7 +143,7 @@ function PasskeysForm() {
               placeholder="For example, personal laptop"
               error={operation.fields.name}
             />
-          </form>
+          </SafeForm>
         </FieldGroup>
       </CardContent>
       <CardFooter>

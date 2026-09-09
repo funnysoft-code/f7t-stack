@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { SafeForm } from "./safe-form";
 import {
   Card,
   CardHeader,
@@ -44,7 +45,7 @@ export function ProfileForm({ account }: Pick<AccountProps, "account">) {
         <Separator />
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="profile-form"
           onSubmit={(event) => {
             // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
@@ -90,7 +91,7 @@ export function ProfileForm({ account }: Pick<AccountProps, "account">) {
               hint="Changing your email requires confirmation. We will send a new verification link."
             />
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter className="form-actions">
         <Submit form="profile-form" pending={operation.pending}>

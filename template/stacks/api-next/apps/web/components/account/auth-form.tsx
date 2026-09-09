@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SafeForm } from "./safe-form";
 import { TurnstileCheck } from "./turnstile-check";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
+        <SafeForm
           id="auth-form"
           onSubmit={(event) => {
             // eslint-disable-next-line react-doctor/no-prevent-default -- Laravel JSON mutations must relay cookies through the browser proxy.
@@ -231,7 +232,7 @@ export function AuthForm({ mode, ...props }: AccountProps & { mode: AuthMode }) 
               </Field>
             ) : null}
           </FieldGroup>
-        </form>
+        </SafeForm>
       </CardContent>
       <CardFooter className="form-actions">
         <Submit

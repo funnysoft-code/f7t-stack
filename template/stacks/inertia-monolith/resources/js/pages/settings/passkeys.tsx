@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SafeForm } from "@/components/account/safe-form";
 import { router } from "@inertiajs/react";
 import { Shell } from "@/components/account/shell";
 import { useConfirmed } from "@/components/account/confirmation";
@@ -107,7 +108,7 @@ function PasskeysForm() {
               </Item>
             ))
           )}
-          <form
+          <SafeForm
             id="passkey-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -140,7 +141,7 @@ function PasskeysForm() {
               placeholder="For example, personal laptop"
               error={operation.fields.name}
             />
-          </form>
+          </SafeForm>
         </FieldGroup>
       </CardContent>
       <CardFooter>

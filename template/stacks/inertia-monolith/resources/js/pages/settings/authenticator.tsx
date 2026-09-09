@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SafeForm } from "@/components/account/safe-form";
 import { Link, router } from "@inertiajs/react";
 import { Shell } from "@/components/account/shell";
 import { useConfirmed } from "@/components/account/confirmation";
@@ -77,7 +78,7 @@ function AuthenticatorForm({ account }: Pick<AccountProps, "account">) {
                   </InputGroupAddon>
                 </InputGroup>
               </Field>
-              <form
+              <SafeForm
                 id="authenticator-form"
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -98,7 +99,7 @@ function AuthenticatorForm({ account }: Pick<AccountProps, "account">) {
                   pattern="[0-9]{6}"
                   error={operation.fields.code}
                 />
-              </form>
+              </SafeForm>
             </>
           ) : null}
         </FieldGroup>
