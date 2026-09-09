@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_PROTO);
         $middleware->redirectGuestsTo(fn (): string => rtrim(config()->string('funnysoft.frontend_url'), '/').'/login');
         $middleware->web(append: [
             ValidatePendingLogin::class,

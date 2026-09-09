@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\PreventSessionResponseCaching;
 use App\Http\Middleware\ValidatePendingPasswordProof;
 use App\Http\Middleware\ValidatePublicTurnstile;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Webauthn\Exception\AuthenticatorResponseVerificationException;
 
@@ -18,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(headers: Request::HEADER_X_FORWARDED_PROTO);
+        $middleware->web(prepend: [PreventSessionResponseCaching::class]);
         $middleware->web(append: [AuthenticateSession::class, ValidatePendingPasswordProof::class, Inertia\Middleware::class, ValidatePublicTurnstile::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

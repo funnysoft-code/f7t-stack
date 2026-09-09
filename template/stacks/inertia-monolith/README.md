@@ -29,6 +29,14 @@ php artisan horizon
 
 Use `php artisan schedule:work` when developing scheduled jobs. Nightwatch has no local process and is not registered in local or testing environments.
 
+### HTTPS through a reverse proxy
+
+When Herd proxies a secured hostname to an HTTP `artisan serve` listener, set `APP_URL` to that public HTTPS origin and `TRUSTED_PROXIES=127.0.0.1` in `.env`. Add `::1` only if the proxy actually connects over IPv6. Keep `SESSION_SECURE_COOKIE=true` and leave `SESSION_DOMAIN` unset. Bind the private listener to loopback. Rebuild cached configuration and restart the listener after changing its environment.
+
+`TRUSTED_PROXIES` is an explicit comma-separated IPv4/IPv6 address allowlist. Its empty default trusts no proxy. Wildcards, hostnames, CIDR ranges and `REMOTE_ADDR` are rejected. In production, list the actual TLS-terminating proxy peer addresses and restrict direct access to the backend. The proxy must preserve the public Host and overwrite `X-Forwarded-Proto` from the incoming transport. Only that scheme header is trusted; forwarded Host, port and client IP headers are ignored. `APP_URL` alone does not change the scheme of an incoming HTTP request.
+
+All session-bearing `web` responses, including account/auth HTML, Inertia JSON, redirects and errors returned through that group, send `Cache-Control: private, no-store`. Static assets and the `/up` health route stay outside this policy. Put future cacheable public pages outside the session-bearing group. Verify HTTPS asset URLs, secure cookies and authenticated HTML cache headers at the public origin after deployment.
+
 Create the first account independently of setup:
 
 ```sh
