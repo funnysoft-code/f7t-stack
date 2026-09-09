@@ -1,0 +1,899 @@
+{
+  "schemaVersion": 1,
+  "standards": {
+    "release": "v0.3.1",
+    "commit": "13889e25ab3df8a06307156722dc08377183b356"
+  },
+  "local": false,
+  "variants": {
+    "inertia-monolith": {
+      "layout": {
+        "phpRoot": ".",
+        "jsRoots": [
+          "."
+        ],
+        "designRoot": "design",
+        "boostArtisan": "artisan",
+        "boostSkills": ".opencode/skills"
+      },
+      "assetSets": [
+        "harness",
+        "playbook",
+        "laravel",
+        "inertia-tooling"
+      ],
+      "assets": [
+        {
+          "path": ".github/workflows/deploy-cloud.yml",
+          "source": "variants/inertia-monolith/files/.github/workflows/deploy-cloud.yml",
+          "sha256": "3341b1d95df5bda88e351e5bf806a1352cc59186229a546f77afa0aea8d061d9",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".github/workflows/quality.yml",
+          "source": "variants/inertia-monolith/files/.github/workflows/quality.yml",
+          "sha256": "9ebfa77b30aad0c4d003a5258739b29d90f7a14268facac3e77489f31ed4a3e9",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/agent/adversary.md",
+          "source": "variants/inertia-monolith/files/.opencode/agent/adversary.md",
+          "sha256": "301fe829505e0b7339cf9144caea0155abbcfcf46ea5a34e21b86e6dd3c60ed7",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/caveman.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/caveman.md",
+          "sha256": "ace47862c100a2c741eff45230427522560f7258aa026a28c8f5d74debbd0139",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/design.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/design.md",
+          "sha256": "0bfd2ab283f2b5d77c0137dca8796d0f25474150ab62e662a7a51dce1e894f77",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/laravel-api.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/laravel-api.md",
+          "sha256": "af77e3bce43b8e730a615dc0cffc05ec8665094df6c1f55150fea82d67349541",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/ponytail.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/ponytail.md",
+          "sha256": "b45b5325fdaa3f88721cdd0ec2b8e56aeddb770fefb3a6ce4fde19cabaf407bd",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/product.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/product.md",
+          "sha256": "b6ee5aa0c9c5cc58f8c0ff6becbe7cc03b92fd35a2b11577dae596cae8a20199",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/unslop.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/unslop.md",
+          "sha256": "6a592ee5fca14807a6f46b3300b997d1c19e2666ae836c87db5515352edcce6c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/workflow.md",
+          "source": "variants/inertia-monolith/files/.opencode/rules/workflow.md",
+          "sha256": "bc513f8c970992bd641e447b2d96af5e17003bf32732b1cd053309483f76f503",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/adr/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/adr/SKILL.md",
+          "sha256": "20fe1b7b8455989b4d137245245a112248e6d3738d3d19e7fe598366cd43af6d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/creative-mode/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/creative-mode/SKILL.md",
+          "sha256": "2e7170f45d92f7a8c6e4664ca5ce3735ebb564afb8afcee8a15a4b904341e9f0",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/design-mock/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/design-mock/SKILL.md",
+          "sha256": "cebc71724c9d690ba029b2e73297c524aa2a777f406632d71db5838342c338e5",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/frontend-ui/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/frontend-ui/SKILL.md",
+          "sha256": "77a5f29cb6a687c9800dce4d321b0d612630e5c8716bd82410ba5ed9858264ee",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/funnysoft-quality/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/funnysoft-quality/SKILL.md",
+          "sha256": "1579c028ff5b91994d1530f08eabe2642282473f4b414cfecfc73b8b3067dc3d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/grilling/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/grilling/SKILL.md",
+          "sha256": "a4132f43b6da788a71c06ab4e32d873f99dbc9d7e3ec6ade6f3c4233965f3373",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/linear/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/linear/SKILL.md",
+          "sha256": "732d5b6053b2f3b8a28939aea1570fead04eb535effcd4072ca6e6cdfb850926",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/retro/SKILL.md",
+          "source": "variants/inertia-monolith/files/.opencode/skills/retro/SKILL.md",
+          "sha256": "53df1dff8220cd618a9256ab5c92cd1154fabecb8157469422a7d3f9f147f816",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/README.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/README.md",
+          "sha256": "ca12588bb9130457145ab71e1facf0defc73d17af9aa89ca191fc83ede64b85a",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0000-template.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/adr/0000-template.md",
+          "sha256": "75a3e8284acc5162bc399c1de84dd443cebfc8db62123818c15a14ef2ebe2971",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0001-opencode-only-harness.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/adr/0001-opencode-only-harness.md",
+          "sha256": "64e5ed16f3422f9bbcfd74e6313a4d09015a8a51879b6946a47265d7307e9f9f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/README.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/adr/README.md",
+          "sha256": "283c78ec87c864038f3d99f6635fb854ad41a895309187b3586465caeed61106",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/design.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/design.md",
+          "sha256": "1752198ad3d9a04c76245cacf34d25576f32550f79a510a966bcdc15bf56fc38",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/engineering.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/engineering.md",
+          "sha256": "4fe33eb94b59348ceaddfe5f234c5f1dbd40272a0163e8c920d9f917767bc975",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/harness.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/harness.md",
+          "sha256": "4c97ee937e525eb6dfc478f47e5c55b8e5d49c42b9b7e9f9207fa628753c39b6",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/quality.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/quality.md",
+          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/api-next.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/variants/api-next.md",
+          "sha256": "99b1d50c662d876da36e98e4f588d448f2929e9a00eb26301639f48c3d4c6eca",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/inertia-monolith.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/variants/inertia-monolith.md",
+          "sha256": "2b72fab7b8d05dd086b40afd8623884c40cbf89330c4fd8d4d61545b5295b01d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/next-only.md",
+          "source": "variants/inertia-monolith/files/docs/playbook/variants/next-only.md",
+          "sha256": "30f6ec637123cc34ebbd97abfa63c00892598643f08289e0a0b91b0e4200f8ed",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "lefthook.yml",
+          "source": "variants/inertia-monolith/files/lefthook.yml",
+          "sha256": "c45964f249e4291a4bb639db98e6d670f74cf6f51d7931a9927bb53610d6308f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "opencode.json",
+          "source": "variants/inertia-monolith/files/opencode.json",
+          "sha256": "1e80043e792e7a2a7ef853b4f565acc394020469610d9119e02f6f840d428f17",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "packages/boost-guidelines/composer.json",
+          "source": "variants/inertia-monolith/files/packages/boost-guidelines/composer.json",
+          "sha256": "271c9285ab524ab3c523192ac4e48dddb4e79cac66c473e46246a3541451e8d9",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "packages/boost-guidelines/resources/boost/guidelines/core.blade.php",
+          "source": "variants/inertia-monolith/files/packages/boost-guidelines/resources/boost/guidelines/core.blade.php",
+          "sha256": "1695e5cbf8efcfa1ed365407e2769189434dbb2cc45565ccd60ff91c87d60751",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "packages/boost-guidelines/resources/boost/skills/funnysoft-quality/SKILL.md",
+          "source": "variants/inertia-monolith/files/packages/boost-guidelines/resources/boost/skills/funnysoft-quality/SKILL.md",
+          "sha256": "1579c028ff5b91994d1530f08eabe2642282473f4b414cfecfc73b8b3067dc3d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/boost-sync-opencode-skills.sh",
+          "source": "variants/inertia-monolith/files/scripts/boost-sync-opencode-skills.sh",
+          "sha256": "22d6074481eb509662e75c8773995e295798f51ae41b462379d9719c46f12133",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/frontend-gate.sh",
+          "source": "variants/inertia-monolith/files/scripts/frontend-gate.sh",
+          "sha256": "03ce79ce217c7c53a3bf3ae3c3c0e7061f3e4b7945ad2e1752e6b1dde177c8ed",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/lint-commit-msg.sh",
+          "source": "variants/inertia-monolith/files/scripts/lint-commit-msg.sh",
+          "sha256": "1e5d956e864321cbdf02ad737f6dc3dd43f03e2964c6aefe92b290866b360659",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/php-coverage-config.php",
+          "source": "variants/inertia-monolith/files/scripts/php-coverage-config.php",
+          "sha256": "70d2beaabf2dea12796aa7bf04980aac9459834f3c852a953193d61d3c86344f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/php-gate.sh",
+          "source": "variants/inertia-monolith/files/scripts/php-gate.sh",
+          "sha256": "87c0333a3857107f65136300876b928b2e74513f0b04bdd04b12c3a895cf7242",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.mjs",
+          "source": "variants/inertia-monolith/files/scripts/screenshot.mjs",
+          "sha256": "f91a15d341d3f5c6c724c883f62b0aa4533e4b4a2078034b887e980f7f9fcd16",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.sh",
+          "source": "variants/inertia-monolith/files/scripts/screenshot.sh",
+          "sha256": "46b3937a8974434ead360ac18f4b2f7d7b40ad090b34337b5d0f65fd891affb5",
+          "mode": 493,
+          "text": true
+        }
+      ]
+    },
+    "api-next": {
+      "layout": {
+        "phpRoot": "services/api",
+        "jsRoots": [
+          "apps/web",
+          "packages/api-client",
+          "packages/design-system"
+        ],
+        "designRoot": "packages/design-system",
+        "boostArtisan": "services/api/artisan",
+        "boostSkills": "services/api/.opencode/skills"
+      },
+      "assetSets": [
+        "harness",
+        "playbook",
+        "laravel",
+        "api-tooling"
+      ],
+      "assets": [
+        {
+          "path": ".github/workflows/deploy-cloud.yml",
+          "source": "variants/api-next/files/.github/workflows/deploy-cloud.yml",
+          "sha256": "3341b1d95df5bda88e351e5bf806a1352cc59186229a546f77afa0aea8d061d9",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".github/workflows/deploy-vercel.yml",
+          "source": "variants/api-next/files/.github/workflows/deploy-vercel.yml",
+          "sha256": "1a1ba701b5cbe2ac2dce9665a57abee3115b4a75fc801b955457faf74284e75d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".github/workflows/quality.yml",
+          "source": "variants/api-next/files/.github/workflows/quality.yml",
+          "sha256": "4228e67d8d88de3cfe938e79f4bf05cb69221d34e06b3a4ec82a08c183fa64f7",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/agent/adversary.md",
+          "source": "variants/api-next/files/.opencode/agent/adversary.md",
+          "sha256": "ec84bf5518f91792c79eaed1c7f5c193e34e8d3247a185aebc75eb9f5afd6221",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/caveman.md",
+          "source": "variants/api-next/files/.opencode/rules/caveman.md",
+          "sha256": "ace47862c100a2c741eff45230427522560f7258aa026a28c8f5d74debbd0139",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/design.md",
+          "source": "variants/api-next/files/.opencode/rules/design.md",
+          "sha256": "dcab4e4ca0bc7dbb35668885188250e56f1952335844a997d92310133d963adb",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/laravel-api.md",
+          "source": "variants/api-next/files/.opencode/rules/laravel-api.md",
+          "sha256": "eeab3a99d4db1c22ef6de784f1f5cc39d332c1a9709cac1ee460a7e24b2469d4",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/ponytail.md",
+          "source": "variants/api-next/files/.opencode/rules/ponytail.md",
+          "sha256": "71ec2de9628edb4d14943d28fbc973831b477c38d6ec921678e93a98b8fbf299",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/product.md",
+          "source": "variants/api-next/files/.opencode/rules/product.md",
+          "sha256": "b6ee5aa0c9c5cc58f8c0ff6becbe7cc03b92fd35a2b11577dae596cae8a20199",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/unslop.md",
+          "source": "variants/api-next/files/.opencode/rules/unslop.md",
+          "sha256": "6a592ee5fca14807a6f46b3300b997d1c19e2666ae836c87db5515352edcce6c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/workflow.md",
+          "source": "variants/api-next/files/.opencode/rules/workflow.md",
+          "sha256": "bc513f8c970992bd641e447b2d96af5e17003bf32732b1cd053309483f76f503",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/adr/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/adr/SKILL.md",
+          "sha256": "20fe1b7b8455989b4d137245245a112248e6d3738d3d19e7fe598366cd43af6d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/creative-mode/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/creative-mode/SKILL.md",
+          "sha256": "2e7170f45d92f7a8c6e4664ca5ce3735ebb564afb8afcee8a15a4b904341e9f0",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/design-mock/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/design-mock/SKILL.md",
+          "sha256": "cda5b1a92880e3156b9d48cb66441037ac9e24c1eaf4b70872094fd804d17ae4",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/frontend-ui/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/frontend-ui/SKILL.md",
+          "sha256": "d5b98d5499b83489b64ecde96d5ba50beb92d9b6161cb9c4da216d65bd50e202",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/funnysoft-quality/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/funnysoft-quality/SKILL.md",
+          "sha256": "1579c028ff5b91994d1530f08eabe2642282473f4b414cfecfc73b8b3067dc3d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/grilling/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/grilling/SKILL.md",
+          "sha256": "a4132f43b6da788a71c06ab4e32d873f99dbc9d7e3ec6ade6f3c4233965f3373",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/linear/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/linear/SKILL.md",
+          "sha256": "732d5b6053b2f3b8a28939aea1570fead04eb535effcd4072ca6e6cdfb850926",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/retro/SKILL.md",
+          "source": "variants/api-next/files/.opencode/skills/retro/SKILL.md",
+          "sha256": "53df1dff8220cd618a9256ab5c92cd1154fabecb8157469422a7d3f9f147f816",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/README.md",
+          "source": "variants/api-next/files/docs/playbook/README.md",
+          "sha256": "ca12588bb9130457145ab71e1facf0defc73d17af9aa89ca191fc83ede64b85a",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0000-template.md",
+          "source": "variants/api-next/files/docs/playbook/adr/0000-template.md",
+          "sha256": "75a3e8284acc5162bc399c1de84dd443cebfc8db62123818c15a14ef2ebe2971",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0001-opencode-only-harness.md",
+          "source": "variants/api-next/files/docs/playbook/adr/0001-opencode-only-harness.md",
+          "sha256": "64e5ed16f3422f9bbcfd74e6313a4d09015a8a51879b6946a47265d7307e9f9f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/README.md",
+          "source": "variants/api-next/files/docs/playbook/adr/README.md",
+          "sha256": "283c78ec87c864038f3d99f6635fb854ad41a895309187b3586465caeed61106",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/design.md",
+          "source": "variants/api-next/files/docs/playbook/design.md",
+          "sha256": "55312867af2aa682c8ee5d2ba8fe0ce1620a61bf47a57b85898d7d3b532e8ebf",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/engineering.md",
+          "source": "variants/api-next/files/docs/playbook/engineering.md",
+          "sha256": "4fe33eb94b59348ceaddfe5f234c5f1dbd40272a0163e8c920d9f917767bc975",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/harness.md",
+          "source": "variants/api-next/files/docs/playbook/harness.md",
+          "sha256": "4c97ee937e525eb6dfc478f47e5c55b8e5d49c42b9b7e9f9207fa628753c39b6",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/quality.md",
+          "source": "variants/api-next/files/docs/playbook/quality.md",
+          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/api-next.md",
+          "source": "variants/api-next/files/docs/playbook/variants/api-next.md",
+          "sha256": "99b1d50c662d876da36e98e4f588d448f2929e9a00eb26301639f48c3d4c6eca",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/inertia-monolith.md",
+          "source": "variants/api-next/files/docs/playbook/variants/inertia-monolith.md",
+          "sha256": "2b72fab7b8d05dd086b40afd8623884c40cbf89330c4fd8d4d61545b5295b01d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/next-only.md",
+          "source": "variants/api-next/files/docs/playbook/variants/next-only.md",
+          "sha256": "30f6ec637123cc34ebbd97abfa63c00892598643f08289e0a0b91b0e4200f8ed",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "lefthook.yml",
+          "source": "variants/api-next/files/lefthook.yml",
+          "sha256": "035d7bb1958a9279ed387cd0f7c0f290329141a160817113a4defe6ad2818eec",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "opencode.json",
+          "source": "variants/api-next/files/opencode.json",
+          "sha256": "94726d1ffd90a719bb2c36604111dc3b66f51525bf9bf83addd2e8a898f831c7",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/boost-sync-opencode-skills.sh",
+          "source": "variants/api-next/files/scripts/boost-sync-opencode-skills.sh",
+          "sha256": "924287786aff2d6aa960c443bb543542b24c8d89ed052aadccf7b666f377daf2",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/check-workflows.mjs",
+          "source": "variants/api-next/files/scripts/check-workflows.mjs",
+          "sha256": "23fb9d7db8968ac7dd2735f67dd34deca65d843d41e0c7f05bdf2fc06ba35502",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/frontend-gate.sh",
+          "source": "variants/api-next/files/scripts/frontend-gate.sh",
+          "sha256": "8a33c8be95061d2310846080399043e9b5d2aed4739f2610949b5599796f7d1c",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/generate-api-client.sh",
+          "source": "variants/api-next/files/scripts/generate-api-client.sh",
+          "sha256": "b4e10f60804446586500f6f18c8cfa927ba78aa81ae80f26b906ee8fb8115013",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/lint-commit-msg.sh",
+          "source": "variants/api-next/files/scripts/lint-commit-msg.sh",
+          "sha256": "1e5d956e864321cbdf02ad737f6dc3dd43f03e2964c6aefe92b290866b360659",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/php-coverage-config.php",
+          "source": "variants/api-next/files/scripts/php-coverage-config.php",
+          "sha256": "70d2beaabf2dea12796aa7bf04980aac9459834f3c852a953193d61d3c86344f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/php-gate.sh",
+          "source": "variants/api-next/files/scripts/php-gate.sh",
+          "sha256": "403ebb4d7df38e3bd3d309cc8229f35e4000c8bc817af94fb1e0db3e5153ba60",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.mjs",
+          "source": "variants/api-next/files/scripts/screenshot.mjs",
+          "sha256": "f91a15d341d3f5c6c724c883f62b0aa4533e4b4a2078034b887e980f7f9fcd16",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.sh",
+          "source": "variants/api-next/files/scripts/screenshot.sh",
+          "sha256": "46b3937a8974434ead360ac18f4b2f7d7b40ad090b34337b5d0f65fd891affb5",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "services/api/packages/boost-guidelines/composer.json",
+          "source": "variants/api-next/files/services/api/packages/boost-guidelines/composer.json",
+          "sha256": "271c9285ab524ab3c523192ac4e48dddb4e79cac66c473e46246a3541451e8d9",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "services/api/packages/boost-guidelines/resources/boost/guidelines/core.blade.php",
+          "source": "variants/api-next/files/services/api/packages/boost-guidelines/resources/boost/guidelines/core.blade.php",
+          "sha256": "1695e5cbf8efcfa1ed365407e2769189434dbb2cc45565ccd60ff91c87d60751",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "services/api/packages/boost-guidelines/resources/boost/skills/funnysoft-quality/SKILL.md",
+          "source": "variants/api-next/files/services/api/packages/boost-guidelines/resources/boost/skills/funnysoft-quality/SKILL.md",
+          "sha256": "1579c028ff5b91994d1530f08eabe2642282473f4b414cfecfc73b8b3067dc3d",
+          "mode": 420,
+          "text": true
+        }
+      ]
+    },
+    "next-only": {
+      "layout": {
+        "phpRoot": null,
+        "jsRoots": [
+          "."
+        ],
+        "designRoot": "design",
+        "boostArtisan": null,
+        "boostSkills": null
+      },
+      "assetSets": [
+        "harness",
+        "playbook",
+        "next-tooling"
+      ],
+      "assets": [
+        {
+          "path": ".github/workflows/deploy-vercel.yml",
+          "source": "variants/next-only/files/.github/workflows/deploy-vercel.yml",
+          "sha256": "1a1ba701b5cbe2ac2dce9665a57abee3115b4a75fc801b955457faf74284e75d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".github/workflows/quality.yml",
+          "source": "variants/next-only/files/.github/workflows/quality.yml",
+          "sha256": "d2fb24917b6cea22bf0dfdf5099aaa72c7e1ea44bb8f1cb66c4533377c2323af",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/agent/adversary.md",
+          "source": "variants/next-only/files/.opencode/agent/adversary.md",
+          "sha256": "301fe829505e0b7339cf9144caea0155abbcfcf46ea5a34e21b86e6dd3c60ed7",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/caveman.md",
+          "source": "variants/next-only/files/.opencode/rules/caveman.md",
+          "sha256": "ace47862c100a2c741eff45230427522560f7258aa026a28c8f5d74debbd0139",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/design.md",
+          "source": "variants/next-only/files/.opencode/rules/design.md",
+          "sha256": "0bfd2ab283f2b5d77c0137dca8796d0f25474150ab62e662a7a51dce1e894f77",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/ponytail.md",
+          "source": "variants/next-only/files/.opencode/rules/ponytail.md",
+          "sha256": "b45b5325fdaa3f88721cdd0ec2b8e56aeddb770fefb3a6ce4fde19cabaf407bd",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/product.md",
+          "source": "variants/next-only/files/.opencode/rules/product.md",
+          "sha256": "b6ee5aa0c9c5cc58f8c0ff6becbe7cc03b92fd35a2b11577dae596cae8a20199",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/unslop.md",
+          "source": "variants/next-only/files/.opencode/rules/unslop.md",
+          "sha256": "6a592ee5fca14807a6f46b3300b997d1c19e2666ae836c87db5515352edcce6c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/rules/workflow.md",
+          "source": "variants/next-only/files/.opencode/rules/workflow.md",
+          "sha256": "bc513f8c970992bd641e447b2d96af5e17003bf32732b1cd053309483f76f503",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/adr/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/adr/SKILL.md",
+          "sha256": "20fe1b7b8455989b4d137245245a112248e6d3738d3d19e7fe598366cd43af6d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/creative-mode/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/creative-mode/SKILL.md",
+          "sha256": "2e7170f45d92f7a8c6e4664ca5ce3735ebb564afb8afcee8a15a4b904341e9f0",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/design-mock/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/design-mock/SKILL.md",
+          "sha256": "cebc71724c9d690ba029b2e73297c524aa2a777f406632d71db5838342c338e5",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/frontend-ui/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/frontend-ui/SKILL.md",
+          "sha256": "77a5f29cb6a687c9800dce4d321b0d612630e5c8716bd82410ba5ed9858264ee",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/grilling/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/grilling/SKILL.md",
+          "sha256": "a4132f43b6da788a71c06ab4e32d873f99dbc9d7e3ec6ade6f3c4233965f3373",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/linear/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/linear/SKILL.md",
+          "sha256": "732d5b6053b2f3b8a28939aea1570fead04eb535effcd4072ca6e6cdfb850926",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": ".opencode/skills/retro/SKILL.md",
+          "source": "variants/next-only/files/.opencode/skills/retro/SKILL.md",
+          "sha256": "53df1dff8220cd618a9256ab5c92cd1154fabecb8157469422a7d3f9f147f816",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/README.md",
+          "source": "variants/next-only/files/docs/playbook/README.md",
+          "sha256": "ca12588bb9130457145ab71e1facf0defc73d17af9aa89ca191fc83ede64b85a",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0000-template.md",
+          "source": "variants/next-only/files/docs/playbook/adr/0000-template.md",
+          "sha256": "75a3e8284acc5162bc399c1de84dd443cebfc8db62123818c15a14ef2ebe2971",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/0001-opencode-only-harness.md",
+          "source": "variants/next-only/files/docs/playbook/adr/0001-opencode-only-harness.md",
+          "sha256": "64e5ed16f3422f9bbcfd74e6313a4d09015a8a51879b6946a47265d7307e9f9f",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/adr/README.md",
+          "source": "variants/next-only/files/docs/playbook/adr/README.md",
+          "sha256": "283c78ec87c864038f3d99f6635fb854ad41a895309187b3586465caeed61106",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/design.md",
+          "source": "variants/next-only/files/docs/playbook/design.md",
+          "sha256": "1752198ad3d9a04c76245cacf34d25576f32550f79a510a966bcdc15bf56fc38",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/engineering.md",
+          "source": "variants/next-only/files/docs/playbook/engineering.md",
+          "sha256": "4fe33eb94b59348ceaddfe5f234c5f1dbd40272a0163e8c920d9f917767bc975",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/harness.md",
+          "source": "variants/next-only/files/docs/playbook/harness.md",
+          "sha256": "4c97ee937e525eb6dfc478f47e5c55b8e5d49c42b9b7e9f9207fa628753c39b6",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/quality.md",
+          "source": "variants/next-only/files/docs/playbook/quality.md",
+          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/api-next.md",
+          "source": "variants/next-only/files/docs/playbook/variants/api-next.md",
+          "sha256": "99b1d50c662d876da36e98e4f588d448f2929e9a00eb26301639f48c3d4c6eca",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/inertia-monolith.md",
+          "source": "variants/next-only/files/docs/playbook/variants/inertia-monolith.md",
+          "sha256": "2b72fab7b8d05dd086b40afd8623884c40cbf89330c4fd8d4d61545b5295b01d",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "docs/playbook/variants/next-only.md",
+          "source": "variants/next-only/files/docs/playbook/variants/next-only.md",
+          "sha256": "30f6ec637123cc34ebbd97abfa63c00892598643f08289e0a0b91b0e4200f8ed",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "lefthook.yml",
+          "source": "variants/next-only/files/lefthook.yml",
+          "sha256": "d9403b66b399575a5b57441e3cfa2947aaa965b4ed62b72305c3a2d58bea3294",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "opencode.json",
+          "source": "variants/next-only/files/opencode.json",
+          "sha256": "92768d58aa3a16ddadd49bb16991fe535375aab67014d9cf1cce2ad8e5dd380c",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/frontend-gate.sh",
+          "source": "variants/next-only/files/scripts/frontend-gate.sh",
+          "sha256": "03ce79ce217c7c53a3bf3ae3c3c0e7061f3e4b7945ad2e1752e6b1dde177c8ed",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/lint-commit-msg.sh",
+          "source": "variants/next-only/files/scripts/lint-commit-msg.sh",
+          "sha256": "1e5d956e864321cbdf02ad737f6dc3dd43f03e2964c6aefe92b290866b360659",
+          "mode": 493,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.mjs",
+          "source": "variants/next-only/files/scripts/screenshot.mjs",
+          "sha256": "f91a15d341d3f5c6c724c883f62b0aa4533e4b4a2078034b887e980f7f9fcd16",
+          "mode": 420,
+          "text": true
+        },
+        {
+          "path": "scripts/screenshot.sh",
+          "source": "variants/next-only/files/scripts/screenshot.sh",
+          "sha256": "46b3937a8974434ead360ac18f4b2f7d7b40ad090b34337b5d0f65fd891affb5",
+          "mode": 493,
+          "text": true
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "source": "apply.mjs",
+    "sha256": "23355bbcd4f598ccaaac766c01e0e1c945aa3e3757dac88c9142416ae713ec0d"
+  },
+  "assetDigest": "9617fb25af0eab734dd99ac5fc4d1b8d186b9b5214b6ae4ec5cce70263d9aa42"
+}

@@ -54,7 +54,25 @@ test("real package inventory retains every Next template asset and excludes deve
   expect(files).toContain("template/base/package.json");
   expect(files).toContain("template/base/gitignore");
   expect(files).toContain("template/PROVENANCE.md");
+  expect(files).toContain("template/CLI-NOTICES.txt");
   expect(files.some((file) => file.startsWith("cli/"))).toBe(false);
+});
+
+test("package audit fails when npm omits an existing template asset", async () => {
+  const root = await temporary();
+  await writeFixtureFile(
+    root,
+    "package.json",
+    JSON.stringify({
+      name: "omission-fixture",
+      version: "0.0.0",
+      bin: "./create-f7t-app.js",
+      files: ["create-f7t-app.js"],
+    }),
+  );
+  for (const file of ["create-f7t-app.js", "README.md", "LICENSE", "template/base/omitted.txt"])
+    await writeFixtureFile(root, file, "fixture");
+  expect(() => auditPackage(root)).toThrow("Missing packaged asset: template/base/omitted.txt");
 });
 
 test.each([

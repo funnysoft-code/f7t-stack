@@ -20,15 +20,15 @@ import { dependencyComposition, STACK_IDS, stacks } from "./stacks";
 // Explicit opt-in source for building a real export fixture, never a production dependency.
 // Only this immutable archive is read. No working-tree files or private dependencies are copied.
 const source = process.env.F7T_STANDARDS_FIXTURE_SOURCE;
-const commit = "8f3d7d67841c2ba094813c75697446068e6c3767";
-const identity = "v0.0.0-u15-fixture";
+const commit = "13889e25ab3df8a06307156722dc08377183b356";
+const identity = "v0.3.1";
 const temps: string[] = [];
 afterEach(async () => {
   await Promise.all(temps.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
 test.skipIf(!source).each(STACK_IDS)(
-  "real U2 export composes %s before the install boundary",
+  "published export composes %s before the install boundary",
   async (stack) => {
     const temp = await mkdtemp(path.join(realpathSync(tmpdir()), "f7t-u15-"));
     temps.push(temp);
@@ -57,8 +57,12 @@ test.skipIf(!source).each(STACK_IDS)(
     await rm(archiveRoot, { recursive: true });
     const exported = JSON.parse(await readFile(path.join(exportRoot, "manifest.json"), "utf8"));
     verifyStandardsBundle(exportRoot, exported.assetDigest);
-    const pending = JSON.parse(await readFile(path.resolve("template/manifest.json"), "utf8"));
-    expect(pending.standardsCompatibility).toMatchObject({ commit, fixtureIdentity: identity });
+    const current = JSON.parse(await readFile(path.resolve("template/manifest.json"), "utf8"));
+    expect(current.standards).toMatchObject({
+      commit,
+      release: identity,
+      assetDigest: exported.assetDigest,
+    });
     release.standards = { ...exported.standards, assetDigest: exported.assetDigest };
     await cp(path.resolve("template/shared"), path.join(template, "shared"), { recursive: true });
     for (const variant of STACK_IDS) {

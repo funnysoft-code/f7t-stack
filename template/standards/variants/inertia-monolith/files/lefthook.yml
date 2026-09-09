@@ -1,0 +1,24 @@
+# Commit-time checks. CI runs the same scripts on pull requests.
+# Playwright is merge-time only. Do not add it here.
+
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: scripts/lint-commit-msg.sh --file {1}
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: php
+      glob:
+        - "{app/**,routes/**,config/**,database/**,tests/**,Modules/**}"
+        - "composer.*"
+        - "phpunit*"
+        - "phpstan*"
+        - "rector*"
+        - "pint*"
+        - "scripts/**"
+      run: scripts/php-gate.sh all
+    - name: frontend
+      glob: ["resources/**", "tests/**", "package.json", "bun.lock", "*.{js,ts,json}", "scripts/**"]
+      run: scripts/frontend-gate.sh lint && scripts/frontend-gate.sh typecheck && scripts/frontend-gate.sh test && scripts/frontend-gate.sh doctor

@@ -179,9 +179,13 @@ describe("createApp", () => {
   });
 
   test("pending production release cannot be bypassed by skip-install", async () => {
-    const cwd = await workspace();
-    const config = resolveConfig({ appName: "shop", skipInstall: true, git: false }, cwd);
-    await expect(createApp(config)).rejects.toThrow(/pending U14/);
+    const { config, root, options } = await fixture();
+    await writeFixtureFile(
+      root,
+      "template/manifest.json",
+      JSON.stringify({ schemaVersion: 1, status: "pending-release" }),
+    );
+    await expect(createApp(config, options)).rejects.toThrow(/pending U14/);
     await expect(readdir(config.projectDir)).rejects.toMatchObject({ code: "ENOENT" });
   });
 

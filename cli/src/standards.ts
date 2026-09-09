@@ -125,7 +125,8 @@ export function verifyReleaseBundle(root = packageRoot()): ReleaseManifest {
   if (release.schemaVersion !== 1 || release.status !== "release")
     throw new Error("Release bundle is pending U14 inventory, standards pin and lock catalog");
   if (
-    !commitPattern.test(release.templateRevision) ||
+    (!commitPattern.test(release.templateRevision) &&
+      release.templateRevision !== release.generatorVersion) ||
     !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(release.generatorVersion)
   )
     throw new Error("Invalid generator/template identity");

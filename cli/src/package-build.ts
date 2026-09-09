@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { assertDistributablePath } from "./fs";
 import { packageRoot } from "./paths";
+import { verifyCompleteCatalog } from "./release-matrix";
 import { packageInventory, verifyReleaseBundle } from "./standards";
 
 /** Compare npm's actual inventory with disk, so nested ignores cannot drop assets silently. */
@@ -33,7 +34,7 @@ export function auditPackage(root = packageRoot()): string[] {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const files = auditPackage();
-    if (process.argv.includes("--release")) verifyReleaseBundle();
+    if (process.argv.includes("--release")) verifyCompleteCatalog(verifyReleaseBundle());
     console.log(
       `Verified ${files.length} package files${process.argv.includes("--release") ? " and release bundle" : ""}.`,
     );

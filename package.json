@@ -1,7 +1,7 @@
 {
   "name": "create-f7t-app",
-  "version": "0.1.0",
-  "description": "FunnySoft Next.js app generator (T3-shaped, bun-first)",
+  "version": "0.2.0",
+  "description": "FunnySoft generator for Next.js, Laravel + Inertia, and Laravel API + Next.js",
   "keywords": [
     "bun",
     "create-f7t-app",
@@ -24,6 +24,9 @@
     "prepublishOnly": "bun run build && bun run verify:release",
     "verify:package": "bun cli/src/package-build.ts",
     "verify:release": "bun cli/src/package-build.ts --release",
+    "prepare:candidate": "bun cli/src/release-candidate.ts",
+    "prepare:release": "bun cli/src/release-candidate.ts --release",
+    "verify:matrix": "bun cli/src/packed-matrix.ts",
     "test": "vitest run",
     "check": "oxlint cli && oxfmt --check cli package.json tsconfig.json vitest.config.ts && tsc --noEmit && vitest run"
   },

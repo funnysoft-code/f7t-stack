@@ -50,6 +50,16 @@ test("verifies schema 1 and stamps shared runtime with generator receipt", async
   });
 });
 
+test("template revision may use the exact generator release version, but not an unrelated version", async () => {
+  const { root, release } = await fixture();
+  release.templateRevision = release.generatorVersion;
+  await writeFile(path.join(root, "template/manifest.json"), JSON.stringify(release));
+  expect(verifyReleaseBundle(root).templateRevision).toBe(release.generatorVersion);
+  release.templateRevision = "99.0.0";
+  await writeFile(path.join(root, "template/manifest.json"), JSON.stringify(release));
+  expect(() => verifyReleaseBundle(root)).toThrow("Invalid generator/template identity");
+});
+
 test.each(["directory", "symlink"])(
   "rejects a %s project brief before any standards writes",
   async (kind) => {
