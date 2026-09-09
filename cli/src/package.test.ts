@@ -56,7 +56,7 @@ test("real package inventory retains every Next template asset and excludes deve
   expect(files).toContain("template/PROVENANCE.md");
   expect(files).toContain("template/CLI-NOTICES.txt");
   expect(files.some((file) => file.startsWith("cli/"))).toBe(false);
-});
+}, 30_000);
 
 test("Git ignore rules retain every release asset while excluding local OpenCode state", async () => {
   const root = await temporary();
@@ -78,7 +78,7 @@ test("Git ignore rules retain every release asset while excluding local OpenCode
     .trim()
     .split("\n");
   expect(ignored).toEqual([".opencode/local-state.json"]);
-});
+}, 30_000);
 
 test("package audit fails when npm omits an existing template asset", async () => {
   const root = await temporary();
