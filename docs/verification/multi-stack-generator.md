@@ -1,6 +1,62 @@
 # Multi-stack generator verification
 
-The `0.2.0` source includes the reviewed application fixes and three test-only isolation fixes, pinned to published standards `v0.3.1`. Its minimal package refresh is under `u14-release-031-accepted`, with manifest commit `ff01d4e`. The route/schema failures were missing migrated-database prerequisites, not production defects. Stable local HTTPS acceptance passed; the coordinator verified all 359 recorded runtime files against the final candidate and source. Hosted CI and deployed-preview acceptance remain separate.
+The `0.2.0` bundle now pins published standards `v0.3.2` for the second CI correction round. Its package proof is under `u14-release-032`. All 359 recorded HTTPS runtime files still match current source and the new archive. The prior route/schema failures were missing migrated-database prerequisites, not production defects. Stable local HTTPS acceptance carries forward only for unchanged runtime content. Hosted CI retry and deployed-preview acceptance remain coordinator-owned.
+
+## CI round two: standards v0.3.2
+
+- Release: https://github.com/funnysoft-code/standards/releases/tag/v0.3.2, merged through standards PR #5.
+- Exact `git archive` source: `eeb9a77bb3fcc9e7100a0d87518f2966deeaf911`. Remote tag resolution was independently checked. The coordinator verified the merged tree against reviewed `dd56247`.
+- Independently verified export digest: `a2d300f3daf9b14e764f7e815afd07253a1b07446e8ec45a928a866fcf9f697a`.
+- Generator and template revision remain `0.2.0`. The existing complete lock catalog was preserved without re-resolution. Full `inventory()` equality and independent release verification pass.
+- New artifact root: `/private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/u14-release-032`.
+- Archive: `packed/create-f7t-app-0.2.0.tgz`.
+
+```text
+SHA-256 1d2354d69ec306bc1477274ffcf27eede67bb4886afbbb6527e808f8ac04209f
+```
+
+### Verified changes and parity
+
+Against accepted archive `a8076d66f6eb4d6c82144724e703da5afad03a186c1516cabf4961724de05605`, **953 of 962 files are byte-identical**, with unchanged executable modes. The nine changed files are the root README, template provenance, generator manifest, standards manifest, two exported `deploy-vercel.yml` workflows and three exported playbook `quality.md` documents. `delta.json` records their exact old/new hashes. CLI and application templates, setup code, tests, all dependency manifests and all lock files remain byte-identical.
+
+The Vercel workflow now exposes `VERCEL_TOKEN` only to project-settings pull and deploy/promote steps. Installation and build do not inherit it from job environment. This is verified exported workflow behavior; no deployment was executed. The generator's root CI Boost/local and SQLite-file corrections and `cli/src/github-actions.test.ts` remained coordinator-owned and were not edited by this worker.
+
+The runtime hash manifest retained by the HTTPS worker has SHA-256 `a5d937bc448fbb7483949c36f4a7abfcabcc9524817182da514239f8fa20912f`. All **359 entries match both current source and the v0.3.2 archive**. `runtime-parity.json` records this comparison. It does not claim a new browser run, changed deployment-workflow acceptance on a provider, or new Cloud proxy-address verification.
+
+All **962 package paths are tracked**, including the 46 standards assets retained by `aaf75f0`. This path check is not a committed Git-only snapshot test; the coordinator still owns that final verification after committing this refresh.
+
+### Checks and install-proof transfer
+
+| Check                                           | Result                                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------------------- |
+| Production release verification                 | 962 files pass, 837 template assets, 120 standards files                   |
+| Production generation matrix                    | 194 outputs and all three negative probes pass; no fixture mode            |
+| New full-matrix installs                        | Zero; unchanged 66-key catalog and 34 dependency fingerprints              |
+| Root checks with published-export tests enabled | 405 passed, 7 opt-in skips; lint, formatting and types pass                |
+| Real React Doctor 0.9.12                        | Pass on site, app, Sanity, SQLite, PostgreSQL, maximal Next and API + Next |
+| Archived v0.3.2 standards gate fixtures         | All 47 assertions pass                                                     |
+| Current source versus new extracted archive     | All 962 files match byte-for-byte                                          |
+
+Doctor ran on seven new generated directories under `doctor/`, each with a targeted frozen JavaScript install and the actual new exported gate. `env -u VERCEL_TOKEN` kept deployment credentials absent without reading their values. These seven prerequisite installs are not a rerun of the 66-key release install matrix; no new Composer installs were required. Node **22.23.2** and Bun **1.4.0** came from the existing isolated `u14-release-031/toolchain`.
+
+Hosted run [34297024838](https://github.com/funnysoft-code/f7t-stack/actions/runs/34297024838), head `aaf75f0b10ee4e80173504fce5cce7767d1b417b`, has successful `check` and `packed-matrix` jobs. Job conclusions were independently read with `gh run view`. Its generated-gate jobs failed before the reviewed CI/standards corrections. The successful hosted frozen-install proof and prior local 66-key receipt remain applicable to the identical lock/dependency inputs; the new hosted generated-gate run is still pending root's push/retry.
+
+Commands from the generator root, with the isolated toolchain prepended to PATH:
+
+```sh
+# Export exact archived standards commit, independently verify, copy its export,
+# and refresh the provenance hash using inventory("template").
+bun run verify:release
+F7T_STANDARDS_FIXTURE_SOURCE=/Users/jonaspauleta/Code/funnysoft/standards bun run check
+bun run verify:matrix --output "$R/packed"
+# In each of seven fresh generated Doctor directories, with VERCEL_TOKEN unset:
+bun install --frozen-lockfile
+bash scripts/frontend-gate.sh doctor
+# From the external artifact root:
+node standards-source/tests/gates_test.mjs "$R/doctor/api/node_modules/@playwright/test"
+```
+
+Receipts and logs under `$R`: `packed/matrix.json`, `packed.log`, `check.log`, `doctor.log`, `standards-gates.log`, `delta.json`, `runtime-parity.json`. No runtime fixtures or shared data were changed. No application, source CI workflow or CI-test files were edited by the package worker.
 
 ## Accepted test-only package refresh
 

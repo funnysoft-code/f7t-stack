@@ -10,6 +10,6 @@ test("README documents all stacks, setup recovery and the pending release gate",
   expect(readme).toContain("bun run setup");
   expect(readme).toContain("verify:release");
   expect(readme).toContain("0.2.0 is not released");
-  expect(readme).toContain("v0.3.1");
+  expect(readme).toContain("v0.3.2");
   expect(readme).toContain("cannot overwrite a nonempty target");
 });

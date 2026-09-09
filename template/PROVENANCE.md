@@ -4,7 +4,7 @@ The generator owns runnable application templates and their dependency locks. Fu
 
 ## Release state
 
-The generator bundle is version `0.2.0`, with template revision `0.2.0`. It pins published standards `v0.3.1`, merged commit `13889e25ab3df8a06307156722dc08377183b356`, export digest `9617fb25af0eab734dd99ac5fc4d1b8d186b9b5214b6ae4ec5cce70263d9aa42`. The export was produced from `git archive` of that exact commit, not the standards working directory. Package validation does not itself approve npm publication, paid-license scope or live deployment behavior.
+The generator bundle is version `0.2.0`, with template revision `0.2.0`. It pins published standards `v0.3.2`, merged commit `eeb9a77bb3fcc9e7100a0d87518f2966deeaf911`, export digest `a2d300f3daf9b14e764f7e815afd07253a1b07446e8ec45a928a866fcf9f697a`. The export was produced from `git archive` of that exact commit, not the standards working directory. Package validation does not itself approve npm publication, paid-license scope or live deployment behavior.
 
 ## Release manifest, schema 1
 

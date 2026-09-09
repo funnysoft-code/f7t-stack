@@ -20,8 +20,8 @@ import { dependencyComposition, STACK_IDS, stacks } from "./stacks";
 // Explicit opt-in source for building a real export fixture, never a production dependency.
 // Only this immutable archive is read. No working-tree files or private dependencies are copied.
 const source = process.env.F7T_STANDARDS_FIXTURE_SOURCE;
-const commit = "13889e25ab3df8a06307156722dc08377183b356";
-const identity = "v0.3.1";
+const commit = "eeb9a77bb3fcc9e7100a0d87518f2966deeaf911";
+const identity = "v0.3.2";
 const temps: string[] = [];
 afterEach(async () => {
   await Promise.all(temps.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));

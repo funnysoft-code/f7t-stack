@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "standards": {
-    "release": "v0.3.1",
-    "commit": "13889e25ab3df8a06307156722dc08377183b356"
+    "release": "v0.3.2",
+    "commit": "eeb9a77bb3fcc9e7100a0d87518f2966deeaf911"
   },
   "local": false,
   "variants": {
@@ -201,7 +201,7 @@
         {
           "path": "docs/playbook/quality.md",
           "source": "variants/inertia-monolith/files/docs/playbook/quality.md",
-          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "sha256": "3ece737740364a5fffc7741ae389841066c92a6d04dbe234596065be3ba26a83",
           "mode": 420,
           "text": true
         },
@@ -341,7 +341,7 @@
         {
           "path": ".github/workflows/deploy-vercel.yml",
           "source": "variants/api-next/files/.github/workflows/deploy-vercel.yml",
-          "sha256": "1a1ba701b5cbe2ac2dce9665a57abee3115b4a75fc801b955457faf74284e75d",
+          "sha256": "e74553853ef1c1a41fb35e4b5f4e45ca3d14c837d463aa36cc5fedad3361b898",
           "mode": 420,
           "text": true
         },
@@ -516,7 +516,7 @@
         {
           "path": "docs/playbook/quality.md",
           "source": "variants/api-next/files/docs/playbook/quality.md",
-          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "sha256": "3ece737740364a5fffc7741ae389841066c92a6d04dbe234596065be3ba26a83",
           "mode": 420,
           "text": true
         },
@@ -660,7 +660,7 @@
         {
           "path": ".github/workflows/deploy-vercel.yml",
           "source": "variants/next-only/files/.github/workflows/deploy-vercel.yml",
-          "sha256": "1a1ba701b5cbe2ac2dce9665a57abee3115b4a75fc801b955457faf74284e75d",
+          "sha256": "e74553853ef1c1a41fb35e4b5f4e45ca3d14c837d463aa36cc5fedad3361b898",
           "mode": 420,
           "text": true
         },
@@ -821,7 +821,7 @@
         {
           "path": "docs/playbook/quality.md",
           "source": "variants/next-only/files/docs/playbook/quality.md",
-          "sha256": "0eeb7dfeb4a798999914fc5e7bd868418d1bb16ee225a6fd693c94b9a4c2143c",
+          "sha256": "3ece737740364a5fffc7741ae389841066c92a6d04dbe234596065be3ba26a83",
           "mode": 420,
           "text": true
         },
@@ -895,5 +895,5 @@
     "source": "apply.mjs",
     "sha256": "23355bbcd4f598ccaaac766c01e0e1c945aa3e3757dac88c9142416ae713ec0d"
   },
-  "assetDigest": "9617fb25af0eab734dd99ac5fc4d1b8d186b9b5214b6ae4ec5cce70263d9aa42"
+  "assetDigest": "a2d300f3daf9b14e764f7e815afd07253a1b07446e8ec45a928a866fcf9f697a"
 }

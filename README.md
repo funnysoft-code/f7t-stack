@@ -10,7 +10,7 @@ FunnySoft's Bun-first generator for three application layouts:
 
 ## Release status
 
-Generator **0.2.0 is not released** to npm yet. Its bundle pins published FunnySoft standards [v0.3.1](https://github.com/funnysoft-code/standards/releases/tag/v0.3.1), commit `13889e25ab3df8a06307156722dc08377183b356`. Template revision `0.2.0` identifies the generator release rather than an unknown future Git commit. Packed verification is distinct from the remaining live browser, licensing and shipping gates. See [verification and remaining gates](docs/verification/multi-stack-generator.md).
+Generator **0.2.0 is not released** to npm yet. Its bundle pins published FunnySoft standards [v0.3.2](https://github.com/funnysoft-code/standards/releases/tag/v0.3.2), commit `eeb9a77bb3fcc9e7100a0d87518f2966deeaf911`. Template revision `0.2.0` identifies the generator release rather than an unknown future Git commit. Packed verification is distinct from the remaining live browser, licensing and shipping gates. See [verification and remaining gates](docs/verification/multi-stack-generator.md).
 
 The CLI syntax below describes the pending release:
 
