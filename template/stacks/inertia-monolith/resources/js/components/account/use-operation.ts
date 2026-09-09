@@ -16,11 +16,6 @@ export function useOperation() {
     } catch (error) {
       const result = failure(error);
       setState({ pending: false, error: result.message, fields: result.fields, success: "" });
-      requestAnimationFrame(() =>
-        document
-          .querySelector<HTMLElement>('[role="dialog"] [data-feedback], [data-feedback]')
-          ?.focus(),
-      );
     }
   }
   return { ...state, run };

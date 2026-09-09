@@ -1,13 +1,18 @@
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import type { ComponentProps } from "react";
+import { useLayoutEffect, useRef, type ComponentProps } from "react";
 import { useHydrated } from "./safe-form";
 
 export function Feedback({ message, error = false }: { message?: string; error?: boolean }) {
+  const node = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (error && message) node.current?.focus();
+  }, [error, message]);
   if (!message) return null;
   return (
     <Alert
+      ref={node}
       variant={error ? "destructive" : "default"}
       role={error ? "alert" : "status"}
       tabIndex={-1}
