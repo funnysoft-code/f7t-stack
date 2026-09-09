@@ -13,6 +13,7 @@ test('account pages preserve only same-origin intended destinations', function (
 });
 
 test('session-bearing HTML cannot be stored by browsers or shared caches', function (): void {
+    $this->withoutVite();
     $this->get('/login')->assertOk()->assertHeader('Cache-Control', 'no-store, private');
     $user = User::factory()->verified()->create();
     $this->actingAs($user)->get('/settings/profile')->assertOk()->assertHeader('Cache-Control', 'no-store, private');
