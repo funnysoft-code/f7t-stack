@@ -1,0 +1,55 @@
+{
+  "status": "complete",
+  "verdict": "Ready to merge",
+  "scope": {
+    "base": "abbf4bc9448703acae66e1cda5188dee93fa8fe5",
+    "head_sha": "abbf4bc9448703acae66e1cda5188dee93fa8fe5",
+    "branch": "feat/f7t-158-multi-stack-generator",
+    "pr_url": null,
+    "files_changed": 3,
+    "mode": "local-aligned, only the three explicitly named test diffs"
+  },
+  "intent": "Make proxy tests override and restore all Laravel environment adapters despite dotenv reloads. Remove the HTML cache test's dependency on a built Vite manifest while preserving real response and cache assertions.",
+  "intent_confidence": "explicit",
+  "reviewers": ["inline-correctness", "inline-testing", "inline-isolation-and-false-pass"],
+  "findings": [],
+  "actionable_findings": [],
+  "triage_groups": [],
+  "pre_existing_findings": [],
+  "requirements_completeness": null,
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [],
+  "residual_risks": [],
+  "testing_gaps": [
+    "These tests do not establish configuration-cache rebuild behavior or browser HTTPS asset correctness. Neither is newly claimed by this test-only correction.",
+    "The helper restores environment values rather than reconstructing dotenv's private loaded-key bookkeeping. That distinction is intentional: clearing the marker makes subsequent dotenv loads respect the explicit override. No failing behavior from this distinction was established."
+  ],
+  "coverage": {
+    "review_method": "Single reviewer, inline lenses, report-only. No source edits, lifecycle actions or delegation.",
+    "cross_model": "Not run under explicit zero-descendant and no-delegation instructions.",
+    "validator": "No findings required validation; no independent validator or corroboration shortcut claimed.",
+    "mechanics": "findings-mechanics.py accepted the empty finding set with zero malformed returns or findings.",
+    "source_inspection": [
+      "Read both complete proxy test files and the complete Inertia account-page test, plus their exact diff against HEAD.",
+      "Read the installed dotenv ImmutableWriter. clear removes a dotenv-loaded marker; externally defined values are already protected. The helper overrides ENV, SERVER and process values together, so refreshing the application cannot select a stale adapter value.",
+      "Read the installed withoutVite implementation. It swaps the asset renderer, not the HTTP request, session middleware or cache-header behavior. Restricting it to the HTML cache test preserves the purpose of that assertion.",
+      "The helper uses finally to restore absent keys, empty values and distinct prior adapter values. Normal-return restoration assertions supplement rather than replace the proxy and invalid-config assertions."
+    ],
+    "independent_probe": "Executed the actual helper extracted from the current source in a standalone PHP process with the fresh fixture's dependencies. For absent values, dotenv-loaded empty values and different ENV/SERVER/process values, attempted dotenv replacement did not defeat the override. An intentional callback exception propagated and all three original adapter states were restored exactly. No application database or browser was used.",
+    "identity": "All three current source files match their fresh fixture overlays byte for byte. Exact SHA-256 values are in identity.json.",
+    "retained_log_checks": {
+      "red": "Inertia 9 failed/15 passed; API 8 failed/2 passed.",
+      "green": "Inertia 24 passed/125 assertions; API 10 passed/48 assertions.",
+      "full_php": "Inertia 115 passed/968 assertions; API 117 passed/967 assertions. Logs include successful Pint and PHPStan summaries and configured coverage/type totals of 100%.",
+      "external_environment": "Both stacks 10 passed/48 assertions with an external TRUSTED_PROXIES value.",
+      "attribution": "Inspected retained log summaries and the evidence addendum. These suite runs belong to the worker. The coordinator separately reports matching targeted reruns. This reviewer did not rerun either complete suite."
+    },
+    "limits": "Production application code was outside this rereview. Live HTTPS verification remains with the ongoing worker. Manifest absence/restoration and complete static-gate success are reported in the evidence addendum. Fixture overlays do not establish a newly packed artifact.",
+    "plan": "Explicit narrow task contract; no separate plan-completeness or settlement-suppression pass.",
+    "suppressed_findings": 0,
+    "validation_drops": 0
+  },
+  "artifact_path": "docs/reviews/u14-proxy-tests-rereview-ses-f7c835d0",
+  "run_id": "u14-proxy-tests-rereview-ses-f7c835d0"
+}

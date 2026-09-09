@@ -14,7 +14,10 @@ describe("drizzle extras", () => {
     const example = await readFile(path.join(dir, ".env.example"), "utf8");
     expect(example).toContain("file:./dev.db");
     const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
-    expect(pkg.scripts["db:migrate"]).toBeDefined();
+    expect(pkg.scripts["db:migrate"]).toBe("bun scripts/migrate.ts");
+    expect(await readFile(path.join(dir, "scripts/migrate.ts"), "utf8")).toContain(
+      "drizzle-orm/bun-sqlite/migrator",
+    );
     expect(pkg.devDependencies["@types/bun"]).toBe("1.4.0");
   });
 

@@ -1,0 +1,18 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "template/stacks/inertia-monolith/.env.example": "136b4b8fad88a15811cbd8dc5d7748afa7abf35d4d2139d7cdfc1e759cc01fa5",
+    "template/stacks/inertia-monolith/README.md": "6597a0409367981b35be5b4a6bb01dfdfa905c970e72d788a556eea433fb5e74",
+    "template/stacks/inertia-monolith/bootstrap/app.php": "7eb9d0b2f99529a82793fdef1f6a9acb378da0c2746b2b9a19f06994d27f38d4",
+    "template/stacks/inertia-monolith/config/trustedproxy.php": "04442da12a24e209f69301e568f49f2905f88cbc451982e312832a6eb4e37a46",
+    "template/stacks/inertia-monolith/app/Http/Middleware/PreventSessionResponseCaching.php": "c5269dbd5043214c137dcc43e46b80a39982129a2b056d00481244e11fa533cf",
+    "template/stacks/inertia-monolith/tests/Feature/TrustedProxyTest.php": "b289be5ac67783085d1d121fc6ee2d124421021ec1f699aeadb006d077af0140",
+    "template/stacks/inertia-monolith/tests/Http/Users/AccountPagesTest.php": "9879fb19705723b76af2f81128463359b69c89b855524aae87a2a5f2d00239ca",
+    "template/stacks/api-next/README.md": "26af237dd6001286dcca86ea8f5db4ac00d9a4bf388c8d10426767f4b7bf60dd",
+    "template/stacks/api-next/services/api/.env.example": "627023528549aaa1327093fb6f6bac3170fb53f05179cb7cc3cf418a7b57cc4b",
+    "template/stacks/api-next/services/api/bootstrap/app.php": "b34e2c6617747fe31f0380000a7ca380c2b4a7e5e41412a7a2913371db56779e",
+    "template/stacks/api-next/services/api/config/trustedproxy.php": "04442da12a24e209f69301e568f49f2905f88cbc451982e312832a6eb4e37a46",
+    "template/stacks/api-next/services/api/tests/Feature/TrustedProxyTest.php": "b289be5ac67783085d1d121fc6ee2d124421021ec1f699aeadb006d077af0140",
+    "docs/verification/u14-proxy-cache-fix.md": "57f0780c12ca062f7f3978fa012cc2443388fe111f597d9ac0a6aa53082bc385"
+  }
+}

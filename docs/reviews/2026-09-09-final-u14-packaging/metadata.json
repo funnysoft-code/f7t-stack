@@ -1,0 +1,8 @@
+{
+  "run_id": "2026-09-09-final-u14-packaging",
+  "branch": "feat/f7t-158-multi-stack-generator",
+  "head_sha": "e87f4be5f131b4b9f967fe3e7c0f7a19c7e77467",
+  "verdict": "Ready to merge",
+  "verdict_scope": "Packaging delta only. No whole-release acceptance or CI claim.",
+  "completed_at": "2026-09-09T00:17:55Z"
+}

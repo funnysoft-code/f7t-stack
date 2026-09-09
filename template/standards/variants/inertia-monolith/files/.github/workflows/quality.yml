@@ -1,0 +1,186 @@
+# Laravel merge-time net. Browser interactions with external services are stubbed.
+# Hosting account connection is manual; deployment calls this workflow first.
+
+name: Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  commit-lint:
+    name: commit-lint
+    if: github.event_name == 'pull_request'
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Lint commit messages and PR title
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          {
+            git log --format=%s --no-merges "origin/${BASE_REF}..HEAD"
+            printf '%s\n' "$PR_TITLE"
+          } | scripts/lint-commit-msg.sh
+
+  php-gate:
+    name: php-${{ matrix.gate }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    timeout-minutes: 15
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: testing
+      DB_USERNAME: testing
+      DB_PASSWORD: testing
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      MAIL_MAILER: array
+      NIGHTWATCH_ENABLED: "false"
+      POSTHOG_ENABLED: "false"
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: testing
+          POSTGRES_PASSWORD: testing
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [pint, phpstan, rector, pest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.5"
+          coverage: pcov
+          extensions: pgsql, redis, mbstring, xml, ctype, tokenizer, json, bcmath
+
+      - name: Install Composer dependencies
+        working-directory: .
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        if: matrix.gate == 'phpstan' || matrix.gate == 'pest'
+        working-directory: .
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+
+      - name: PHP gate
+        run: scripts/php-gate.sh ${{ matrix.gate }}
+
+  frontend-gate:
+    name: frontend-${{ matrix.gate }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    timeout-minutes: 20
+    env:
+      APP_ENV: testing
+      E2E_MODE: stub
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: testing
+      DB_USERNAME: testing
+      DB_PASSWORD: testing
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      MAIL_MAILER: array
+      NIGHTWATCH_ENABLED: "false"
+      POSTHOG_ENABLED: "false"
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: testing
+          POSTGRES_PASSWORD: testing
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [lint, typecheck, test, doctor, e2e]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: oven-sh/setup-bun@56408e9a3f6d4f21fb6b1bf4fd7529dc366d7611 # v2.0.2
+        with:
+          bun-version: 1.4.0
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.5"
+          coverage: none
+          extensions: pgsql, redis, mbstring, xml, ctype, tokenizer, json, bcmath
+
+      - name: Install API or Inertia dependencies
+        working-directory: .
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare Laravel
+        working-directory: .
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
+          php artisan migrate --force
+
+      - name: Generate Inertia contracts for build and other checks
+        if: "'.' == '.' && matrix.gate != 'typecheck'"
+        run: |
+          php artisan wayfinder:generate --with-form
+          php artisan typescript:transform
+
+      - name: Check API contracts and workflow registry
+        if: "'.' == 'services/api'"
+        run: |
+          scripts/frontend-gate.sh schema
+          scripts/frontend-gate.sh workflows
+
+      - name: Install browser
+        if: matrix.gate == 'e2e' || ('.' == 'services/api' && matrix.gate == 'test')
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Build application
+        if: matrix.gate == 'e2e'
+        run: bun run build
+
+      - name: Frontend gate
+        run: scripts/frontend-gate.sh ${{ matrix.gate }}

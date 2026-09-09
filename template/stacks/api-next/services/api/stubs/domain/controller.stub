@@ -1,0 +1,11 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+final readonly class {{ class }}
+{
+    // Writes: validated FormRequest -> Data -> Action -> JsonResource.
+    // Reads: authorized FormRequest -> concrete repository -> JsonResource.
+}

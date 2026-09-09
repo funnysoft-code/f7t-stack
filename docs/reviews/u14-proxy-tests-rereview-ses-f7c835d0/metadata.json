@@ -1,0 +1,10 @@
+{
+  "run_id": "u14-proxy-tests-rereview-ses-f7c835d0",
+  "branch": "feat/f7t-158-multi-stack-generator",
+  "head_sha": "abbf4bc9448703acae66e1cda5188dee93fa8fe5",
+  "verdict": "Ready to merge",
+  "completed_at": "2026-09-09T00:29:10.559353+00:00",
+  "mode": "agent, targeted report-only, inline lenses",
+  "independent_reviewers": [],
+  "source_identity": "identity.json"
+}

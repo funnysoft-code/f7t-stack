@@ -1,5 +1,13 @@
 import { cancel, confirm, intro, isCancel, select, text } from "@clack/prompts";
-import type { Data, Db, FlagInput, Harness, Locale, Shell } from "./config";
+import {
+  validateOptions,
+  type Data,
+  type Db,
+  type FlagInput,
+  type Locale,
+  type Shell,
+} from "./config";
+import { STACK_IDS, stacks } from "./stacks";
 
 function abortIfCancel<T>(value: T | symbol): T {
   if (isCancel(value)) {
@@ -10,6 +18,7 @@ function abortIfCancel<T>(value: T | symbol): T {
 }
 
 export async function runWizard(input: FlagInput): Promise<FlagInput> {
+  validateOptions(input);
   intro("create-f7t-app");
 
   const appName =
@@ -25,6 +34,22 @@ export async function runWizard(input: FlagInput): Promise<FlagInput> {
         },
       }),
     ).trim();
+
+  const stack =
+    input.stack ??
+    abortIfCancel(
+      await select({
+        message: "Stack",
+        options: STACK_IDS.map((value) => ({ value, label: stacks[value].label })),
+        initialValue: "next-only" as const,
+      }),
+    );
+  validateOptions({ ...input, stack });
+  if (stack !== "next-only") {
+    const git =
+      input.git ?? abortIfCancel(await confirm({ message: "Git init", initialValue: true }));
+    return { ...input, appName, stack, git };
+  }
 
   const shell =
     input.shell ??
@@ -98,30 +123,12 @@ export async function runWizard(input: FlagInput): Promise<FlagInput> {
     locale = "en";
   }
 
-  const harness =
-    input.harness ??
-    abortIfCancel(
-      await select({
-        message: "Harness",
-        options: [
-          { value: "none" as const, label: "None" },
-          { value: "grok" as const, label: "Grok" },
-          { value: "cursor" as const, label: "Cursor" },
-          { value: "both" as const, label: "Both" },
-        ],
-        initialValue: "none" as Harness,
-      }),
-    );
-
-  const githubActions =
-    input.githubActions ??
-    abortIfCancel(await confirm({ message: "GitHub Actions", initialValue: true }));
-
   const git =
     input.git ?? abortIfCancel(await confirm({ message: "Git init", initialValue: true }));
 
   return {
     ...input,
+    stack,
     appName,
     shell,
     data,
@@ -131,8 +138,8 @@ export async function runWizard(input: FlagInput): Promise<FlagInput> {
     resend,
     intl,
     locale,
-    harness,
-    githubActions,
+    harness: "opencode",
+    githubActions: true,
     git,
   };
 }

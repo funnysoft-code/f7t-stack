@@ -8,8 +8,8 @@
       "drizzle-kit": "0.31.10"
     },
     "scripts": {
-      "db:generate": "drizzle-kit generate",
-      "db:migrate": "drizzle-kit migrate",
+      "db:generate": "drizzle-kit generate && oxfmt drizzle",
+      "db:migrate": "bun scripts/migrate.ts",
       "db:studio": "drizzle-kit studio"
     }
   },

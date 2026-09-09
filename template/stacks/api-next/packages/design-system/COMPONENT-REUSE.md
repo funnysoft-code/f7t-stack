@@ -1,0 +1,71 @@
+# Account component reuse contract
+
+Owner instruction, 2026-09-08: use the maximum useful amount of shadcn/ui and shadcn.io. U10 and U11 should share these compositions and tokens. The static mock demonstrates appearance and states; its vanilla controls and event handlers are not a component library to port.
+
+## Implementation map
+
+| Mock role                                                  | Reuse                                                                                                            | Composition and integration                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top account navigation                                     | shadcn `NavigationMenu` plus shadcn.io `navbar-settings-header`                                                  | Reuse the header/active-indicator composition. Use `NavigationMenuList`, `NavigationMenuItem`, and `NavigationMenuLink` with real route links and `aria-current`. Keep Home, Profile, Security. Render sign-out as a mutation button. Move the registry's demo Save/Edit controls into the actual form footer. |
+| Form and companion structure                               | shadcn `Card`, `Separator`                                                                                       | `CardHeader`/`CardTitle`/`CardDescription`, `CardContent`, and `CardFooter` own content and actions. Put form and companion in the selected responsive grid. Use the shared Card spacing variable for insets. Apply the shell's one divider with `Separator`; avoid one card per field.                        |
+| Identity                                                   | shadcn `Avatar`, `AvatarFallback`                                                                                | Use fallback initials from the account data. No photo upload feature is implied.                                                                                                                                                                                                                               |
+| Profile, registration, forgot/reset password, confirmation | shadcn `FieldGroup`, `FieldSet`, `FieldLegend`, `Field`, `FieldLabel`, `FieldDescription`, `FieldError`, `Input` | Preserve labels, autocomplete, paste, and 16px input text. `data-invalid` belongs on Field and `aria-invalid` on Input. API validation messages connect to the matching field.                                                                                                                                 |
+| Password change                                            | shadcn.io `account-change-password` plus shadcn Field/InputGroup                                                 | Reuse its current/new/confirmation field order, reveal/hide control, match feedback, pending action, and success replacement. Replace demo rules and timeout with the established server password policy and operation state. Keep session-impact notice only where the backend contract supports it.          |
+| Password visibility / setup-key copy                       | shadcn `InputGroup`, `InputGroupInput`, `InputGroupAddon`, `InputGroupButton`                                    | Addon follows the input in DOM and uses inline-end alignment. Name controls Show password, Hide password, or Copy setup key. Use 44px touch targets and announce copy feedback. Do not build absolutely positioned custom icon buttons.                                                                        |
+| Primary and secondary actions                              | shadcn `Button`                                                                                                  | Use default, outline, ghost, link, and destructive variants, driven by semantic tokens. Pending state composes `Spinner` and disabled state; there is no invented `isLoading` prop.                                                                                                                            |
+| Verification, confirmation, passkey errors and outages     | shadcn `Alert`, `AlertTitle`, `AlertDescription`                                                                 | Durable inline explanation with status or alert semantics. Password fallback stays available after passkey failure. Keep success actions inside the relevant flow, rather than replacing everything with a transient toast.                                                                                    |
+| Status rows                                                | shadcn `Badge`, `Item`, `ItemContent`, `ItemTitle`, `ItemDescription`, `ItemActions`                             | Verified email, passkey device, and recovery status use text plus shape/icon rather than color alone. Keep state derived from real account data.                                                                                                                                                               |
+| Empty passkeys and recovery lists                          | shadcn `Empty`, `EmptyHeader`, `EmptyTitle`, `EmptyDescription`, `EmptyContent`                                  | The explanatory text and next action from the mock fill these existing primitives.                                                                                                                                                                                                                             |
+| Initial account loading                                    | shadcn `Skeleton`                                                                                                | Match the selected form and companion geometry. Distinguish initial-data loading from mutation pending state.                                                                                                                                                                                                  |
+| Authenticator QR                                           | shadcn.io `qr-code`                                                                                              | Use its local QR generation around the server-issued otpauth URI. Reserve the QR area, include readable setup-key fallback, and provide error/loading states using Alert and Skeleton. See source caveats below.                                                                                               |
+| Authenticator challenge                                    | shadcn `Input` inside Field                                                                                      | Retain a single paste/autofill-friendly input with `autoComplete="one-time-code"`, numeric input mode, and a recovery-code alternative. A segmented `InputOTP` adds no useful behavior here.                                                                                                                   |
+| Recovery codes                                             | shadcn `Card`, `Button`, `Alert`                                                                                 | Use the existing layout and controls around real codes. Copy/download feedback can use `sonner`; do not add a second notification system. Regeneration requires the backend confirmation flow.                                                                                                                 |
+| Delete account / remove passkey / disable authenticator    | shadcn `AlertDialog` and `Checkbox`                                                                              | Use full AlertDialog title, description, footer, cancel, and action composition. Cancel receives initial focus; focus trapping and restoration belong to the primitive, not the mock's JS. Keep server-confirmed success and failure distinct.                                                                 |
+
+## Registry source inspection, not blind copying
+
+Inspected metadata and complete source on 2026-09-08:
+
+### `navbar-settings-header`
+
+Source: https://www.shadcn.io/blocks/navbar-settings-header. Registry metadata marks this block premium; authenticated source retrieval succeeded. Source imports `framer-motion`, `lucide-react`, and Button. Metadata additionally declares react-hook-form, which its retrieved source does not use.
+
+Reuse the compact horizontal settings header and active underline. Replace its local `activeTab` buttons with route-aware NavigationMenu links. Drop its Billing, Notifications, API, and Team labels, hidden demo Edit trigger, mount entrance animation, and global Save button. Preserve the selected top-nav composition. A static CSS active underline is enough; do not install both `motion` and `framer-motion` for unrelated block demos.
+
+### `account-change-password`
+
+Source: https://www.shadcn.io/blocks/account-change-password. Metadata marks this block premium; authenticated source retrieval succeeded. Dependencies are `motion` and `lucide-react`, with shadcn Button/Input.
+
+Its retrieved source contains fake sessions, a 1.5-second success timer, an eight-character/composition rule set, raw status colors, small unnamed eye buttons, and claims about logout and confirmation emails. Those are demo assumptions. Reuse the form and feedback composition, wire it to the account contract, adopt Field and InputGroup primitives, label reveal controls, use this design's semantic colors, and keep only backend-supported claims. U10/U11 should not import the demo validation policy or fabricate active sessions.
+
+### `qr-code`
+
+Source: https://www.shadcn.io/components/visualization/qr-code. Inspected complete source including its Demo. It imports `qrcode` and `culori`, though the returned registry metadata does not list dependencies. The implementation parses only an `oklch(...)` string and uses fallback colors for hex strings. Pass explicit valid OKLCH values for a dark QR on a light substrate, or adapt that parser before integrating this hex-token theme. Its `margin: 0` also requires a quiet-zone wrapper. Reserve space before generation and expose generation errors with an Alert. Replace the source's `props as any` cast to satisfy the project's strict types. The mock contains a plainly labeled setup placeholder; never use its sample text as a real credential.
+
+### Considered and omitted
+
+`form-password-strength` metadata was inspected. Its character-variety strength policy overlaps the change-password block and could conflict with the backend rules. Reuse the selected block's policy-backed feedback rather than layering another meter. No copy-button component matched the registry search; use shadcn InputGroupButton instead of inventing a source name.
+
+## Version-aware shadcn composition
+
+Ran `bunx --bun shadcn@latest docs field alert-dialog navigation-menu card input-group` and read the returned docs in a browser. Current CLI returned Base UI docs. Those docs use `render={<Button />}` / `render={<Link />}`; the registry examples for the older Radix-style AlertDialog use `asChild`. U10/U11 must inspect the generated project's actual `components.json` and existing primitives before choosing syntax. Do not migrate a base library as part of this design work.
+
+Verified docs:
+
+- https://ui.shadcn.com/docs/components/base/field
+- https://ui.shadcn.com/docs/components/base/alert-dialog
+- https://ui.shadcn.com/docs/components/base/navigation-menu
+- https://ui.shadcn.com/docs/components/base/card
+- https://ui.shadcn.com/docs/components/base/input-group
+
+Also inspected registry `field-demo` and `alert-dialog-demo` examples. In particular, use FieldError adjacent to the control and preserve AlertDialog's named title/description structure.
+
+Install only missing primitives and selected registry blocks inside the actual generated app/package. Resolve imports against its aliases. Styling belongs in the shared tokens and existing component variants; page-level classes arrange layout. Motion is optional and must honor reduced motion. Do not transplant Apex branding, sports content, navigation labels, or data models.
+
+## U11 implementation
+
+The API + Next runtime reuses U10's Radix-based shadcn components in `generated/`, with upstream attribution in `generated/PROVENANCE.md`. `apps/web/components.json` maps the UI alias to this shared package. Authored account compositions live in `apps/web/components/account/` and `apps/web/components/screens/`; `account.css` supplies the selected responsive layout.
+
+Navigation uses Next links and real route state. Forms use generated API types and the browser-visible Laravel request transport. The password composition uses server policy and actual session-impact behavior. QR generation uses `qrcode` locally with an explicit quiet zone and setup-key fallback. Recovery feedback stays inline. Demo timers, fake session lists, invented credential counts, and the mock toolbar are absent from production.
+
+See `mocks/account/U11-REVIEW.md` for route captures, browser journeys, gate results, and outstanding owner review.

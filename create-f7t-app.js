@@ -91,9 +91,60 @@ var require_src = __commonJS(function(exports, module) {
   module.exports = { cursor, scroll, erase, beep };
 });
 
+// cli/src/index.ts
+import path9 from "node:path";
+import { realpathSync } from "node:fs";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+
 // cli/src/config.ts
 import path from "node:path";
+
+// cli/src/stacks.ts
+var STACK_IDS = ["next-only", "inertia-monolith", "api-next"];
+var nextOnlyOptions = ["shell", "data", "db", "intl", "locale", "resend"];
+var stacks = {
+  "next-only": {
+    label: "Next.js only",
+    templateRoot: "base",
+    jsRoots: ["."],
+    phpRoot: null,
+    rejectedOptions: [],
+    setupEntryPoint: "bun run setup"
+  },
+  "inertia-monolith": {
+    label: "Laravel + Inertia + React",
+    templateRoot: "stacks/inertia-monolith",
+    jsRoots: ["."],
+    phpRoot: ".",
+    rejectedOptions: nextOnlyOptions,
+    setupEntryPoint: "bun run setup"
+  },
+  "api-next": {
+    label: "Laravel API + Next.js",
+    templateRoot: "stacks/api-next",
+    jsRoots: ["apps/web", "packages/api-client", "packages/design-system"],
+    phpRoot: "services/api",
+    rejectedOptions: nextOnlyOptions,
+    setupEntryPoint: "bun run setup"
+  }
+};
+function dependencyComposition(config) {
+  if (config.stack !== "next-only")
+    return { stack: config.stack };
+  return {
+    stack: config.stack,
+    data: config.data,
+    db: config.data === "drizzle" ? config.db : null,
+    shadcn: config.shadcn,
+    playwright: config.playwright,
+    resend: config.resend,
+    intl: config.intl
+  };
+}
+
+// cli/src/config.ts
 var YES_DEFAULTS = {
+  stack: "next-only",
   shell: "site",
   data: "none",
   db: "sqlite",
@@ -102,7 +153,7 @@ var YES_DEFAULTS = {
   resend: false,
   intl: false,
   locale: "pt-PT",
-  harness: "none",
+  harness: "opencode",
   githubActions: true,
   git: true,
   skipInstall: false,
@@ -111,7 +162,6 @@ var YES_DEFAULTS = {
 var SHELLS = ["site", "app"];
 var DATAS = ["none", "sanity", "drizzle"];
 var DBS = ["sqlite", "postgres"];
-var HARNESSES = ["none", "grok", "cursor", "both"];
 var LOCALES = ["en", "pt-PT"];
 function takeValue(flag, argv, index) {
   const value = argv[index + 1];
@@ -129,12 +179,28 @@ function takeEnum(flag, value, allowed) {
 function parseArgv(argv) {
   const input = {};
   let positionalName;
+  const seen = new Set;
   for (let i = 0;i < argv.length; i++) {
     const arg = argv[i];
     if (arg === undefined) {
       continue;
     }
+    const key = arg === "--no-git" ? "--git" : arg;
+    if (arg.startsWith("--") && seen.has(key)) {
+      throw new Error("Repeated or conflicting flags are not supported; provide each option once");
+    }
+    seen.add(key);
     switch (arg) {
+      case "--stack":
+        input.stack = takeEnum(arg, takeValue(arg, argv, i), STACK_IDS);
+        i++;
+        break;
+      case "--json":
+        input.json = true;
+        break;
+      case "--help":
+        input.help = true;
+        break;
       case "--app-name": {
         input.appName = takeValue(arg, argv, i);
         i++;
@@ -156,7 +222,10 @@ function parseArgv(argv) {
         break;
       }
       case "--harness": {
-        input.harness = takeEnum(arg, takeValue(arg, argv, i), HARNESSES);
+        if (takeValue(arg, argv, i) !== "opencode") {
+          throw new Error("OpenCode is mandatory; remove the old --harness flag or use --harness opencode");
+        }
+        input.harness = "opencode";
         i++;
         break;
       }
@@ -200,17 +269,24 @@ function parseArgv(argv) {
         input.githubActions = true;
         break;
       case "--no-github-actions":
-        input.githubActions = false;
-        break;
+      case "--no-opencode":
+      case "--no-quality":
+      case "--no-shadcn":
+        throw new Error("OpenCode, applicable shadcn and quality workflows are mandatory; remove policy-off flags");
       default: {
         if (arg.startsWith("-")) {
-          throw new Error(`Unknown flag: ${arg}`);
+          throw new Error("Unknown flag; run --help for supported options");
         }
         if (positionalName === undefined) {
           positionalName = arg;
+        } else {
+          throw new Error("Provide only one app name");
         }
       }
     }
+  }
+  if (input.appName !== undefined && positionalName !== undefined && input.appName !== positionalName) {
+    throw new Error("Conflicting app names; use a positional name or --app-name");
   }
   if (input.appName === undefined && positionalName !== undefined) {
     input.appName = positionalName;
@@ -218,16 +294,41 @@ function parseArgv(argv) {
   return input;
 }
 function resolveConfig(input, cwd = process.cwd()) {
+  validateOptions(input);
   if ((input.yes || input.ci) && input.appName === undefined) {
     throw new Error("--app-name is required with --yes or --CI");
   }
   if (input.appName === undefined) {
     throw new Error("--app-name is required");
   }
+  if (!/^[a-z0-9][a-z0-9_-]*$/.test(input.appName)) {
+    throw new Error("App name must use lowercase letters, numbers, hyphens or underscores, and start with a letter or number");
+  }
+  const common = {
+    appName: input.appName,
+    projectDir: path.resolve(cwd, input.appName),
+    harness: "opencode",
+    githubActions: true,
+    git: input.git ?? true,
+    skipInstall: input.skipInstall ?? false,
+    force: input.force ?? false
+  };
+  if (input.stack && input.stack !== "next-only") {
+    return {
+      ...common,
+      stack: input.stack,
+      shell: "app",
+      locale: "en",
+      db: "postgres",
+      intl: false,
+      shadcn: true,
+      playwright: true,
+      resend: true
+    };
+  }
   const config = {
     ...YES_DEFAULTS,
-    appName: input.appName,
-    projectDir: path.join(cwd, input.appName)
+    ...common
   };
   if (input.shell !== undefined)
     config.shell = input.shell;
@@ -245,17 +346,6 @@ function resolveConfig(input, cwd = process.cwd()) {
     config.intl = input.intl;
   if (input.locale !== undefined)
     config.locale = input.locale;
-  if (input.harness !== undefined)
-    config.harness = input.harness;
-  if (input.githubActions !== undefined) {
-    config.githubActions = input.githubActions;
-  }
-  if (input.git !== undefined)
-    config.git = input.git;
-  if (input.skipInstall !== undefined)
-    config.skipInstall = input.skipInstall;
-  if (input.force !== undefined)
-    config.force = input.force;
   if (config.intl) {
     config.locale = "en";
   }
@@ -264,19 +354,40 @@ function resolveConfig(input, cwd = process.cwd()) {
   }
   return config;
 }
+function validateOptions(input) {
+  const stack = input.stack ?? "next-only";
+  takeEnum("--stack", stack, STACK_IDS);
+  if (input.harness !== undefined && input.harness !== "opencode")
+    throw new Error("OpenCode is mandatory; remove the old --harness flag or use --harness opencode");
+  if (input.githubActions === false)
+    throw new Error("Quality workflows are mandatory; remove --no-github-actions");
+  for (const option of stacks[stack].rejectedOptions) {
+    if (input[option] !== undefined)
+      throw new Error(`--${option} is Next-only; Laravel uses a fixed English account app with PostgreSQL and prewired Resend`);
+  }
+  if (stack !== "next-only" && (input.shadcn === false || input.playwright === false))
+    throw new Error("Laravel shadcn and browser quality checks are mandatory");
+  if (input.shell !== undefined)
+    takeEnum("--shell", input.shell, SHELLS);
+  if (input.data !== undefined)
+    takeEnum("--data", input.data, DATAS);
+  if (input.db !== undefined)
+    takeEnum("--db", input.db, DBS);
+  if (input.locale !== undefined)
+    takeEnum("--locale", input.locale, LOCALES);
+}
 
 // cli/src/create-app.ts
-import { copyFile, mkdir as mkdir2, readdir as readdir2 } from "node:fs/promises";
-import { existsSync as existsSync4 } from "node:fs";
-import path7 from "node:path";
+import { lstat as lstat3, mkdir as mkdir4, readdir as readdir2 } from "node:fs/promises";
+import path8 from "node:path";
 
-// cli/src/agents.ts
+// cli/src/env-file.ts
 import { writeFile as writeFile3 } from "node:fs/promises";
 import path5 from "node:path";
 
 // cli/src/installers.ts
 import { existsSync as existsSync3, readFileSync as readFileSync2 } from "node:fs";
-import { readFile as readFile2, rename as rename2, unlink, writeFile as writeFile2 } from "node:fs/promises";
+import { readFile as readFile2, rename, unlink, writeFile as writeFile2 } from "node:fs/promises";
 import path4 from "node:path";
 
 // cli/src/app-root.ts
@@ -286,11 +397,11 @@ function appPagesRoot(config) {
 
 // cli/src/fs.ts
 import { existsSync as existsSync2, readFileSync } from "node:fs";
-import { cp, mkdir, readdir, readFile, rename, writeFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path3 from "node:path";
 
 // cli/src/paths.ts
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync } from "node:fs";
 import path2 from "node:path";
 import { fileURLToPath } from "node:url";
 function packageRoot() {
@@ -307,7 +418,37 @@ function packageRoot() {
   }
 }
 function templateDir(...parts) {
+  const relative = parts.join("/");
+  if (relative)
+    safeRelativePath(relative);
   return path2.join(packageRoot(), "template", ...parts);
+}
+function safeRelativePath(value) {
+  if (typeof value !== "string" || !value || value.includes("\\") || value.includes("\x00") || /^[A-Za-z]:/.test(value) || value.split("/").some((part) => !part || part === "." || part === "..")) {
+    throw new Error("Invalid package-relative path");
+  }
+  return value;
+}
+function regularPackagePath(root, relative, allowMissing = false) {
+  safeRelativePath(relative);
+  let cursor = path2.resolve(root);
+  const parts = ["", ...relative.split("/")];
+  for (const [index, part] of parts.entries()) {
+    cursor = path2.join(cursor, part);
+    const info = lstatSync(cursor, { throwIfNoEntry: false });
+    if (!info) {
+      if (allowMissing)
+        continue;
+      throw new Error(`Missing package asset: ${relative}`);
+    }
+    if (info.isSymbolicLink())
+      throw new Error(`Symlink package path: ${relative}`);
+    if (index < parts.length - 1 && !info.isDirectory())
+      throw new Error(`Invalid package directory: ${relative}`);
+    if (index === parts.length - 1 && !info.isFile() && !info.isDirectory())
+      throw new Error(`Invalid package file: ${relative}`);
+  }
+  return cursor;
 }
 function htmlLang(config) {
   return config.intl ? "en" : config.locale;
@@ -321,25 +462,124 @@ function applyReplacements(content, replacements) {
   }
   return next;
 }
-async function replaceInTree(dir, replacements) {
-  const entries = await readdir(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const abs = path3.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      if (entry.name === "node_modules") {
-        continue;
-      }
-      await replaceInTree(abs, replacements);
-      continue;
+var textExtensions = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".jsonc",
+  ".md",
+  ".txt",
+  ".css",
+  ".scss",
+  ".html",
+  ".svg",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".xml",
+  ".php",
+  ".sh",
+  ".bash",
+  ".lock",
+  ".sql"
+]);
+var textNames = new Set([
+  "gitignore",
+  ".gitignore",
+  ".gitattributes",
+  ".editorconfig",
+  ".env.example",
+  "LICENSE",
+  "NOTICE",
+  "artisan",
+  "Dockerfile",
+  "STANDARDS_VERSION"
+]);
+function isTemplateText(relative) {
+  return textNames.has(path3.basename(relative)) || textExtensions.has(path3.extname(relative));
+}
+function assertDistributablePath(relative, isDirectory = false) {
+  safeRelativePath(relative);
+  const forbidden = new Set([
+    "node_modules",
+    "vendor",
+    ".git",
+    ".next",
+    ".turbo",
+    ".cache",
+    "coverage",
+    "dist",
+    ".DS_Store",
+    "auth.json",
+    ".npmrc",
+    ".netrc",
+    ".ssh",
+    ".vercel",
+    ".envrc",
+    ".f7t-setup-state.json"
+  ]);
+  const runtimeFile = !isDirectory && !["gitignore", ".gitignore"].includes(path3.basename(relative)) && /(?:^|\/)(?:storage\/(?:logs|framework)|bootstrap\/cache|public\/build)\//.test(relative);
+  if (relative.split("/").some((part) => forbidden.has(part) || part.startsWith(".env") && part !== ".env.example" || /\.(?:sqlite(?:3)?(?:-wal|-shm)?|db|tgz|zip|tar|gz|phar|pem|key|p12|log)$/i.test(part)) || runtimeFile) {
+    throw new Error(`Forbidden distributable path: ${relative}`);
+  }
+}
+function assertDistributableContent(relative, bytes) {
+  if (/(?:^|\/)(?:composer\.(?:json|lock)|package\.json|bun\.lock)$/.test(relative)) {
+    const text = bytes.toString("utf8");
+    if (/https?:\/\/[^\s/"@]+@|[?&](?:token|key|auth|password|signature)=|"(?:http-basic|bearer|github-oauth)"\s*:/i.test(text))
+      throw new Error(`Credential-bearing dependency metadata: ${relative}`);
+  }
+}
+async function collectTemplate(from, replacements, skip = new Set, mapRoot = (name) => name) {
+  const writes = [];
+  const seen = new Set;
+  async function visit(relative) {
+    const source = regularPackagePath(from, relative);
+    const info = await lstat(source);
+    assertDistributablePath(relative, info.isDirectory());
+    if (info.isDirectory()) {
+      for (const name of (await readdir(source)).sort())
+        await visit(`${relative}/${name}`);
+      return;
     }
-    if (!entry.isFile()) {
-      continue;
+    const parts = relative.split("/");
+    parts[0] = mapRoot(parts[0]);
+    if (parts.at(-1) === "gitignore")
+      parts[parts.length - 1] = ".gitignore";
+    const destination = safeRelativePath(parts.join("/"));
+    if (seen.has(destination))
+      throw new Error(`Duplicate template destination: ${destination}`);
+    seen.add(destination);
+    let bytes = await readFile(source);
+    assertDistributableContent(relative, bytes);
+    if (isTemplateText(relative)) {
+      if (bytes.includes(0))
+        throw new Error(`Binary bytes in declared text: ${relative}`);
+      const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      bytes = Buffer.from(applyReplacements(text, replacements));
     }
-    const content = await readFile(abs, "utf8");
-    const next = applyReplacements(content, replacements);
-    if (next !== content) {
-      await writeFile(abs, next, "utf8");
-    }
+    writes.push({ relative: destination, bytes, mode: info.mode & 73 ? 493 : 420 });
+  }
+  for (const name of (await readdir(from)).sort())
+    if (!skip.has(name))
+      await visit(name);
+  return writes;
+}
+async function writeTemplate(target, writes) {
+  for (const item of writes) {
+    const dest = regularPackagePath(target, item.relative, true);
+    if (existsSync2(dest) && (await lstat(dest)).isDirectory())
+      throw new Error(`Target is a directory: ${item.relative}`);
+  }
+  for (const item of writes) {
+    const dest = path3.join(target, item.relative);
+    await mkdir(path3.dirname(dest), { recursive: true });
+    await writeFile(dest, item.bytes);
+    await chmod(dest, item.mode);
   }
 }
 function extraRootSkip(fromAbs) {
@@ -348,7 +588,7 @@ function extraRootSkip(fromAbs) {
   if (!existsSync2(manifestPath)) {
     return skip;
   }
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const manifest = JSON.parse(readFileSync(regularPackagePath(fromAbs, "extra.json"), "utf8"));
   if (manifest.globalsCss) {
     skip.add(path3.basename(manifest.globalsCss));
   }
@@ -373,44 +613,11 @@ async function copyExtra(name, config, options = {}) {
   }
   const replacements = extraReplacements(config);
   const skip = extraRootSkip(fromAbs);
-  const entries = await readdir(fromAbs, { withFileTypes: true });
-  for (const entry of entries) {
-    if (skip.has(entry.name)) {
-      continue;
-    }
-    const src = path3.join(fromAbs, entry.name);
-    const destRel = options.appPrefix && entry.name === "__app__" ? appPagesRoot(config) : entry.name;
-    const dest = path3.join(config.projectDir, destRel);
-    if (entry.isDirectory()) {
-      await copyTemplateDir(src, dest, replacements);
-      continue;
-    }
-    if (!entry.isFile()) {
-      continue;
-    }
-    await mkdir(path3.dirname(dest), { recursive: true });
-    await cp(src, dest);
-    const content = await readFile(dest, "utf8");
-    const next = applyReplacements(content, replacements);
-    if (next !== content) {
-      await writeFile(dest, next, "utf8");
-    }
-  }
-}
-async function promoteGitignore(dir) {
-  const from = path3.join(dir, "gitignore");
-  const to = path3.join(dir, ".gitignore");
-  if (existsSync2(from)) {
-    await rename(from, to);
-  }
+  const writes = await collectTemplate(fromAbs, replacements, skip, (name2) => options.appPrefix && name2 === "__app__" ? appPagesRoot(config) : name2);
+  await writeTemplate(config.projectDir, writes);
 }
 async function copyTemplateDir(fromAbs, toAbs, replacements) {
-  await cp(fromAbs, toAbs, {
-    recursive: true,
-    filter: (src) => path3.basename(src) !== "node_modules"
-  });
-  await replaceInTree(toAbs, replacements);
-  await promoteGitignore(toAbs);
+  await writeTemplate(toAbs, await collectTemplate(fromAbs, replacements));
 }
 async function mergePackageJson(projectDir, patch) {
   const pkgPath = path3.join(projectDir, "package.json");
@@ -423,6 +630,11 @@ async function mergePackageJson(projectDir, patch) {
   }
   if (patch.scripts) {
     pkg.scripts = { ...pkg.scripts, ...patch.scripts };
+  }
+  for (const field of ["dependencies", "devDependencies"]) {
+    if (pkg[field]) {
+      pkg[field] = Object.fromEntries(Object.entries(pkg[field]).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
+    }
   }
   await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}
 `);
@@ -461,6 +673,10 @@ async function appendEnvExample(projectDir, entries) {
 // cli/src/installers.ts
 async function runShell(name, config) {
   await copyExtra(name, config, { appPrefix: true });
+  if (config.intl) {
+    const page = path4.join(config.projectDir, appPagesRoot(config), "page.tsx");
+    await writeFile2(page, (await readFile2(page, "utf8")).replace('import Link from "next/link";', 'import { Link } from "~/i18n/navigation";'));
+  }
 }
 async function runExtra(name, config, options = {}) {
   await copyExtra(name, config, options);
@@ -484,7 +700,7 @@ async function runResend(config) {
   const dest = contactPath(config);
   const root = path4.join(config.projectDir, appPagesRoot(config));
   if (dest !== "contact") {
-    await rename2(path4.join(root, "contact"), path4.join(root, dest));
+    await rename(path4.join(root, "contact"), path4.join(root, dest));
   }
   if (!config.intl) {
     return;
@@ -515,24 +731,6 @@ function readExtraManifest(extraName) {
     return {};
   }
   return JSON.parse(readFileSync2(manifestPath, "utf8"));
-}
-var GITHUB_E2E_JOB = `
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps
-      - run: bun run test:e2e
-`;
-async function runGithubActions(config) {
-  await copyExtra("github-actions", config);
-  const ymlPath = path4.join(config.projectDir, ".github/workflows/ci.yml");
-  const yml = await readFile2(ymlPath, "utf8");
-  const next = yml.split("__F7T_E2E_JOB__").join(config.playwright ? GITHUB_E2E_JOB : "");
-  await writeFile2(ymlPath, next.replace(/\n+$/, `
-`));
 }
 var installers = [
   {
@@ -579,21 +777,6 @@ var installers = [
     name: "playwright",
     shouldRun: (config) => config.playwright,
     run: (config) => runExtra("playwright", config)
-  },
-  {
-    name: "harness-grok",
-    shouldRun: (config) => config.harness === "grok" || config.harness === "both",
-    run: (config) => runExtra("harness-grok", config)
-  },
-  {
-    name: "harness-cursor",
-    shouldRun: (config) => config.harness === "cursor" || config.harness === "both",
-    run: (config) => runExtra("harness-cursor", config)
-  },
-  {
-    name: "github-actions",
-    shouldRun: (config) => config.githubActions,
-    run: (config) => runGithubActions(config)
   }
 ];
 function landedExtras(config) {
@@ -603,135 +786,37 @@ function landedExtras(config) {
   }));
 }
 async function runInstallers(config) {
+  if (config.stack !== "next-only")
+    throw new Error("Next installers require the next-only stack");
   for (const installer of installers) {
     if (installer.shouldRun(config)) {
       await installer.run(config);
     }
   }
+  const entry = [
+    ...config.data === "sanity" ? ["src/sanity/lib/site-settings.ts"] : [],
+    ...config.data === "drizzle" ? ["src/server/db/index.ts", "src/server/db/schema.ts"] : [],
+    ...config.shadcn ? ["src/components/ui/button.tsx"] : [],
+    ...config.intl ? ["src/i18n/navigation.ts"] : []
+  ];
+  if (entry.length) {
+    const inline = `[${entry.map((file) => JSON.stringify(file)).join(", ")}]`;
+    const formatted = inline.length + '  "entry": '.length <= 100 ? inline : `[
+${entry.map((file) => `    ${JSON.stringify(file)}`).join(`,
+`)}
+  ]`;
+    await writeFile2(path4.join(config.projectDir, "knip.json"), `{
+  "entry": ${formatted}
 }
-
-// cli/src/agents.ts
-var STACK_LABELS = {
-  sanity: "Sanity",
-  "drizzle-sqlite": "Drizzle (SQLite)",
-  "drizzle-postgres": "Drizzle (Postgres)",
-  "next-intl": "next-intl",
-  "shell-site": "Site shell",
-  "shell-app": "App shell",
-  shadcn: "ShadCN UI",
-  resend: "Resend",
-  playwright: "Playwright",
-  "harness-grok": "Grok harness",
-  "harness-cursor": "Cursor harness",
-  "github-actions": "GitHub Actions"
-};
-function layoutLines(names) {
-  const lines = [];
-  if (names.has("next-intl")) {
-    lines.push("- `src/app/[locale]/` pages");
-    lines.push("- `src/i18n/` next-intl routing");
-    lines.push("- `messages/` catalogs");
-  } else {
-    lines.push("- `src/app/` App Router pages");
+`);
   }
-  lines.push("- `src/env.js` env schema");
-  if (names.has("shell-site") || names.has("shell-app")) {
-    lines.push("- `src/lib/site.ts` copy and nav");
-  }
-  if (names.has("sanity")) {
-    lines.push("- `src/app/studio/` Sanity Studio");
-    lines.push("- `src/sanity/` schema and client");
-  }
-  if (names.has("drizzle-sqlite") || names.has("drizzle-postgres")) {
-    lines.push("- `src/server/db/` Drizzle");
-  }
-  if (names.has("shadcn")) {
-    lines.push("- `src/components/ui/` ShadCN UI");
-    lines.push("- `src/lib/utils.ts` `cn` helper");
-  }
-  if (names.has("resend")) {
-    lines.push("- `src/app/api/contact/` Resend contact Route Handler");
-  }
-  if (names.has("playwright")) {
-    lines.push("- `e2e/` Playwright");
-  }
-  return lines;
-}
-async function writeAgents(config) {
-  const extras = landedExtras(config);
-  const names = new Set(extras.map((extra) => extra.name));
-  const shellLabel = config.shell === "site" ? "Site" : "App";
-  const stack = [
-    "- bun",
-    "- Next.js App Router, React 19, TypeScript strict",
-    "- Tailwind CSS v4",
-    "- oxlint, oxfmt, vitest, React Doctor",
-    "- `@t3-oss/env-nextjs`",
-    ...extras.map((extra) => `- ${STACK_LABELS[extra.name] ?? extra.name}`)
-  ];
-  const extraScripts = extras.flatMap((extra) => Object.keys(extra.manifest.package?.scripts ?? {}));
-  const commands = [
-    "- `bun install`",
-    "- `bun run dev`",
-    "- `bun run check`",
-    "- `bun run build`",
-    ...extraScripts.map((script) => `- \`bun run ${script}\``)
-  ];
-  const extraAgents = extras.map((extra) => extra.manifest.agents?.trim()).filter((block) => Boolean(block));
-  const extraBlock = extraAgents.length > 0 ? `
-${extraAgents.join(`
-
-`)}
-` : "";
-  const doNot = [
-    "- Commit secrets or print them in logs",
-    "- Force-push",
-    "- Drive-by refactors",
-    "- Hand-edit ignored generated files"
-  ];
-  if (names.has("sanity")) {
-    doNot.push("- Hand-edit generated Sanity `schema.json` or types");
-  }
-  const markdown = `# ${config.appName}
-
-${config.appName} is a Next.js ${shellLabel}.
-
-## Stack
-
-${stack.join(`
-`)}
-
-## Commands
-
-${commands.join(`
-`)}
-${extraBlock}
-## src/
-
-${layoutLines(names).join(`
-`)}
-
-## Conventions
-
-- Import alias \`~/*\` maps to \`src/*\`
-- bun only. Do not add npm, pnpm, or yarn
-- APIs are Route Handlers plus Zod. no tRPC
-
-## Do not
-
-${doNot.join(`
-`)}
-`;
-  await writeFile3(path5.join(config.projectDir, "AGENTS.md"), markdown);
 }
 
 // cli/src/env-file.ts
-import { writeFile as writeFile4 } from "node:fs/promises";
-import path6 from "node:path";
 var BASE_SITE_URL = {
   key: "NEXT_PUBLIC_SITE_URL",
   side: "client",
-  zod: "z.string().url()",
+  zod: "z.url()",
   example: "http://localhost:3000"
 };
 function extraEnv(config) {
@@ -793,7 +878,7 @@ ${runtime.join(`
   emptyStringAsUndefined: true,
 });
 `;
-  await writeFile4(path6.join(config.projectDir, "src/env.js"), envJs);
+  await writeFile3(path5.join(config.projectDir, "src/env.js"), envJs);
   const dotenv = [
     `${BASE_SITE_URL.key}=${BASE_SITE_URL.example}`,
     ...extra.map((entry) => `${entry.key}=${entry.example}`)
@@ -801,8 +886,8 @@ ${runtime.join(`
 `);
   const dotenvText = `${dotenv}
 `;
-  await writeFile4(path6.join(config.projectDir, ".env.example"), dotenvText);
-  await writeFile4(path6.join(config.projectDir, ".env"), dotenvText);
+  await writeFile3(path5.join(config.projectDir, ".env.example"), dotenvText);
+  await writeFile3(path5.join(config.projectDir, ".env"), dotenvText);
 }
 
 // cli/src/git.ts
@@ -833,78 +918,626 @@ async function initGit(dir) {
   }
 }
 
-// cli/src/install.ts
+// template/shared/setup-runtime.ts
+import { createHash } from "node:crypto";
+import { lstat as lstat2, mkdir as mkdir2, readFile as readFile3, writeFile as writeFile4 } from "node:fs/promises";
+import path6 from "node:path";
+
+// template/shared/prerequisites.ts
 import { spawn as spawn2 } from "node:child_process";
-function runBunInstall(projectDir) {
-  const bunGlobal = globalThis.Bun;
-  if (bunGlobal) {
-    return bunGlobal.spawn(["bun", "install"], {
-      cwd: projectDir,
-      stdout: "inherit",
-      stderr: "inherit"
-    }).exited;
-  }
-  return new Promise((resolve, reject) => {
-    const child = spawn2("bun", ["install"], {
-      cwd: projectDir,
-      stdio: "inherit",
-      env: process.env
-    });
-    child.on("error", reject);
-    child.on("close", (code) => resolve(code ?? 1));
+var runCommand = (command, cwd) => new Promise((resolve, reject) => {
+  const child = spawn2(command[0], command.slice(1), {
+    cwd,
+    env: process.env,
+    stdio: ["ignore", "pipe", "ignore"]
   });
-}
-async function installDeps(projectDir) {
-  const code = await runBunInstall(projectDir);
-  if (code !== 0) {
-    throw new Error(`bun install exited with code ${code}`);
+  let output = "";
+  child.stdout.on("data", (chunk) => {
+    if (output.length < 65536)
+      output += chunk.toString();
+  });
+  child.on("error", () => reject(new Error("Command unavailable")));
+  child.on("close", (code) => code === 0 ? resolve(output.trim()) : reject(new Error("Command failed")));
+});
+async function checkPrerequisites(stack, cwd, run2 = runCommand) {
+  const check = async (command, valid, guidance) => {
+    try {
+      if (valid(await run2(command, cwd)))
+        return;
+    } catch {}
+    throw new Error(guidance);
+  };
+  await check(["bun", "--version"], (value) => /^(1\.(?:[4-9]|[1-9]\d+)\.|[2-9]\.)/.test(value), "Install bun >=1.4 before rerunning setup.");
+  if (stack === "next-only")
+    return;
+  await check(["composer", "--version"], (value) => /Composer version 2\./.test(value), "Install composer 2 and configure private package access outside this project.");
+  const compatible = (value) => Number(value) >= 80500 && Number(value) < 90000;
+  await check(["php", "-r", "echo PHP_VERSION_ID;"], compatible, "Select php 8.5 or newer PHP 8.x for the CLI.");
+  await check(["herd", "php", "-r", "echo PHP_VERSION_ID;"], compatible, "Install herd and select PHP 8.5 for this site: herd isolate 8.5.");
+  const extensions = [
+    "ctype",
+    "curl",
+    "dom",
+    "fileinfo",
+    "filter",
+    "hash",
+    "intl",
+    "mbstring",
+    "openssl",
+    "pcntl",
+    "pdo_pgsql",
+    "redis",
+    "session",
+    "tokenizer",
+    "xml",
+    "zlib"
+  ];
+  for (const prefix of [["php"], ["herd", "php"]]) {
+    await check([
+      ...prefix,
+      "-r",
+      `foreach (${JSON.stringify(extensions).replaceAll('"', "'")} as $extension) { if (!extension_loaded($extension)) exit(1); }`
+    ], () => true, `${prefix.join(" ")} needs extensions: ${extensions.join(", ")}. Enable them for the CLI and Herd site, then rerun setup.`);
   }
 }
 
-// cli/src/create-app.ts
-async function assertProjectDirReady(projectDir, force) {
-  let entries;
+// template/shared/install.ts
+async function installDeps(projectDir, run2 = runCommand) {
+  await run2(["bun", "install", "--frozen-lockfile"], projectDir);
+}
+
+// template/shared/setup-runtime.ts
+function projectDatabase(root) {
+  const slug = path6.basename(root).toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 35);
+  return `f7t_${slug}_${createHash("sha256").update(path6.resolve(root)).digest("hex").slice(0, 8)}`;
+}
+async function preserveEnvironment(directory, database) {
+  const target = path6.join(directory, ".env");
   try {
-    entries = await readdir2(projectDir);
+    const info = await lstat2(target);
+    if (!info.isFile() || info.isSymbolicLink())
+      throw new Error("Environment must be a regular file");
+    return;
   } catch (error) {
-    const err = error;
-    if (err.code === "ENOENT") {
-      return;
-    }
-    throw error;
+    if (error.code !== "ENOENT")
+      throw error;
   }
-  if (entries.length > 0 && !force) {
-    throw new Error(`Directory ${projectDir} is not empty`);
+  let example = await readFile3(path6.join(directory, ".env.example"), "utf8");
+  if (database) {
+    example = example.replace(/^DB_DATABASE=.*$/m, `DB_DATABASE=${database}`).replace(/^REDIS_PREFIX=.*$/m, `REDIS_PREFIX=${database}:`).replace(/^HORIZON_PREFIX=.*$/m, `HORIZON_PREFIX=${database}:horizon:`).replace(/^REDIS_QUEUE=.*$/m, `REDIS_QUEUE=${database}`);
+  }
+  await writeFile4(target, example, { flag: "wx", mode: 384 });
+}
+var guidance = {
+  prerequisites: "Check Bun, Composer, PHP extensions and the Herd site's PHP version.",
+  environment: "Provide regular .env.example files and preserve your existing .env values.",
+  "javascript-dependencies": "Check network access and the committed Bun lockfile. Rerun with bun run setup.",
+  "php-dependencies": "Check network access, composer.lock and preconfigured Composer credentials. For API + Next, authorized Scramble Pro access is mandatory.",
+  platform: "Enable the extensions and PHP version required by composer.lock in both CLI and Herd.",
+  boost: "Check Boost guideline/skill installation in the PHP root and the root skill-sync script. Rerun setup after restoring installed formatting tools and package access.",
+  services: "Check PostgreSQL authentication, Redis and Herd SMTP at the hosts and ports in .env. Herd defaults: 5432, 6138, 2525; set REDIS_PORT=6379 if your Valkey uses it.",
+  "application-key": "Check .env permissions. Existing application keys must remain unchanged.",
+  database: "Setup only creates its dedicated project database. Check DB_DATABASE and database creation permission; never point setup at a shared database.",
+  migrations: "Check the database connection. Inspect php artisan migrate in the Laravel root, then rerun setup. Existing rows are preserved.",
+  contracts: "Check route/schema generation and private package access, then rerun setup."
+};
+async function initializeProject(root, stack, options = {}) {
+  const run2 = options.run ?? runCommand;
+  const phpRoot = stack === "api-next" ? path6.join(root, "services/api") : root;
+  const completedStages = [];
+  let failedStage = "prerequisites";
+  const stage = async (name, action) => {
+    failedStage = name;
+    await action();
+    completedStages.push(name);
+  };
+  let result;
+  try {
+    await stage("prerequisites", () => checkPrerequisites(stack, phpRoot, run2));
+    await stage("environment", async () => {
+      await preserveEnvironment(phpRoot, stack === "next-only" ? undefined : projectDatabase(root));
+      if (stack === "api-next")
+        await preserveEnvironment(path6.join(root, "apps/web"));
+    });
+    await stage("javascript-dependencies", async () => {
+      const lock = await lstat2(path6.join(root, "bun.lock"));
+      if (!lock.isFile() || lock.isSymbolicLink())
+        throw new Error("A regular Bun release lock is required");
+      await installDeps(root, run2);
+    });
+    const pkg = JSON.parse(await readFile3(path6.join(root, "package.json"), "utf8"));
+    if (stack !== "next-only") {
+      await stage("php-dependencies", async () => {
+        const lock = await lstat2(path6.join(phpRoot, "composer.lock"));
+        if (!lock.isFile() || lock.isSymbolicLink())
+          throw new Error("A regular Composer release lock is required");
+        await run2(["composer", "validate", "--strict", "--no-check-all"], phpRoot);
+        await run2(["composer", "install", "--no-interaction", "--prefer-dist"], phpRoot);
+      });
+      await stage("platform", async () => {
+        await run2(["composer", "check-platform-reqs"], phpRoot);
+        await run2(["herd", "composer", "check-platform-reqs"], phpRoot);
+      });
+      await stage("boost", async () => {
+        await run2(["php", "artisan", "boost:install", "--guidelines", "--skills", "--no-interaction"], phpRoot);
+        await run2(["bash", "scripts/boost-sync-opencode-skills.sh"], root);
+      });
+      const helper = path6.join(root, "scripts/setup.php");
+      await stage("services", () => run2(["php", helper, "services", projectDatabase(root)], phpRoot));
+      await stage("application-key", async () => {
+        const env = await readFile3(path6.join(phpRoot, ".env"), "utf8");
+        if (!/^APP_KEY=(?!["']?["']?\s*$).+/m.test(env))
+          await run2(["php", "artisan", "key:generate", "--no-interaction"], phpRoot);
+      });
+      await stage("database", () => run2(["php", helper, "database", projectDatabase(root)], phpRoot));
+      await stage("migrations", () => run2(["php", "artisan", "migrate", "--no-interaction"], phpRoot));
+      await stage("contracts", async () => {
+        if (stack === "api-next")
+          await run2(["bun", "run", "api:generate"], root);
+        else {
+          await run2(["php", "artisan", "wayfinder:generate", "--with-form"], phpRoot);
+          await run2(["php", "artisan", "typescript:transform"], phpRoot);
+        }
+      });
+    } else if (pkg.scripts?.["db:migrate"]) {
+      await stage("migrations", async () => {
+        await run2(["bun", "run", "db:generate"], root);
+        await run2(["bun", "run", "db:migrate"], root);
+      });
+    }
+    const manual = pkg.dependencies?.sanity ? ["connect-sanity"] : [];
+    if (stack === "next-only" && pkg.dependencies?.resend)
+      manual.push("connect-resend");
+    result = {
+      status: manual.length ? "setup-pending" : "initialized",
+      stack,
+      failedStage: null,
+      completedStages,
+      pendingSteps: [...manual, "start-processes", "browser-verification"],
+      recovery: "bun run setup",
+      message: manual.length ? "Local initialization complete. External provider connection remains pending." : "Initialized and ready to start. Application processes and browser journeys have not been verified."
+    };
+  } catch (error) {
+    const hint = failedStage === "migrations" && stack === "next-only" ? "Check DATABASE_URL and bun run db:migrate. Start the generated PostgreSQL service with docker compose up -d when applicable, then rerun setup. Existing rows are preserved." : guidance[failedStage] ?? "Check local configuration and rerun setup.";
+    result = {
+      status: "incomplete",
+      stack,
+      failedStage,
+      completedStages,
+      pendingSteps: [failedStage, "local-setup", "browser-verification"],
+      recovery: "bun run setup",
+      message: `Setup incomplete at ${failedStage}. ${failedStage === "prerequisites" && error instanceof Error ? error.message : hint}`
+    };
+  }
+  const state = path6.join(root, ".f7t");
+  await mkdir2(state, { recursive: true });
+  await writeFile4(path6.join(state, "setup-state.json"), `${JSON.stringify(result, null, 2)}
+`, {
+    mode: 384
+  });
+  return result;
+}
+// cli/src/standards.ts
+import { createHash as createHash2 } from "node:crypto";
+import { lstatSync as lstatSync2, readFileSync as readFileSync3, readdirSync } from "node:fs";
+import { mkdir as mkdir3, writeFile as writeFile6, chmod as chmod2 } from "node:fs/promises";
+import path7 from "node:path";
+import { pathToFileURL } from "node:url";
+
+// cli/src/agents.ts
+import { writeFile as writeFile5 } from "node:fs/promises";
+async function writeProjectBrief(options) {
+  const definition = stacks[options.variant];
+  const php = definition.phpRoot;
+  const design = options.variant === "next-only" ? null : options.variant === "api-next" ? "packages/design-system/DESIGN.md" : "design/DESIGN.md";
+  const lines = [
+    "# Project brief",
+    "",
+    options.productBlurb.replace(/[\r\n]+/g, " "),
+    "",
+    "Before work, read the applicable `.opencode/rules/*.md` files and the pinned `docs/playbook/README.md`.",
+    "",
+    `Stack: ${definition.label}. JS roots: ${definition.jsRoots.map((root) => `\`${root}\``).join(", ")}.`,
+    "Standards identity: `STANDARDS_VERSION` and `STANDARDS_MANIFEST.json`. Generator identity: `F7T_MANIFEST.json`.",
+    ...design ? [`Design authority: \`${design}\`.`] : [],
+    "",
+    "Run `bun run check` from the repository root. Install the locked dependencies before running gates. Run `bun run hooks:install` after Git initialization.",
+    ...php ? [
+      `PHP root: \`${php}\`. Run Composer and Artisan there.`,
+      "After `php artisan boost:update --ansi`, run `bash scripts/boost-sync-opencode-skills.sh` from the repository root. Root `.opencode/skills` contains portable real files.",
+      "Boost may append guidelines to this brief; retain its policy-entry instruction."
+    ] : [],
+    ...options.variant === "api-next" ? [
+      "After API contract changes, run `bun run api:generate`. `bun run check:schema` compares a fresh Laravel export and generated types; `bun run check:workflows` validates `tests/workflows.yml` against tagged `e2e/` journeys."
+    ] : [],
+    "",
+    "Keep product decisions in repository docs. Never commit secrets or copy personal OpenCode providers, models, permissions, or global configuration.",
+    ""
+  ];
+  await writeFile5(regularPackagePath(options.target, "AGENTS.md", true), lines.join(`
+`));
+}
+
+// cli/src/standards.ts
+var variants = ["next-only", "inertia-monolith", "api-next"];
+var sha256 = (bytes) => createHash2("sha256").update(bytes).digest("hex");
+var digestPattern = /^[a-f0-9]{64}$/;
+var commitPattern = /^[a-f0-9]{40}$/;
+var compareKeys = ([a], [b]) => a < b ? -1 : a > b ? 1 : 0;
+function jsonFile(root, relative) {
+  return JSON.parse(readFileSync3(regularPackagePath(root, relative), "utf8"));
+}
+function verifyBytes(root, relative, digest) {
+  assertDistributablePath(relative);
+  if (!digestPattern.test(digest))
+    throw new Error("Invalid expected asset digest");
+  const file = regularPackagePath(root, relative);
+  if (!lstatSync2(file).isFile())
+    throw new Error(`Asset is not a file: ${relative}`);
+  const bytes = readFileSync3(file);
+  if (sha256(bytes) !== digest)
+    throw new Error(`Asset digest mismatch: ${relative}`);
+  return bytes;
+}
+function packageInventory(root) {
+  const files = [];
+  function walk(relative) {
+    const absolute = regularPackagePath(root, relative);
+    const info = lstatSync2(absolute);
+    assertDistributablePath(relative, info.isDirectory());
+    if (info.isDirectory()) {
+      for (const name of readdirSync(absolute).sort())
+        walk(`${relative}/${name}`);
+    } else {
+      files.push(relative);
+      assertDistributableContent(relative, readFileSync3(absolute));
+    }
+  }
+  for (const name of readdirSync(root).sort())
+    walk(name);
+  return files;
+}
+function verifyStandardsBundle(exportRoot, expectedDigest) {
+  if (!digestPattern.test(expectedDigest))
+    throw new Error("Invalid expected standards digest");
+  const manifest = jsonFile(exportRoot, "manifest.json");
+  const { assetDigest, ...content } = manifest;
+  if (manifest.schemaVersion !== 1 || manifest.local !== false)
+    throw new Error("Unsupported or local standards export");
+  if (assetDigest !== expectedDigest || sha256(JSON.stringify(content)) !== expectedDigest)
+    throw new Error("Standards export digest mismatch");
+  if (!commitPattern.test(manifest.standards?.commit) || !/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(manifest.standards?.release))
+    throw new Error("Invalid immutable standards identity");
+  if (manifest.runtime?.source !== "apply.mjs")
+    throw new Error("Invalid standards runtime path");
+  verifyBytes(exportRoot, manifest.runtime.source, manifest.runtime.sha256);
+  const expected = new Set(["manifest.json", "apply.mjs"]);
+  for (const variant of variants) {
+    const assets = manifest.variants?.[variant]?.assets;
+    if (!Array.isArray(assets) || !assets.length)
+      throw new Error(`Missing standards variant: ${variant}`);
+    const destinations = new Set;
+    for (const asset of assets) {
+      assertDistributablePath(asset.path);
+      safeRelativePath(asset.source);
+      if (asset.source !== `variants/${variant}/files/${asset.path}` || destinations.has(asset.path) || ["STANDARDS_VERSION", "STANDARDS_MANIFEST.json", "F7T_MANIFEST.json"].includes(asset.path))
+        throw new Error("Invalid or duplicate standards asset path");
+      if (![420, 493].includes(asset.mode) || typeof asset.text !== "boolean")
+        throw new Error("Invalid standards asset policy");
+      destinations.add(asset.path);
+      expected.add(asset.source);
+      const bytes = verifyBytes(exportRoot, asset.source, asset.sha256);
+      if (asset.text) {
+        if (bytes.includes(0))
+          throw new Error("Binary standards text asset");
+        new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      }
+    }
+  }
+  for (const file of packageInventory(exportRoot))
+    if (!expected.has(file))
+      throw new Error(`Undeclared standards asset: ${file}`);
+  return manifest;
+}
+function verifyReleaseBundle(root = packageRoot()) {
+  const release = jsonFile(root, "template/manifest.json");
+  if (release.schemaVersion !== 1 || release.status !== "release")
+    throw new Error("Release bundle is pending U14 inventory, standards pin and lock catalog");
+  if (!commitPattern.test(release.templateRevision) && release.templateRevision !== release.generatorVersion || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(release.generatorVersion))
+    throw new Error("Invalid generator/template identity");
+  if (jsonFile(root, "package.json").version !== release.generatorVersion)
+    throw new Error("Generator version mismatch");
+  const template = regularPackagePath(root, "template");
+  const standards = verifyStandardsBundle(regularPackagePath(template, "standards"), release.standards?.assetDigest);
+  if (standards.standards.commit !== release.standards.commit || standards.standards.release !== release.standards.release)
+    throw new Error("Standards identity mismatch");
+  const expected = new Set;
+  if (!Array.isArray(release.assets) || !release.assets.length)
+    throw new Error("Missing template inventory");
+  for (const asset of release.assets) {
+    if (expected.has(asset.path) || asset.path === "manifest.json" || asset.path.startsWith("standards/"))
+      throw new Error("Invalid template inventory path");
+    if (![420, 493].includes(asset.mode) || typeof asset.text !== "boolean")
+      throw new Error("Invalid template asset policy");
+    if (asset.text !== isTemplateText(asset.path))
+      throw new Error(`Template text policy mismatch: ${asset.path}`);
+    const bytes = verifyBytes(template, asset.path, asset.sha256);
+    if (asset.text) {
+      if (bytes.includes(0))
+        throw new Error("Binary template text asset");
+      new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    }
+    if ((lstatSync2(path7.join(template, asset.path)).mode & 73) !== (asset.mode & 73))
+      throw new Error(`Template mode mismatch: ${asset.path}`);
+    expected.add(asset.path);
+  }
+  for (const file of packageInventory(template))
+    if (file !== "manifest.json" && !file.startsWith("standards/") && !expected.has(file))
+      throw new Error(`Undeclared template asset: ${file}`);
+  for (const variant of variants) {
+    const dir = safeRelativePath(release.templates?.[variant]?.root);
+    if (![...expected].some((file) => file.startsWith(`${dir}/`)))
+      throw new Error(`Missing template: ${variant}`);
+  }
+  if (!Array.isArray(release.locks) || !release.locks.length)
+    throw new Error("Missing release lock catalog");
+  const keys = new Set;
+  for (const lock of release.locks) {
+    if (compositionKey(JSON.parse(lock.key)) !== lock.key)
+      throw new Error("Noncanonical lock composition");
+    if (keys.has(lock.key))
+      throw new Error("Duplicate lock composition");
+    keys.add(lock.key);
+    if (!lock.files.length || !Object.keys(lock.manifests).length)
+      throw new Error("Empty lock composition");
+    const destinations = new Set;
+    for (const [file, digest] of Object.entries(lock.manifests)) {
+      safeRelativePath(file);
+      if (!digestPattern.test(digest))
+        throw new Error("Invalid dependency manifest digest");
+    }
+    for (const file of lock.files) {
+      assertDistributablePath(file.destination);
+      if (!expected.has(file.source) || destinations.has(file.destination))
+        throw new Error("Invalid lock catalog path");
+      destinations.add(file.destination);
+      verifyBytes(template, file.source, file.sha256);
+    }
+  }
+  return release;
+}
+function compositionKey(choices) {
+  if (!Object.keys(choices).length || Object.values(choices).some((value) => value !== null && typeof value !== "string" && typeof value !== "boolean"))
+    throw new Error("Invalid dependency composition");
+  return JSON.stringify(Object.fromEntries(Object.entries(choices).sort(compareKeys)));
+}
+function canonical(value) {
+  if (Array.isArray(value))
+    return value.map(canonical);
+  if (value && typeof value === "object")
+    return Object.fromEntries(Object.entries(value).sort(compareKeys).map(([key, item]) => [key, canonical(item)]));
+  return value;
+}
+function dependencyDigest(manifest) {
+  const fields = [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+    "peerDependenciesMeta",
+    "overrides",
+    "resolutions",
+    "workspaces",
+    "trustedDependencies",
+    "patchedDependencies",
+    "engines",
+    "packageManager",
+    "require",
+    "require-dev",
+    "repositories",
+    "config",
+    "minimum-stability",
+    "prefer-stable",
+    "conflict",
+    "replace",
+    "provide",
+    "extra"
+  ];
+  return sha256(JSON.stringify(canonical(Object.fromEntries(fields.filter((key) => Object.hasOwn(manifest, key)).map((key) => [key, manifest[key]])))));
+}
+function selectReleaseLock(release, choices) {
+  const matches = release.locks.filter((lock) => lock.key === compositionKey(choices));
+  if (matches.length !== 1)
+    throw new Error("No unique tested release lock for this dependency composition");
+  return matches[0];
+}
+async function applyReleaseLock(target, choices, root = packageRoot()) {
+  const release = verifyReleaseBundle(root);
+  const lock = selectReleaseLock(release, choices);
+  for (const [file, digest] of Object.entries(lock.manifests))
+    if (dependencyDigest(jsonFile(target, file)) !== digest)
+      throw new Error(`Dependency composition mismatch: ${file}`);
+  const writes = lock.files.map((file) => ({
+    destination: regularPackagePath(target, file.destination, true),
+    bytes: verifyBytes(path7.join(root, "template"), file.source, file.sha256)
+  }));
+  for (const file of writes)
+    if (lstatSync2(file.destination, { throwIfNoEntry: false })?.isDirectory())
+      throw new Error("Lock destination is a directory");
+  for (const file of writes) {
+    await mkdir3(path7.dirname(file.destination), { recursive: true });
+    await writeFile6(file.destination, file.bytes);
+    await chmod2(file.destination, 420);
   }
 }
-async function createApp(config) {
-  await assertProjectDirReady(config.projectDir, config.force);
-  await mkdir2(config.projectDir, { recursive: true });
-  await copyTemplateDir(templateDir("base"), config.projectDir, {
-    __F7T_APP_NAME__: config.appName,
-    __F7T_LOCALE__: config.locale,
-    __F7T_HTML_LANG__: htmlLang(config)
-  });
-  const envPath = path7.join(config.projectDir, ".env");
-  if (!existsSync4(envPath)) {
-    await copyFile(path7.join(config.projectDir, ".env.example"), envPath);
+async function applyBundledStandards(options, root = packageRoot()) {
+  const release = verifyReleaseBundle(root);
+  const exportRoot = path7.join(root, "template/standards");
+  const runtime = await import(pathToFileURL(path7.join(exportRoot, "apply.mjs")).href);
+  runtime.verifyExport(exportRoot, release.standards.assetDigest);
+  const receipt = regularPackagePath(options.target, "F7T_MANIFEST.json", true);
+  if (lstatSync2(receipt, { throwIfNoEntry: false })?.isDirectory())
+    throw new Error("Generator receipt destination is a directory");
+  const brief = regularPackagePath(options.target, "AGENTS.md", true);
+  if (lstatSync2(brief, { throwIfNoEntry: false })?.isDirectory())
+    throw new Error("Project brief destination is a directory");
+  runtime.applyExport({ ...options, exportRoot, expectedDigest: release.standards.assetDigest });
+  await writeProjectBrief(options);
+  await writeFile6(receipt, `${JSON.stringify({ schemaVersion: 1, generatorVersion: release.generatorVersion, templateRevision: release.templateRevision, standards: release.standards, variant: options.variant }, null, 2)}
+`);
+}
+
+// cli/src/create-app.ts
+class GenerationError extends Error {
+  result;
+  constructor(result) {
+    super(result.message);
+    this.result = result;
   }
+}
+async function assertProjectDirReady(projectDir) {
+  let cursor = path8.resolve(projectDir);
+  while (true) {
+    const info = await lstat3(cursor).catch((error) => {
+      if (error.code === "ENOENT")
+        return;
+      throw error;
+    });
+    if (info && (!info.isDirectory() || info.isSymbolicLink()))
+      throw new Error("Target and its parents must be regular directories");
+    const parent = path8.dirname(cursor);
+    if (parent === cursor)
+      break;
+    cursor = parent;
+  }
+  const entries = await readdir2(projectDir).catch((error) => {
+    if (error.code === "ENOENT")
+      return [];
+    throw error;
+  });
+  if (entries.length)
+    throw new Error("Target directory is not empty. --force no longer overlays files; choose an empty target. Rerun setup to resume an existing project");
+}
+async function composeNext(config) {
   await runInstallers(config);
   await writeEnv(config);
-  await writeAgents(config);
-  if (config.git) {
-    await initGit(config.projectDir);
-  }
-  if (!config.skipInstall) {
-    await installDeps(config.projectDir);
+}
+async function createApp(config, options = {}) {
+  let stage = "validation";
+  const setupRecovery = stacks[config.stack]?.setupEntryPoint ?? "bun run setup";
+  try {
+    const { stack, appName, projectDir, git, skipInstall, force } = config;
+    const normalized = resolveConfig(stack === "next-only" ? config : {
+      stack,
+      appName,
+      git,
+      skipInstall,
+      force,
+      harness: config.harness,
+      githubActions: config.githubActions
+    }, path8.dirname(projectDir));
+    const keys = new Set([...Object.keys(config), ...Object.keys(normalized)]);
+    if ([...keys].some((key) => Reflect.get(config, key) !== Reflect.get(normalized, key)))
+      throw new Error("Invalid normalized configuration; use resolveConfig before generation");
+    await assertProjectDirReady(projectDir);
+    stage = "preflight";
+    const root = options.bundleRoot ?? packageRoot();
+    const release = verifyReleaseBundle(root);
+    const definition = stacks[stack];
+    if (release.templates[stack].root !== definition.templateRoot)
+      throw new Error("Release template root does not match the stack registry");
+    const choices = dependencyComposition(config);
+    selectReleaseLock(release, choices);
+    const source = regularPackagePath(path8.join(root, "template"), definition.templateRoot);
+    if (!skipInstall && !options.install && !options.setup) {
+      await checkPrerequisites(stack, path8.dirname(projectDir));
+    }
+    stage = "copy";
+    await mkdir4(projectDir, { recursive: true });
+    await copyTemplateDir(source, projectDir, {
+      __F7T_APP_NAME__: appName,
+      __F7T_LOCALE__: config.locale,
+      __F7T_HTML_LANG__: config.intl ? "en" : config.locale
+    });
+    if (config.stack === "next-only")
+      await (options.composeNext ?? composeNext)(config);
+    await applyBundledStandards({
+      target: projectDir,
+      variant: stack,
+      team: "FunnySoft",
+      teamSlug: "funnysoft",
+      productBlurb: `${appName} application`
+    }, root);
+    await applyReleaseLock(projectDir, choices, root);
+    await copyTemplateDir(regularPackagePath(path8.join(root, "template"), "shared"), path8.join(projectDir, "scripts"), {});
+    if (git)
+      await initGit(projectDir);
+    if (!skipInstall) {
+      stage = "dependencies";
+      if (options.install)
+        await options.install(config);
+      stage = "setup";
+      const setup = options.setup ? await options.setup(config) : !options.install ? await initializeProject(projectDir, stack) : undefined;
+      if (setup?.status === "incomplete")
+        throw new GenerationError(setup);
+      if (setup)
+        return setup;
+    }
+    return {
+      status: "setup-pending",
+      stack,
+      failedStage: null,
+      pendingSteps: skipInstall ? ["dependencies", "local-setup", "verification"] : ["local-setup", "verification"],
+      recovery: setupRecovery,
+      message: "Files generated. Setup pending; the project has not been verified as local-ready."
+    };
+  } catch (error) {
+    if (error instanceof GenerationError)
+      throw error;
+    const beforeCopy = stage === "validation" || stage === "preflight";
+    const message = beforeCopy && error instanceof Error ? error.message : stage === "copy" ? "Generation failed while copying or configuring files. Preserve the partial directory and choose a new empty target or clean it up manually." : stage === "dependencies" ? "Dependency installation failed or is unavailable. Check prerequisites and configured package access, then rerun setup." : "Local setup failed. Check prerequisites and rerun setup.";
+    throw new GenerationError({
+      status: "incomplete",
+      stack: config.stack,
+      failedStage: stage,
+      pendingSteps: beforeCopy || stage === "copy" ? ["generation", "dependencies", "local-setup", "verification"] : stage === "dependencies" ? ["dependencies", "local-setup", "verification"] : ["local-setup", "verification"],
+      recovery: beforeCopy || stage === "copy" ? "Use a new empty target after resolving the reported issue" : setupRecovery,
+      message
+    });
   }
 }
 
 // cli/src/next-steps.ts
-function logNextSteps(config) {
-  const lines = ["Next steps:", "", `  cd ${config.appName}`];
+function formatResult(result) {
+  return [
+    result.message,
+    `Stack: ${result.stack ?? "unresolved"}`,
+    `Status: ${result.status}`,
+    ...result.failedStage ? [`Failed stage: ${result.failedStage}`] : [],
+    `Pending steps: ${result.pendingSteps.join(", ")}`,
+    `Recovery: ${result.recovery}`
+  ].join(`
+`);
+}
+function logNextSteps(config, result, output = console.log) {
+  if (result?.status === "incomplete")
+    return;
+  const lines = [
+    "Next steps (after required setup and verification):",
+    "",
+    `  cd ${config.appName}`
+  ];
+  if (config.stack !== "next-only") {
+    lines.push("  Follow the generated local setup guide for PHP, Composer, PostgreSQL, Redis and local mail.", "  bun run setup", "  Herd Mail uses the generated project name as its mailbox.");
+    if (config.stack === "api-next")
+      lines.push("  Next.js: apps/web", "  Laravel: services/api");
+    lines.push("  After initialization: bun run dev; run php artisan horizon in the Laravel root.", "  Create the first unverified account separately: php artisan funnysoft:create-first-user.");
+    output(lines.join(`
+`));
+    return;
+  }
   if (config.skipInstall) {
-    lines.push("  bun install");
+    lines.push("  bun run setup", "  Setup is pending until this succeeds.");
   }
   lines.push("  bun run dev", "  bun run check");
   if (config.data === "drizzle" && config.db === "postgres") {
@@ -913,12 +1546,12 @@ function logNextSteps(config) {
     lines.push("  bun run db:migrate");
   }
   if (config.data === "sanity") {
-    lines.push("  bun run typegen");
+    lines.push("  Connect Sanity project and dataset manually, then bun run typegen and bun run setup.");
   }
   if (config.playwright) {
     lines.push("  bunx playwright install");
   }
-  console.log(lines.join(`
+  output(lines.join(`
 `));
 }
 
@@ -1876,6 +2509,7 @@ function abortIfCancel(value) {
   return value;
 }
 async function runWizard(input) {
+  validateOptions(input);
   intro("create-f7t-app");
   const appName = input.appName ?? abortIfCancel(await text({
     message: "App name",
@@ -1886,6 +2520,16 @@ async function runWizard(input) {
       }
     }
   })).trim();
+  const stack = input.stack ?? abortIfCancel(await select({
+    message: "Stack",
+    options: STACK_IDS.map((value) => ({ value, label: stacks[value].label })),
+    initialValue: "next-only"
+  }));
+  validateOptions({ ...input, stack });
+  if (stack !== "next-only") {
+    const git2 = input.git ?? abortIfCancel(await confirm({ message: "Git init", initialValue: true }));
+    return { ...input, appName, stack, git: git2 };
+  }
   const shell = input.shell ?? abortIfCancel(await select({
     message: "Shell",
     options: [
@@ -1932,20 +2576,10 @@ async function runWizard(input) {
   if (intl) {
     locale = "en";
   }
-  const harness = input.harness ?? abortIfCancel(await select({
-    message: "Harness",
-    options: [
-      { value: "none", label: "None" },
-      { value: "grok", label: "Grok" },
-      { value: "cursor", label: "Cursor" },
-      { value: "both", label: "Both" }
-    ],
-    initialValue: "none"
-  }));
-  const githubActions = input.githubActions ?? abortIfCancel(await confirm({ message: "GitHub Actions", initialValue: true }));
   const git = input.git ?? abortIfCancel(await confirm({ message: "Git init", initialValue: true }));
   return {
     ...input,
+    stack,
     appName,
     shell,
     data,
@@ -1955,14 +2589,62 @@ async function runWizard(input) {
     resend,
     intl,
     locale,
-    harness,
-    githubActions,
+    harness: "opencode",
+    githubActions: true,
     git
   };
 }
 
 // cli/src/index.ts
-var input = parseArgv(process.argv.slice(2));
-var resolved = input.yes || input.ci ? resolveConfig(input) : resolveConfig(await runWizard(input));
-await createApp(resolved);
-logNextSteps(resolved);
+var HELP = `Usage: create-f7t-app <app-name> [options]
+  --stack next-only|inertia-monolith|api-next  (default: next-only)
+  --yes, --CI       Use deterministic defaults; requires an app name
+  --json           Emit one nonsecret JSON result; never prompt
+  --skip-install   Generate files with setup pending
+  --no-git         Skip git initialization
+  --help           Show this help
+Next-only: --shell site|app --data none|sanity|drizzle --db sqlite|postgres
+           --shadcn --playwright --resend --intl --locale en|pt-PT
+Laravel: English account app, PostgreSQL, shadcn and Resend are fixed.
+OpenCode and quality workflows are mandatory. Remove old --harness
+none|grok|cursor|both and --no-github-actions flags (use --harness opencode).
+Nonempty targets are always rejected, including with legacy --force.
+Resume an existing project's setup instead of regenerating over its files.`;
+async function runCli(argv, options = {}) {
+  const output = options.output ?? console.log;
+  const json = argv.includes("--json");
+  let stack = null;
+  try {
+    const input = parseArgv(argv);
+    if (input.help) {
+      output(json ? JSON.stringify({ help: HELP }) : HELP);
+      return 0;
+    }
+    const unattended = input.yes || input.ci || input.json || !(options.isTTY ?? Boolean(process.stdin.isTTY && process.stdout.isTTY));
+    const config = resolveConfig(unattended ? input : await (options.wizard ?? runWizard)(input), options.cwd);
+    stack = config.stack;
+    const result = await (options.generate ?? createApp)(config);
+    output(json ? JSON.stringify(result) : formatResult(result));
+    if (!json && result.status !== "incomplete")
+      logNextSteps(config, result, output);
+    return result.status === "incomplete" ? 1 : 0;
+  } catch (error) {
+    const result = error instanceof GenerationError ? error.result : {
+      status: "incomplete",
+      stack,
+      failedStage: "validation",
+      pendingSteps: ["generation"],
+      recovery: "Run --help, correct the options and use an empty target",
+      message: stack === null && error instanceof Error ? error.message : "Generation failed. Check prerequisites and rerun setup."
+    };
+    output(json ? JSON.stringify(result) : formatResult(result));
+    return 1;
+  }
+}
+if (process.argv[1] && realpathSync(path9.resolve(process.argv[1])) === fileURLToPath2(import.meta.url)) {
+  process.exitCode = await runCli(process.argv.slice(2));
+}
+export {
+  HELP,
+  runCli
+};

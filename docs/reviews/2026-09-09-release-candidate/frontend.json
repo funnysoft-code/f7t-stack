@@ -1,0 +1,57 @@
+{
+  "reviewer": "frontend",
+  "findings": [
+    {
+      "title": "Recovery rotation leaves invalid codes available to copy",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/recovery.tsx",
+      "line": 104,
+      "why_it_matters": "After generating new recovery codes, a failed follow-up GET leaves the previous codes displayed and the Copy codes action enabled. Those codes have already been invalidated by the successful POST, so a user can save an unusable recovery set and later fail to recover their account. The same sequence exists in the Inertia screen. Clear the old set when rotation succeeds and make a failed read retryable without another rotation.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "In both recovery screens, clear the displayed codes immediately after the regeneration request succeeds, before awaiting the new list. Keep copying unavailable until the replacement list loads, and let the existing Show recovery codes action retry only the read. Disable Copy codes while regeneration is pending so its independent useOperation.run call cannot reset the mutation's pending state.",
+      "confidence": 75,
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:106: request(browserApi.GET(\"/auth/user/two-factor-recovery-codes\")),",
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:101-103: await confirmed(() => request(browserApi.POST(\"/auth/user/two-factor-recovery-codes\")), ); completes before the replacement read; there is no intervening setCodes(null).",
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:83: await navigator.clipboard.writeText(codes.join(\"\\n\")); uses the retained old set and the button has no pending guard.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/recovery.tsx:95-96: await confirmed(() => request(regenerateRecoveryCodes())); setCodes(await confirmed(() => request<string[]>(recoveryCodes()))); repeats the same successful-write/failed-read sequence.",
+        "template/stacks/api-next/services/api/Modules/Identity/Tests/Http/TwoFactorTest.php:72-83: the backend test regenerates the set and asserts that an old recovery code is unprocessable, establishing that retaining the pre-rotation set is incorrect.",
+        "Scenario: reveal set A, successfully rotate to B, fail the subsequent GET with 503. request throws, useOperation records an error without changing codes, and Copy codes still copies A."
+      ],
+      "pre_existing": false
+    },
+    {
+      "title": "Late initial passkey reads overwrite post-registration state",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/passkeys.tsx",
+      "line": 42,
+      "why_it_matters": "On a slow initial listing request, users can add a passkey and successfully load the updated list before that original request finishes. The original effect can then overwrite the new list with an older snapshot, or set loadError and hide the successfully refreshed list. Its active flag only protects unmounts, and the same independent loading paths exist in the Inertia screen.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "Use one generation-tracked list loader for the initial effect, retries, and post-mutation reloads in both stacks. Apply keys and loadError only if the completing request is still the latest generation, and invalidate it on unmount. Alternatively, disable enrollment until the initial request settles and serialize every later reload.",
+      "confidence": 75,
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:42: if (active) setKeys(result.data); and template/stacks/api-next/apps/web/components/screens/passkeys.tsx:35: setKeys(result.data); independently commit initial and post-mutation responses.",
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:45: if (active) setLoadError(failure(error).message); can also hide a newer successful listing after the initial request fails late.",
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:128-138: enrollment registers the passkey and calls await load(); the submit button at line 150 is gated only by operation.pending, not keys === null.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/passkeys.tsx:31-49: load() and the mount effect independently write keys and loadError with the same unmount-only guard.",
+        "Scenario: initial GET captures an empty list and its response is delayed; an already-confirmed user enrolls a passkey; the post-registration GET renders that passkey; the delayed initial GET then resolves and replaces the list with empty. The form remains mounted throughout, so active is still true."
+      ],
+      "pre_existing": false
+    }
+  ],
+  "residual_risks": [
+    "Read-only review covered the assigned API proxy and server/browser adapters, generated API-client transport, account forms and factor flows in both stacks, representative shared runtime primitives, generated frontend gates, and associated unit, browser, and real-transport test infrastructure. No live browser or lifecycle verification was executed in this leaf; the root's dedicated worker owns that evidence.",
+    "Horizon asset handling was checked against the exact locked Horizon v5.48.3 source: CSS and JavaScript are embedded by Horizon::css/js, so a missing /vendor/horizon proxy is not a defect. The reviewed integration suite also checks this behavior.",
+    "No actionable origin, redirect, CSRF, or cross-session transport defect was confirmed in the assigned source. Actual HTTPS cookie and provider behavior remain operational verification boundaries rather than proven findings.",
+    "Callsite inspection used text search and explicit import/caller reads; it did not establish exhaustive symbol-aware coverage. Generated Wayfinder implementations are build outputs, so their frontend use was cross-checked against route names and tests rather than executing generation."
+  ],
+  "testing_gaps": [
+    "Add a browser regression in both stacks where recovery regeneration succeeds but the replacement GET fails. Assert that old codes disappear, copying is unavailable, and retrying the read shows the replacement set without another POST.",
+    "Add deferred-response browser coverage for initial passkey loading overlapping successful enrollment, including both a stale successful initial response and a late initial error. Existing tests cover empty lists and WebAuthn cancellation but not these ordering cases.",
+    "Frontend line coverage is scoped to libraries and deliberately excludes most account components. The existing browser suite supplies component behavior coverage, but its recovery happy path and passkey empty-state cases do not exercise the two failures reported here."
+  ]
+}

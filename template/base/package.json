@@ -4,15 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "setup": "bun scripts/setup.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "oxlint .",
+    "lint": "bash scripts/frontend-gate.sh lint",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "check": "oxlint . && oxfmt --check . && tsc --noEmit && vitest run && bunx react-doctor@0.9.12 . --no-telemetry -y"
+    "typecheck": "bash scripts/frontend-gate.sh typecheck",
+    "test": "bash scripts/frontend-gate.sh test",
+    "doctor": "bash scripts/frontend-gate.sh doctor",
+    "hooks:install": "lefthook install",
+    "check": "bun run lint && bun run typecheck && bun run test && bun run doctor"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "0.13.11",
@@ -22,12 +25,16 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.10.1",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
+    "@vitest/coverage-v8": "4.1.11",
+    "lefthook": "2.1.12",
     "oxfmt": "0.65.0",
     "oxlint": "1.80.0",
+    "react-doctor": "0.9.12",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vitest": "4.1.11"

@@ -5,14 +5,176 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: generator-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@56408e9a3f6d4f21fb6b1bf4fd7529dc366d7611 # v2.0.2
         with:
           bun-version: "1.4.0"
       - run: bun install --frozen-lockfile
       - run: bun run check
-      - run: F7T_LIVE_CHECK=1 bunx vitest run cli/src/matrix.test.ts
+      - run: bun run build && bun run verify:package
+
+  packed-matrix:
+    needs: check
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@56408e9a3f6d4f21fb6b1bf4fd7529dc366d7611 # v2.0.2
+        with:
+          bun-version: "1.4.0"
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.5"
+          extensions: pgsql, redis, mbstring, xml, ctype, tokenizer, bcmath, pcntl
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/composer/files
+          key: generator-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock', 'template/**/bun.lock', 'template/**/composer.lock', 'template/manifest.json') }}
+      - run: bun install --frozen-lockfile && bun run build
+      # Verify the published bundled pin. CI never accepts fixture mode.
+      - run: bun run verify:release
+      - name: All packed compositions and frozen dependency graphs
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: bun run verify:matrix --output "$RUNNER_TEMP/packed-matrix" --install
+
+  generated-gates:
+    needs: packed-matrix
+    runs-on: blacksmith-4vcpu-ubuntu-2404-arm
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: site, stack: next-only, flags: "" }
+          - { name: app, stack: next-only, flags: "--shell app" }
+          - { name: sanity, stack: next-only, flags: "--data sanity" }
+          - { name: sqlite, stack: next-only, flags: "--data drizzle --db sqlite" }
+          - { name: postgres, stack: next-only, flags: "--data drizzle --db postgres" }
+          - {
+              name: max,
+              stack: next-only,
+              flags: "--data sanity --shadcn --resend --intl --playwright",
+            }
+          - { name: inertia, stack: inertia-monolith, flags: "" }
+          - { name: api, stack: api-next, flags: "" }
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: testing
+      DB_USERNAME: testing
+      DB_PASSWORD: testing
+      DATABASE_URL: postgresql://testing:testing@127.0.0.1:5432/testing
+      F7T_TRANSPORT_DATABASE: testing
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      MAIL_MAILER: array
+      NIGHTWATCH_ENABLED: "false"
+      POSTHOG_ENABLED: "false"
+      E2E_MODE: stub
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: testing
+          POSTGRES_USER: testing
+          POSTGRES_PASSWORD: testing
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@56408e9a3f6d4f21fb6b1bf4fd7529dc366d7611 # v2.0.2
+        with:
+          bun-version: "1.4.0"
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: "8.5"
+          coverage: pcov
+          extensions: pgsql, redis, mbstring, xml, ctype, tokenizer, bcmath, pcntl
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cache/composer/files
+          key: generator-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock', 'template/**/bun.lock', 'template/**/composer.lock', 'template/manifest.json') }}
+      - name: Generate from extracted npm artifact
+        env:
+          STACK: ${{ matrix.stack }}
+          FLAGS: ${{ matrix.flags }}
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile
+          bun run build
+          bun run verify:release
+          mkdir "$RUNNER_TEMP/packed"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/packed"
+          tar -xzf "$RUNNER_TEMP"/packed/*.tgz -C "$RUNNER_TEMP/packed"
+          cd "$RUNNER_TEMP"
+          node packed/package/create-f7t-app.js app --yes --no-git --skip-install --stack "$STACK" $FLAGS
+      - name: Frozen install and prepare generated application
+        working-directory: ${{ runner.temp }}/app
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+          STACK: ${{ matrix.stack }}
+          CASE: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile
+          if [ "$STACK" = next-only ]; then
+            cp .env.example .env
+          elif [ "$STACK" = api-next ]; then
+            cp apps/web/.env.example apps/web/.env
+          fi
+          if [ "$STACK" != next-only ]; then
+            PHP_ROOT=.
+            [ "$STACK" != api-next ] || PHP_ROOT=services/api
+            (cd "$PHP_ROOT" && cp .env.example .env)
+            (cd "$PHP_ROOT" && composer install --no-interaction --prefer-dist --no-progress && composer validate --strict --no-check-all)
+            (cd "$PHP_ROOT" && php artisan key:generate --force && php artisan migrate --force && APP_ENV=local php artisan boost:install --guidelines --skills --no-interaction)
+            bash scripts/boost-sync-opencode-skills.sh
+          elif [ "$CASE" = sqlite ]; then
+            DATABASE_URL=file:./local.sqlite bun run db:generate
+            DATABASE_URL=file:./local.sqlite bun run db:migrate
+          elif [ "$CASE" = postgres ]; then
+            bun run db:generate
+            bun run db:migrate
+          fi
+      - name: Install Chromium before API transport tests and e2e
+        working-directory: ${{ runner.temp }}/app
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Complete generated quality and production build
+        working-directory: ${{ runner.temp }}/app
+        run: bun run check && bun run build
+      - name: Stubbed account journeys and optional Next smoke test
+        if: matrix.stack != 'next-only' || matrix.name == 'max'
+        working-directory: ${{ runner.temp }}/app
+        run: bun run test:e2e

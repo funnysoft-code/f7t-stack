@@ -1,0 +1,484 @@
+{
+  "status": "complete",
+  "verdict": "Not ready",
+  "scope": {
+    "base": "1d3d051f8602cd30caf2a864e114c73c62af0266",
+    "branch": "feat/f7t-158-multi-stack-generator",
+    "head_sha": "3821c1ceb8c7fd835592816e847a2af48c9cfd54",
+    "pr_url": null,
+    "files_changed": 907,
+    "mode": "local-aligned working tree",
+    "includes": "All committed branch changes and requested uncommitted U14 source/package files, including 152 untracked paths.",
+    "excludes": [
+      "lefthook.yml",
+      "docs/verification/u14-packed-live.md",
+      "This review's artifacts"
+    ]
+  },
+  "intent": "Generate standalone Next, Inertia, and API + Next applications with reproducible pinned dependencies and standards. Preserve unattended setup and recovery, and deliver Laravel-authoritative individual account flows with secure frontend transport.",
+  "intent_confidence": "explicit",
+  "reviewers": [
+    "generation",
+    "backend",
+    "frontend"
+  ],
+  "findings": [
+    {
+      "#": 1,
+      "title": "Install Chromium for the API Vitest quality job",
+      "severity": "P1",
+      "file": "template/standards/variants/api-next/files/.github/workflows/quality.yml",
+      "line": 178,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Install Chromium for both test and e2e matrix jobs. Fix the standards source, publish a new immutable export, refresh the generator bundle, and verify frontend-test without a browser cache.",
+      "first_evidence": "template/standards/variants/api-next/files/.github/workflows/quality.yml:178:         if: matrix.gate == 'e2e'",
+      "why_it_matters": "A generated API + Next project fails its frontend-test job on a clean runner. Vitest includes the native Horizon browser integration test, but Chromium is installed only in the separate e2e job. The generator's outer CI installs Chromium unconditionally and masks this defect.",
+      "evidence": [
+        "template/standards/variants/api-next/files/.github/workflows/quality.yml:178:         if: matrix.gate == 'e2e'",
+        "template/stacks/api-next/tests/integration/horizon-transport.test.ts:121 calls chromium.launch without an optional-test guard; vitest.config.ts includes this integration suite.",
+        "Reproduce by running generated frontend-test on a clean runner without a Playwright cache or F7T_CHROMIUM_EXECUTABLE. It skips browser installation and reaches the missing executable."
+      ],
+      "reviewers": [
+        "generation"
+      ],
+      "independent_reviewers": [
+        "generation"
+      ]
+    },
+    {
+      "#": 2,
+      "title": "Prepare Next environment before generated browser CI builds",
+      "severity": "P1",
+      "file": "template/standards/variants/next-only/files/.github/workflows/quality.yml",
+      "line": 64,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Prepare .env from the nonsecret example, or provide the required environment explicitly, before the Next browser build. Fix standards and rebundle a new immutable export. Verify a tracked-files-only generated checkout.",
+      "first_evidence": "template/standards/variants/next-only/files/.github/workflows/quality.yml:64:           bun run build",
+      "why_it_matters": "A generated Next project with Playwright fails its browser CI build after a clean checkout because NEXT_PUBLIC_SITE_URL is missing. Generation writes an ignored .env, which the generator's own tests retain. The generated workflow neither restores that file nor supplies the required variable.",
+      "evidence": [
+        "template/standards/variants/next-only/files/.github/workflows/quality.yml:64:           bun run build",
+        "template/base/next.config.ts:1 imports ./src/env.js; cli/src/env-file.ts declares NEXT_PUBLIC_SITE_URL with required z.url() validation and writes both .env.example and .env.",
+        "Reproduce from a tracked-files-only copy of a generated --playwright project with NEXT_PUBLIC_SITE_URL unset. The build imports the validator before Playwright runs."
+      ],
+      "reviewers": [
+        "generation"
+      ],
+      "independent_reviewers": [
+        "generation"
+      ]
+    },
+    {
+      "#": 3,
+      "title": "Reset schema omits required password confirmation",
+      "severity": "P2",
+      "file": "template/stacks/api-next/packages/api-client/openapi.json",
+      "line": 881,
+      "confidence": 100,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Add a password.update request override in AccountOperationTransformer requiring token, email, password, and password_confirmation. Regenerate OpenAPI and schema.d.ts, and assert these fields against a fresh export.",
+      "first_evidence": "template/stacks/api-next/packages/api-client/openapi.json:881:                 \"required\": [\"token\", \"email\", \"password\"]",
+      "why_it_matters": "A client following the published reset-password contract receives 422 despite a valid token and password. ResetPasswordAction requires password_confirmation, which the schema and generated TypeScript omit. The bundled form sends the extra field and masks the contract error.",
+      "evidence": [
+        "template/stacks/api-next/packages/api-client/openapi.json:881:                 \"required\": [\"token\", \"email\", \"password\"]",
+        "template/stacks/api-next/services/api/Modules/Identity/Actions/Fortify/ResetPasswordAction.php:22 validates password with required, string, Password::min(12), and confirmed.",
+        "Reproduce with a valid reset request containing exactly the three documented fields. AccountOperationTransformer has no password.update request override."
+      ],
+      "reviewers": [
+        "backend"
+      ],
+      "independent_reviewers": [
+        "backend"
+      ]
+    },
+    {
+      "#": 4,
+      "title": "Late initial passkey reads overwrite post-registration state",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/passkeys.tsx",
+      "line": 42,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Use one generation-tracked loader for initial reads, retries, and mutation refreshes in both stacks. Ignore stale successes and errors, and invalidate outstanding requests on unmount.",
+      "first_evidence": "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:42:         if (active) setKeys(result.data);",
+      "why_it_matters": "A slow initial request can erase a newly enrolled passkey from the displayed list or replace the successful state with an old error. Enrollment remains available while that request is pending. Both stacks independently commit the initial request and the post-enrollment refresh.",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:42:         if (active) setKeys(result.data);",
+        "The same file's load() commits keys at line 35 and is called after enrollment at line 129; the active flag only guards unmounts.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/passkeys.tsx:31-49 has the same independent load paths. Delay an initial empty response until after enrollment and its refresh, then release it."
+      ],
+      "reviewers": [
+        "frontend"
+      ],
+      "independent_reviewers": [
+        "frontend"
+      ]
+    },
+    {
+      "#": 5,
+      "title": "Recovery rotation leaves invalid codes available to copy",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/recovery.tsx",
+      "line": 104,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "In both stacks, clear displayed codes immediately after successful rotation and before fetching replacements. Disable copying during rotation. Permit a read-only retry after replacement retrieval fails.",
+      "first_evidence": "template/stacks/api-next/apps/web/components/screens/recovery.tsx:106:                       request(browserApi.GET(\"/auth/user/two-factor-recovery-codes\")),",
+      "why_it_matters": "After recovery-code rotation succeeds, a failed replacement read leaves the invalid old codes visible and copyable. A user can save that unusable set and later fail to recover their account. Both stacks retain the old state until the GET succeeds.",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:106:                       request(browserApi.GET(\"/auth/user/two-factor-recovery-codes\")),",
+        "The POST completes at lines 101-103 before setCodes awaits this GET; Copy codes at line 83 continues to use the old state.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/recovery.tsx:95-96 repeats this sequence. Reveal set A, rotate successfully to B, then fail the GET with 503; copying still returns A."
+      ],
+      "reviewers": [
+        "frontend"
+      ],
+      "independent_reviewers": [
+        "frontend"
+      ]
+    },
+    {
+      "#": 6,
+      "title": "CWE-204: Reset delivery errors expose existing Inertia accounts",
+      "severity": "P2",
+      "file": "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php",
+      "line": 33,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Wrap the Inertia forgot-password broker call in an application controller that reports delivery exceptions and returns the generic PasswordResetLinkResponse, matching the API controller. Preserve validation, normalization, middleware and HTML/JSON behavior. Test throwing delivery for existing and absent accounts.",
+      "first_evidence": "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php:33:         $this->app->bind(Contracts\\FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);",
+      "why_it_matters": "During a mail outage, existing Inertia accounts receive a server error from password reset while absent accounts receive the generic success response. The exception occurs before either response binding runs. This exposes account existence and violates U6's uniform reset-response requirement.",
+      "evidence": [
+        "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php:33:         $this->app->bind(Contracts\\FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);",
+        "routes/auth.php retains Fortify's native PasswordResetLinkController, which calls sendResetLink before constructing either response and does not catch synchronous delivery exceptions.",
+        "An isolated read-only probe with the installed PasswordBroker and synthetic doubles produced an unhandled RuntimeException for an existing account and passwords.user for an absent one. The API PasswordResetLinkController already catches and reports this exception."
+      ],
+      "reviewers": [
+        "backend"
+      ],
+      "independent_reviewers": [
+        "backend"
+      ]
+    }
+  ],
+  "actionable_findings": [
+    {
+      "#": 1,
+      "title": "Install Chromium for the API Vitest quality job",
+      "severity": "P1",
+      "file": "template/standards/variants/api-next/files/.github/workflows/quality.yml",
+      "line": 178,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Install Chromium for both test and e2e matrix jobs. Fix the standards source, publish a new immutable export, refresh the generator bundle, and verify frontend-test without a browser cache.",
+      "first_evidence": "template/standards/variants/api-next/files/.github/workflows/quality.yml:178:         if: matrix.gate == 'e2e'",
+      "why_it_matters": "A generated API + Next project fails its frontend-test job on a clean runner. Vitest includes the native Horizon browser integration test, but Chromium is installed only in the separate e2e job. The generator's outer CI installs Chromium unconditionally and masks this defect.",
+      "evidence": [
+        "template/standards/variants/api-next/files/.github/workflows/quality.yml:178:         if: matrix.gate == 'e2e'",
+        "template/stacks/api-next/tests/integration/horizon-transport.test.ts:121 calls chromium.launch without an optional-test guard; vitest.config.ts includes this integration suite.",
+        "Reproduce by running generated frontend-test on a clean runner without a Playwright cache or F7T_CHROMIUM_EXECUTABLE. It skips browser installation and reaches the missing executable."
+      ],
+      "reviewers": [
+        "generation"
+      ],
+      "independent_reviewers": [
+        "generation"
+      ]
+    },
+    {
+      "#": 2,
+      "title": "Prepare Next environment before generated browser CI builds",
+      "severity": "P1",
+      "file": "template/standards/variants/next-only/files/.github/workflows/quality.yml",
+      "line": 64,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Prepare .env from the nonsecret example, or provide the required environment explicitly, before the Next browser build. Fix standards and rebundle a new immutable export. Verify a tracked-files-only generated checkout.",
+      "first_evidence": "template/standards/variants/next-only/files/.github/workflows/quality.yml:64:           bun run build",
+      "why_it_matters": "A generated Next project with Playwright fails its browser CI build after a clean checkout because NEXT_PUBLIC_SITE_URL is missing. Generation writes an ignored .env, which the generator's own tests retain. The generated workflow neither restores that file nor supplies the required variable.",
+      "evidence": [
+        "template/standards/variants/next-only/files/.github/workflows/quality.yml:64:           bun run build",
+        "template/base/next.config.ts:1 imports ./src/env.js; cli/src/env-file.ts declares NEXT_PUBLIC_SITE_URL with required z.url() validation and writes both .env.example and .env.",
+        "Reproduce from a tracked-files-only copy of a generated --playwright project with NEXT_PUBLIC_SITE_URL unset. The build imports the validator before Playwright runs."
+      ],
+      "reviewers": [
+        "generation"
+      ],
+      "independent_reviewers": [
+        "generation"
+      ]
+    },
+    {
+      "#": 3,
+      "title": "Reset schema omits required password confirmation",
+      "severity": "P2",
+      "file": "template/stacks/api-next/packages/api-client/openapi.json",
+      "line": 881,
+      "confidence": 100,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Add a password.update request override in AccountOperationTransformer requiring token, email, password, and password_confirmation. Regenerate OpenAPI and schema.d.ts, and assert these fields against a fresh export.",
+      "first_evidence": "template/stacks/api-next/packages/api-client/openapi.json:881:                 \"required\": [\"token\", \"email\", \"password\"]",
+      "why_it_matters": "A client following the published reset-password contract receives 422 despite a valid token and password. ResetPasswordAction requires password_confirmation, which the schema and generated TypeScript omit. The bundled form sends the extra field and masks the contract error.",
+      "evidence": [
+        "template/stacks/api-next/packages/api-client/openapi.json:881:                 \"required\": [\"token\", \"email\", \"password\"]",
+        "template/stacks/api-next/services/api/Modules/Identity/Actions/Fortify/ResetPasswordAction.php:22 validates password with required, string, Password::min(12), and confirmed.",
+        "Reproduce with a valid reset request containing exactly the three documented fields. AccountOperationTransformer has no password.update request override."
+      ],
+      "reviewers": [
+        "backend"
+      ],
+      "independent_reviewers": [
+        "backend"
+      ]
+    },
+    {
+      "#": 4,
+      "title": "Late initial passkey reads overwrite post-registration state",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/passkeys.tsx",
+      "line": 42,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Use one generation-tracked loader for initial reads, retries, and mutation refreshes in both stacks. Ignore stale successes and errors, and invalidate outstanding requests on unmount.",
+      "first_evidence": "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:42:         if (active) setKeys(result.data);",
+      "why_it_matters": "A slow initial request can erase a newly enrolled passkey from the displayed list or replace the successful state with an old error. Enrollment remains available while that request is pending. Both stacks independently commit the initial request and the post-enrollment refresh.",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/passkeys.tsx:42:         if (active) setKeys(result.data);",
+        "The same file's load() commits keys at line 35 and is called after enrollment at line 129; the active flag only guards unmounts.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/passkeys.tsx:31-49 has the same independent load paths. Delay an initial empty response until after enrollment and its refresh, then release it."
+      ],
+      "reviewers": [
+        "frontend"
+      ],
+      "independent_reviewers": [
+        "frontend"
+      ]
+    },
+    {
+      "#": 5,
+      "title": "Recovery rotation leaves invalid codes available to copy",
+      "severity": "P2",
+      "file": "template/stacks/api-next/apps/web/components/screens/recovery.tsx",
+      "line": 104,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "In both stacks, clear displayed codes immediately after successful rotation and before fetching replacements. Disable copying during rotation. Permit a read-only retry after replacement retrieval fails.",
+      "first_evidence": "template/stacks/api-next/apps/web/components/screens/recovery.tsx:106:                       request(browserApi.GET(\"/auth/user/two-factor-recovery-codes\")),",
+      "why_it_matters": "After recovery-code rotation succeeds, a failed replacement read leaves the invalid old codes visible and copyable. A user can save that unusable set and later fail to recover their account. Both stacks retain the old state until the GET succeeds.",
+      "evidence": [
+        "template/stacks/api-next/apps/web/components/screens/recovery.tsx:106:                       request(browserApi.GET(\"/auth/user/two-factor-recovery-codes\")),",
+        "The POST completes at lines 101-103 before setCodes awaits this GET; Copy codes at line 83 continues to use the old state.",
+        "template/stacks/inertia-monolith/resources/js/pages/settings/recovery.tsx:95-96 repeats this sequence. Reveal set A, rotate successfully to B, then fail the GET with 503; copying still returns A."
+      ],
+      "reviewers": [
+        "frontend"
+      ],
+      "independent_reviewers": [
+        "frontend"
+      ]
+    },
+    {
+      "#": 6,
+      "title": "CWE-204: Reset delivery errors expose existing Inertia accounts",
+      "severity": "P2",
+      "file": "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php",
+      "line": 33,
+      "confidence": 75,
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "pre_existing": false,
+      "suggested_fix": "Wrap the Inertia forgot-password broker call in an application controller that reports delivery exceptions and returns the generic PasswordResetLinkResponse, matching the API controller. Preserve validation, normalization, middleware and HTML/JSON behavior. Test throwing delivery for existing and absent accounts.",
+      "first_evidence": "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php:33:         $this->app->bind(Contracts\\FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);",
+      "why_it_matters": "During a mail outage, existing Inertia accounts receive a server error from password reset while absent accounts receive the generic success response. The exception occurs before either response binding runs. This exposes account existence and violates U6's uniform reset-response requirement.",
+      "evidence": [
+        "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php:33:         $this->app->bind(Contracts\\FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);",
+        "routes/auth.php retains Fortify's native PasswordResetLinkController, which calls sendResetLink before constructing either response and does not catch synchronous delivery exceptions.",
+        "An isolated read-only probe with the installed PasswordBroker and synthetic doubles produced an unhandled RuntimeException for an existing account and passwords.user for an absent one. The API PasswordResetLinkController already catches and reports this exception."
+      ],
+      "reviewers": [
+        "backend"
+      ],
+      "independent_reviewers": [
+        "backend"
+      ]
+    }
+  ],
+  "triage_groups": [
+    {
+      "title": "Generated CI fidelity",
+      "findings": [
+        1,
+        2
+      ],
+      "context": "Generated projects fail jobs that the generator's outer CI masks.",
+      "preferred_resolution": "Correct both standards-owned workflows, release and rebundle once, then verify clean generated checkouts.",
+      "why": "Both changes require a new standards export and updated generator inventory."
+    },
+    {
+      "title": "Security-screen asynchronous state",
+      "findings": [
+        4,
+        5
+      ],
+      "context": "Both stacks retain or accept stale authentication-method state.",
+      "preferred_resolution": "Fix recovery invalidation first, then passkey request ordering, with deferred and failed-response browser cases in both stacks.",
+      "why": "Successful backend mutations must not leave misleading frontend state."
+    }
+  ],
+  "pre_existing_findings": [],
+  "requirements_completeness": {
+    "plan_source": "explicit",
+    "plan": "docs/plans/2026-09-08-1207-feat-multi-stack-generator-plan.md",
+    "readiness": "implementation-ready",
+    "meaning": "Met means corresponding implementation appears in the reviewed tree, not release certification. Partial entries identify confirmed defects or pending execution evidence, not absent whole units.",
+    "requirements": {
+      "R1": "met",
+      "R2": "met",
+      "R3": "met",
+      "R4": "met",
+      "R5": "met",
+      "R6": "met",
+      "R7": "partially addressed: generated CI findings #1 and #2",
+      "R8": "met; production provider activation remains manual",
+      "R9": "met",
+      "R10": "met",
+      "R11": "partially addressed: Inertia reset-delivery failure #6",
+      "R12": "met",
+      "R13": "met",
+      "R14": "met",
+      "R15": "partially addressed: passkey list ordering #4",
+      "R16": "partially addressed: recovery-code state #5",
+      "R17": "met",
+      "R18": "met",
+      "R19": "met; final packed live mail evidence is root-owned",
+      "R20": "met; stable deployment behavior remains an operational gate",
+      "R21": "met",
+      "R22": "partially addressed: generated CI findings #1 and #2",
+      "R23": "partially addressed: reset request contract #3",
+      "R24": "met",
+      "R25": "partially addressed: asynchronous security-screen states #4 and #5",
+      "R26": "partially addressed: CI defects and final packed live/Blacksmith evidence",
+      "R27": "partially addressed: code and earlier local HTTP evidence exist; final stable HTTPS/preview proof remains root-owned",
+      "R28": "met in published standards v0.3.0; corrected workflow export required by #1 and #2"
+    },
+    "units": {
+      "U1": "met via published bundled standards",
+      "U2": "partially addressed: #1 and #2",
+      "U3": "met",
+      "U4": "met",
+      "U5": "met",
+      "U6": "partially addressed: #6",
+      "U7": "met",
+      "U8": "met backend implementation; frontend issues tracked under U10/U11",
+      "U9": "partially addressed: #3",
+      "U10": "partially addressed: #4 and #5",
+      "U11": "partially addressed: #4 and #5",
+      "U12": "met implementation; final packed live evidence pending separately",
+      "U13": "partially addressed: generated workflow fidelity #1 and #2",
+      "U14": "partially addressed: production bundle/matrix implemented and locally proven; fixes, release CI, final live evidence and root lifecycle remain",
+      "U15": "met",
+      "U16": "met implementation and earlier transport proof; stable preview proof remains",
+      "U17": "met: selected Companion design and route evidence exist"
+    },
+    "unaddressed_units": [],
+    "settled_decision_conflicts": []
+  },
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [
+    "The root owns licensing/redistribution approval, provider activation, Blacksmith execution, final packed live journeys, stable HTTPS preview evidence and publication.",
+    "Successful authorized installation is not proof of Scramble Pro entitlement or redistribution rights.",
+    "Findings #1 and #2 are implementation defects despite the previously clear standards review. Correct the owner repository and issue a new immutable export rather than silently changing v0.3.0."
+  ],
+  "residual_risks": [
+    "Cross-model review was reserved to the root coordinator and was not run or claimed by this subagent.",
+    "Three independent leaf agents paired related lenses. This is not independent coverage for every individual persona, and no paired-lens agreement promoted confidence.",
+    "No source edits, source-template installations, real secret reads, production access, Git/index mutations or lifecycle actions were performed. Only review artifacts were written.",
+    "Full application suites and browser journeys were not rerun here. The root's 401 passing tests, 194 production outputs and 66 frozen-install keys remain supplied evidence.",
+    "The possible transport-database mismatch was not retained: the validator established that forced migrations can create the missing PostgreSQL database."
+  ],
+  "testing_gaps": [
+    "Run generated workflow jobs from clean tracked-files-only checkouts without inherited .env or browser caches.",
+    "Assert reset-password required fields against freshly generated OpenAPI.",
+    "Test delayed initial passkey responses across successful enrollment in both stacks.",
+    "Test successful recovery rotation followed by failed replacement retrieval in both stacks.",
+    "Test equal Inertia reset responses for existing and absent accounts when mail delivery throws."
+  ],
+  "coverage": {
+    "review_mode": "agent report-only",
+    "artifact_root": "docs, default because .compound-engineering/config.yaml is absent",
+    "scope_helper": {
+      "exec_lines": 27044,
+      "uncounted_files": 334,
+      "lite_eligible": false
+    },
+    "lenses": {
+      "generation": "Correctness, reliability, testing, maintainability and CLI agent parity across composition, setup, packaging, standards application and CI.",
+      "backend": "Correctness, security, API contract and additive migration review across both Laravel stacks.",
+      "frontend": "Correctness, security, async race, testing and local adversarial composition review across forms, factors, proxy, SSR and Horizon."
+    },
+    "standards": "No CODING_STANDARDS.md or CLAUDE.md found. The only AGENTS.md is the non-prescriptive generated Next placeholder. Plan and pinned standards conformance were checked within concern slices; no separate independent project-standards persona ran.",
+    "cross_model": "Root-owned, not run in this review; local adversarial composition lens only.",
+    "validator": {
+      "batches": 1,
+      "selected": 6,
+      "validated": 6,
+      "dropped": 0,
+      "shortcuts": 0,
+      "degraded_blockers": 0,
+      "artifact": "validation.json"
+    },
+    "mechanics": {
+      "malformed_findings": 0,
+      "malformed_returns": 0,
+      "suppressed_by_confidence": {},
+      "semantic_duplicates": 0,
+      "settled_conflicts": 0,
+      "mode_aware_demotions": 0
+    },
+    "failed_reviewers": [],
+    "read_only_probes": [
+      "Release/catalog verifier accepted 827 assets and 66 lock keys.",
+      "Installed PasswordBroker synthetic delivery-failure reproduction."
+    ],
+    "limitations": "No new visual audit, Blacksmith run, stable HTTPS ceremony, provider activation or cross-model corroboration is claimed. Review used targeted source reads, text search, installed vendor evidence and independent validation."
+  },
+  "artifact_path": "docs/reviews/2026-09-09-release-candidate/review.json",
+  "run_id": "2026-09-09-release-candidate",
+  "next_action": "Resolve the two generated-CI P1 defects and four validated P2 defects, refresh the affected immutable bundle evidence, then complete the separate root-owned release gates."
+}

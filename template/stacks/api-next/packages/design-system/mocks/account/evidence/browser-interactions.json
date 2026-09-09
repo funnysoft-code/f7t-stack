@@ -1,0 +1,62 @@
+[
+  {
+    "direction": "a",
+    "check": "Passkey cancellation retains password fallback",
+    "passed": true
+  },
+  {
+    "direction": "a",
+    "check": "Recovery alternative updates label, input mode and focus",
+    "passed": true
+  },
+  {
+    "direction": "a",
+    "check": "Save disables submit then shows success",
+    "passed": true
+  },
+  {
+    "direction": "a",
+    "check": "Dialog traps focus, Escape closes and restores trigger focus",
+    "passed": true
+  },
+  {
+    "direction": "a",
+    "check": "Reduced motion disables transitions",
+    "passed": true
+  },
+  {
+    "direction": "a",
+    "check": "Keyboard focus has a 3px solid ring",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Passkey cancellation retains password fallback",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Recovery alternative updates label, input mode and focus",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Save disables submit then shows success",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Dialog traps focus, Escape closes and restores trigger focus",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Reduced motion disables transitions",
+    "passed": true
+  },
+  {
+    "direction": "b",
+    "check": "Keyboard focus has a 3px solid ring",
+    "passed": true
+  }
+]

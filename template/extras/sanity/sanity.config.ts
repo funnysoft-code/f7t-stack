@@ -33,7 +33,6 @@ export default defineConfig({
       schemaType === "siteSettings"
         ? prev.filter((action) => action.action !== "delete" && action.action !== "duplicate")
         : prev,
-    newDocumentOptions: (prev) =>
-      prev.filter((template) => template.templateId !== "siteSettings"),
+    newDocumentOptions: (prev) => prev.filter((template) => template.templateId !== "siteSettings"),
   },
 });

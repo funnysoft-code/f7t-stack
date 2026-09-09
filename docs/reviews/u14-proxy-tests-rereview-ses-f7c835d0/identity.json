@@ -1,0 +1,13 @@
+{
+  "algorithm": "SHA-256",
+  "head_sha": "abbf4bc9448703acae66e1cda5188dee93fa8fe5",
+  "files": {
+    "template/stacks/inertia-monolith/tests/Feature/TrustedProxyTest.php": "d4c5a941ff1d54be3d17383395830a2af3526f7f1efd57c5b15ff128e6f4438f",
+    "template/stacks/api-next/services/api/tests/Feature/TrustedProxyTest.php": "d4c5a941ff1d54be3d17383395830a2af3526f7f1efd57c5b15ff128e6f4438f",
+    "template/stacks/inertia-monolith/tests/Http/Users/AccountPagesTest.php": "07b636f4573b5c52aa249ad53361a189d61e1bc18118a95ef65f7d47f632c01e"
+  },
+  "evidence": {
+    "docs/verification/u14-proxy-cache-fix.md": "bee1b203087665d1929d484782df25687c3686ab62c7015546e237ff3b0391ef"
+  },
+  "all_three_fixture_overlays_match": true
+}

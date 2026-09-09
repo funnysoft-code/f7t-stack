@@ -1,35 +1,34 @@
-import { spawn } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
 import { gen, trackTempDirs } from "./test-helpers";
+import { generationMatrix } from "./release-matrix";
+import { packedMatrix } from "./packed-matrix";
+import { packageRoot } from "./paths";
 
 trackTempDirs();
 
-function run(cmd: string[], cwd: string): Promise<number> {
-  const bunGlobal = (
-    globalThis as unknown as {
-      Bun?: {
-        spawn: (
-          argv: string[],
-          opts: { cwd: string; stdout?: "inherit"; stderr?: "inherit" },
-        ) => { exited: Promise<number> };
-      };
-    }
-  ).Bun;
-  if (bunGlobal) {
-    return bunGlobal.spawn(cmd, { cwd, stdout: "inherit", stderr: "inherit" }).exited;
-  }
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd[0]!, cmd.slice(1), {
-      cwd,
-      stdio: "inherit",
-      env: process.env,
-    });
-    child.on("error", reject);
-    child.on("close", (code) => resolve(code ?? 1));
-  });
-}
+test.each(generationMatrix().filter((flags) => flags.stack === "next-only"))(
+  "complete Next composition %j",
+  async (flags) => {
+    const dir = await gen(flags);
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    expect(Boolean(pkg.dependencies["next-intl"])).toBe(flags.intl);
+    expect(Boolean(pkg.dependencies.resend)).toBe(flags.resend);
+    expect(pkg.devDependencies["@playwright/test"]).toBe("1.62.1");
+    expect(Boolean(pkg.scripts["test:e2e"])).toBe(flags.playwright);
+    expect(Boolean(pkg.dependencies["drizzle-orm"])).toBe(flags.data === "drizzle");
+    await expect(stat(path.join(dir, "composer.json"))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(path.join(dir, "artisan"))).rejects.toMatchObject({ code: "ENOENT" });
+    const page = await readFile(
+      path.join(dir, flags.intl ? "src/app/[locale]/page.tsx" : "src/app/page.tsx"),
+      "utf8",
+    );
+    expect(page).not.toContain("__F7T_");
+    expect(page).toContain(flags.shell === "site" ? "header" : "<main");
+  },
+);
 
 describe("fixture combos", () => {
   test("--yes site no data", async () => {
@@ -44,7 +43,9 @@ describe("fixture combos", () => {
     const page = await readFile(path.join(dir, "src/app/page.tsx"), "utf8");
     expect(page).toContain("header");
     await expect(stat(path.join(dir, "src/lib/site.ts"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".github/workflows/ci.yml"))).resolves.toBeTruthy();
+    await expect(stat(path.join(dir, ".github/workflows/ci.yml"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   test("site + sanity + resend + locale pt-PT", async () => {
@@ -71,19 +72,27 @@ describe("fixture combos", () => {
     expect(page).toContain("<main");
   });
 
-  test("site + intl + playwright + harness both", async () => {
-    const dir = await gen({ intl: true, playwright: true, harness: "both" });
+  test("site + intl + playwright + mandatory OpenCode selection", async () => {
+    const dir = await gen({ intl: true, playwright: true, harness: "opencode" });
     await expect(stat(path.join(dir, "src/app/[locale]/page.tsx"))).resolves.toBeTruthy();
     await expect(stat(path.join(dir, "e2e/smoke.spec.ts"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".grok"))).resolves.toBeTruthy();
-    await expect(stat(path.join(dir, ".cursor"))).resolves.toBeTruthy();
+    await expect(stat(path.join(dir, ".grok"))).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(path.join(dir, ".cursor"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
 
 describe.skipIf(!process.env.F7T_LIVE_CHECK)("live check", () => {
-  test("base+site passes bun run check", async () => {
-    const dir = await gen({ skipInstall: false, git: false });
-    expect(await run(["bun", "install"], dir)).toBe(0);
-    expect(await run(["bun", "run", "check"], dir)).toBe(0);
-  }, 300_000);
+  test("released npm artifact generates the full matrix and frozen-installs every key", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "f7t-live-matrix-"));
+    try {
+      await packedMatrix({
+        source: packageRoot(),
+        output: path.join(dir, "packed"),
+        fixtureMode: false,
+        install: true,
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 3_600_000);
 });

@@ -1,0 +1,10 @@
+{
+  "run_id": "u14-proxy-cache-targeted-ses-f7c835d0",
+  "branch": "feat/f7t-158-multi-stack-generator",
+  "head_sha": "e405b6c3647dbc7b55c0f152e202b51013f56139",
+  "verdict": "Ready to merge",
+  "completed_on": "2026-09-09",
+  "mode": "agent, targeted report-only, inline lenses",
+  "independent_reviewers": [],
+  "source_identity": "identity.json"
+}

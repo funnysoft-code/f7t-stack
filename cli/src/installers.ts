@@ -8,6 +8,16 @@ import { templateDir } from "./paths";
 
 async function runShell(name: string, config: CreateConfig): Promise<void> {
   await copyExtra(name, config, { appPrefix: true });
+  if (config.intl) {
+    const page = path.join(config.projectDir, appPagesRoot(config), "page.tsx");
+    await writeFile(
+      page,
+      (await readFile(page, "utf8")).replace(
+        'import Link from "next/link";',
+        'import { Link } from "~/i18n/navigation";',
+      ),
+    );
+  }
 }
 
 async function runExtra(
@@ -102,25 +112,6 @@ export function readExtraManifest(extraName: string): ExtraManifest {
   return JSON.parse(readFileSync(manifestPath, "utf8")) as ExtraManifest;
 }
 
-const GITHUB_E2E_JOB = `
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps
-      - run: bun run test:e2e
-`;
-
-async function runGithubActions(config: CreateConfig): Promise<void> {
-  await copyExtra("github-actions", config);
-  const ymlPath = path.join(config.projectDir, ".github/workflows/ci.yml");
-  const yml = await readFile(ymlPath, "utf8");
-  const next = yml.split("__F7T_E2E_JOB__").join(config.playwright ? GITHUB_E2E_JOB : "");
-  await writeFile(ymlPath, next.replace(/\n+$/, "\n"));
-}
-
 export const installers: Installer[] = [
   {
     name: "sanity",
@@ -167,21 +158,6 @@ export const installers: Installer[] = [
     shouldRun: (config) => config.playwright,
     run: (config) => runExtra("playwright", config),
   },
-  {
-    name: "harness-grok",
-    shouldRun: (config) => config.harness === "grok" || config.harness === "both",
-    run: (config) => runExtra("harness-grok", config),
-  },
-  {
-    name: "harness-cursor",
-    shouldRun: (config) => config.harness === "cursor" || config.harness === "both",
-    run: (config) => runExtra("harness-cursor", config),
-  },
-  {
-    name: "github-actions",
-    shouldRun: (config) => config.githubActions,
-    run: (config) => runGithubActions(config),
-  },
 ];
 
 export function landedExtras(
@@ -196,9 +172,26 @@ export function landedExtras(
 }
 
 export async function runInstallers(config: CreateConfig): Promise<void> {
+  if (config.stack !== "next-only") throw new Error("Next installers require the next-only stack");
   for (const installer of installers) {
     if (installer.shouldRun(config)) {
       await installer.run(config);
     }
+  }
+  // These are selected integration APIs, not dead code or lint exclusions.
+  // React Doctor reads Knip entry points while still scanning their implementation.
+  const entry = [
+    ...(config.data === "sanity" ? ["src/sanity/lib/site-settings.ts"] : []),
+    ...(config.data === "drizzle" ? ["src/server/db/index.ts", "src/server/db/schema.ts"] : []),
+    ...(config.shadcn ? ["src/components/ui/button.tsx"] : []),
+    ...(config.intl ? ["src/i18n/navigation.ts"] : []),
+  ];
+  if (entry.length) {
+    const inline = `[${entry.map((file) => JSON.stringify(file)).join(", ")}]`;
+    const formatted =
+      inline.length + '  "entry": '.length <= 100
+        ? inline
+        : `[\n${entry.map((file) => `    ${JSON.stringify(file)}`).join(",\n")}\n  ]`;
+    await writeFile(path.join(config.projectDir, "knip.json"), `{\n  "entry": ${formatted}\n}\n`);
   }
 }

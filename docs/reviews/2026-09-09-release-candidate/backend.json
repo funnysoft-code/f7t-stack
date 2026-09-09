@@ -1,0 +1,57 @@
+{
+  "reviewer": "backend",
+  "findings": [
+    {
+      "title": "Reset schema omits required password confirmation",
+      "severity": "P2",
+      "file": "template/stacks/api-next/packages/api-client/openapi.json",
+      "line": 881,
+      "why_it_matters": "A client following the exported reset-password request contract sends token, email, and password but receives 422 even with a valid reset token. ResetPasswordAction requires Laravel's confirmed rule, while the exported operation and generated TypeScript omit password_confirmation entirely. The bundled frontend happens to send the extra field, so its successful reset journey does not verify the published contract.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "Add a password.update request-body override to AccountOperationTransformer containing token, email, password, and password_confirmation as required fields, with the actual password constraints. Regenerate OpenAPI and schema.d.ts, and assert that the freshly exported reset request requires password_confirmation before exercising a valid reset with that shape.",
+      "confidence": 100,
+      "evidence": [
+        "template/stacks/api-next/packages/api-client/openapi.json:881:                 \"required\": [\"token\", \"email\", \"password\"]",
+        "template/stacks/api-next/services/api/Modules/Identity/Actions/Fortify/ResetPasswordAction.php:22: $data = Validator::make($input, ['password' => ['required', 'string', Password::min(12), 'confirmed']])->validate();",
+        "template/stacks/api-next/packages/api-client/src/schema.d.ts:1230-1235 defines the reset application/json body with only token, email, and password.",
+        "template/stacks/api-next/services/api/Modules/Identity/Support/AccountOperationTransformer.php:31-40 overrides registration and confirmation request bodies but leaves password.update to vendor-controller inference, which cannot see the configured reset action's additional validation.",
+        "template/stacks/api-next/apps/web/components/account/auth-form.tsx:123-124 sends password_confirmation explicitly, masking the schema omission in the bundled UI flow.",
+        "template/stacks/api-next/services/api/Modules/Identity/Tests/Http/AccountSchemaTest.php:24-27 asserts the registration request's required fields but not the reset request's fields."
+      ],
+      "pre_existing": false
+    },
+    {
+      "title": "CWE-204: Reset delivery errors expose existing Inertia accounts",
+      "severity": "P2",
+      "file": "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php",
+      "line": 33,
+      "why_it_matters": "During a mail transport failure, an Inertia reset request for an existing account returns 500 while an absent account still receives the generic successful response. Binding both broker-status response contracts does not catch exceptions thrown before either response is constructed, exposing account existence and breaking the promised uniform reset failure behavior. The API stack already catches and reports this delivery exception before returning its generic message.",
+      "autofix_class": "gated_auto",
+      "owner": "downstream-resolver",
+      "requires_verification": true,
+      "suggested_fix": "Wrap the Inertia forgot-password broker call in an application-owned controller that reports delivery exceptions and returns PasswordResetLinkResponse for both broker results and delivery failures, following the API PasswordResetLinkController pattern. Preserve the vendor validation and lowercase normalization, route name, Turnstile middleware, and JSON/HTML response behavior. Test existing and absent emails under a throwing mail transport for identical statuses and messages.",
+      "confidence": 75,
+      "evidence": [
+        "template/stacks/inertia-monolith/app/Providers/FortifyServiceProvider.php:33:         $this->app->bind(Contracts\\FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkResponse::class);",
+        "template/stacks/inertia-monolith/routes/auth.php:9 requires vendor/laravel/fortify/routes/routes.php, retaining the native PasswordResetLinkController for POST /forgot-password.",
+        "Read-only installed reference /private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/u14-release-030/packed/fixture-192/vendor/laravel/fortify/src/Http/Controllers/PasswordResetLinkController.php:41-47 calls $this->broker()->sendResetLink(...) before resolving either response contract, without catching delivery exceptions.",
+        "The same reference vendor/laravel/framework/src/Illuminate/Auth/Passwords/PasswordBroker.php:90-92 returns INVALID_USER for an absent user, whereas line 107 invokes $user->sendPasswordResetNotification($token) for an existing user without an exception handler.",
+        "Read-only PHP reproduction using the installed real PasswordBroker, synthetic Mockery user/provider/token doubles, and a throwing notification produced: existing: unhandled RuntimeException; absent: passwords.user. No application bootstrap, database, network, or actual credentials were used.",
+        "template/stacks/api-next/services/api/Modules/Identity/Http/Controllers/PasswordResetLinkController.php:22-28 catches Throwable around sendResetLink, reports it, and returns the uniform message.",
+        "template/stacks/inertia-monolith/tests/Http/Users/AuthenticationTest.php:65-74 covers existing, absent, and broker-throttled results with Notification::fake(), leaving the throwing delivery path untested."
+      ],
+      "pre_existing": false
+    }
+  ],
+  "residual_risks": [
+    "Live HTTPS WebAuthn ceremonies, production provider delivery, and dependency licensing remain root-owned release gates. This read-only backend review does not claim those gates passed or classify their pending status as implementation defects.",
+    "The review used source-level tracing and installed pinned vendor references. It did not rerun the application HTTP suites or migrations, and therefore relies on the coordinator's existing full-suite execution history for those runtime results."
+  ],
+  "testing_gaps": [
+    "The fresh OpenAPI assertions do not check the reset-password request's password_confirmation field, allowing a reproducibly incomplete Laravel-to-client contract to pass freshness checks.",
+    "Inertia reset tests cover generic responses with fake successful notifications, but do not compare existing and absent account responses when notification delivery throws.",
+    "Read coverage included both stacks' account actions, requests, controllers, middleware, models, providers, registration and verification routes, confirmation and session invalidation, passkeys and TOTP vendor boundaries, first-user and Horizon authorization commands, integrations/configuration, all assigned migrations, and API transformers/generated schemas. The only additional runtime probe was the isolated synthetic PasswordBroker reproduction."
+  ]
+}

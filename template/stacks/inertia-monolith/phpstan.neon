@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/pestphp/pest-plugin-phpstan/extension.neon
+
+parameters:
+    stubFiles:
+        - stubs/fortify-event.stub
+    level: max
+    paths:
+        - app
+        - tests

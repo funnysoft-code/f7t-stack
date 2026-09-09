@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1),
-  email: z.string().email(),
+  email: z.email(),
   message: z.string().trim().min(1),
 });
 

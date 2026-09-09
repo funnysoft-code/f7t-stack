@@ -1,0 +1,58 @@
+{
+  "status": "complete",
+  "verdict": "Ready to merge",
+  "scope": {
+    "base": "e405b6c3647dbc7b55c0f152e202b51013f56139",
+    "branch": "feat/f7t-158-multi-stack-generator",
+    "head_sha": "e405b6c3647dbc7b55c0f152e202b51013f56139",
+    "pr_url": null,
+    "files_changed": 12,
+    "mode": "local-aligned, explicit 12-file uncommitted scope including named untracked files"
+  },
+  "intent": "Accept HTTPS scheme information only from explicitly configured proxy IPs, preserve the original Host boundary, and prevent storage of Inertia session-bearing responses. Document Herd setup and distinguish Next development headers from its existing production policy.",
+  "intent_confidence": "explicit",
+  "reviewers": ["inline-correctness", "inline-security", "inline-testing", "inline-cache-and-reliability"],
+  "findings": [],
+  "actionable_findings": [],
+  "triage_groups": [],
+  "pre_existing_findings": [],
+  "requirements_completeness": null,
+  "learnings": [],
+  "agent_native_gaps": [],
+  "deployment_notes": [
+    "Laravel's installed TrustProxies implementation uses the configured array directly. An empty array disables its automatic wildcard fallback for Laravel Cloud and on-forge/on-vapor hosts. This satisfies the requested empty-default trust boundary, but hosted deployments must supply their actual proxy peers. No deployed Cloud topology or stable peer-address contract was verified.",
+    "The configuration contains only an exported array and reads env at configuration loading time. Rebuild cached configuration and restart long-lived processes after TRUSTED_PROXIES changes, as both READMEs require.",
+    "The root coordinator still owns regenerated inventory, final package identity and the packed HTTPS gate. This verdict covers only this patch."
+  ],
+  "residual_risks": [
+    "An allowed peer must overwrite X-Forwarded-Proto and preserve the public Host. The application cannot distinguish a forged header passed through by an allowed proxy. Backend network restrictions remain part of the documented deployment contract.",
+    "No production Cloud or Forge request was inspected. The explicit-IP policy deliberately forgoes Laravel's automatic hosted-platform proxy trust.",
+    "The reported browser and backend gates used copied fixtures with an older packed frontend and standards v0.3.0. They do not prove the final assembled package."
+  ],
+  "testing_gaps": [
+    "The committed regressions cover trusted IPv4/IPv6, an untrusted peer, empty configuration, spoofed forwarded Host, invalid allowlist entries, login/profile HTML and the health exclusion. They do not run an actual config:cache plus changed-environment/restart sequence.",
+    "The new cache assertions do not directly cover Inertia JSON, auth redirects or rendered exception responses. Inline response checks cover returned status codes; the worker separately reports a live 419 no-store response.",
+    "Forwarded port and client-IP rejection were independently exercised in a standalone review probe, but are not asserted in the added Pest tests."
+  ],
+  "coverage": {
+    "review_method": "One report-only reviewer applied all listed lenses inline, as requested. No independent persona or peer review is claimed.",
+    "cross_model": "Not run, explicit no-delegation and zero descendant budget.",
+    "validator": "No retained findings required validation. No validator batch or corroboration shortcut was used.",
+    "mechanics": "findings-mechanics.py accepted the empty finding set with zero malformed findings or returns.",
+    "source_identity": "identity.json records SHA-256 for all 12 scoped files and the supplied evidence. All eight executable PHP and test files matched the worker's copied fixtures byte for byte. README and env-example identity differs from generated fixture copies and was reviewed at the template source.",
+    "independent_checks": [
+      "Read the installed Laravel TrustProxies implementation and routing Pipeline exception handling. The header mask is applied even when proxy addresses come from config. The routing pipeline renders inner exceptions back through the prepended cache middleware.",
+      "A read-only PHP probe passed four trusted/untrusted IPv4/IPv6/empty scheme boundaries, preserved Host and client IP, ignored a spoofed forwarded port, and round-tripped configuration through var_export.",
+      "The same probe passed cache-header replacement for returned 200, 302, 403, 419 and 500 responses. It did not boot a full application or exercise exception rendering.",
+      "The first probe incorrectly expected HTTP port 80 after a trusted HTTPS scheme. It failed and was corrected to expect the scheme-derived default 443. The code did not change; forwarded port 9999 remained ignored."
+    ],
+    "supplied_evidence": "Read docs/verification/u14-proxy-cache-fix.md. It reports a normal-certificate Chrome red reproduction with 30 HTTP asset references and blank content, followed by a visible HTTPS login with zero insecure references; authenticated private/no-store HTML; real profile edits; secure cookies; a CSRF fallback rejection; and static-asset exclusions. It reports full suites of 111 and 116 tests, configured 100% coverage/type coverage, and PHPStan, Pint and Rector success. These historical runs were not rerun by this reviewer.",
+    "browser": "No browser session was started during this report-only review. The supplied worker evidence explicitly used trusted system Chrome and no certificate bypass.",
+    "scope_limits": "No frontend changes, other package work, globals, index, commits or lifecycle actions were reviewed or changed. The production Next policy is supported by the supplied fixture evidence, not a new Next implementation in this patch.",
+    "plan": "No bounded plan document supplied; the explicit task contract governed scope. Settlement suppression was not evaluated.",
+    "suppressed_findings": 0,
+    "validation_drops": 0
+  },
+  "artifact_path": "docs/reviews/u14-proxy-cache-targeted-ses-f7c835d0",
+  "run_id": "u14-proxy-cache-targeted-ses-f7c835d0"
+}
