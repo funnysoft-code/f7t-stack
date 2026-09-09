@@ -10,9 +10,9 @@ FunnySoft's Bun-first generator for three application layouts:
 
 ## Release status
 
-Generator **0.2.0 is not released** to npm yet. Its bundle pins published FunnySoft standards [v0.3.3](https://github.com/funnysoft-code/standards/releases/tag/v0.3.3), commit `0d955d9297027749f660bae2ca489710f9ffd599`. Template revision `0.2.0` identifies the generator release rather than an unknown future Git commit. Packed verification is distinct from the remaining live browser, licensing and shipping gates. See [verification and remaining gates](docs/verification/multi-stack-generator.md).
+Generator **0.2.0 is published** on npm. Its bundle pins published FunnySoft standards [v0.3.3](https://github.com/funnysoft-code/standards/releases/tag/v0.3.3), commit `0d955d9297027749f660bae2ca489710f9ffd599`. Template revision `0.2.0` identifies the generator release rather than an unknown future Git commit. Hosted Vercel/Laravel Cloud previews and paid-license update-period coverage remain separate. See [verification and remaining gates](docs/verification/multi-stack-generator.md).
 
-The CLI syntax below describes the pending release:
+Install and run:
 
 ```sh
 bunx create-f7t-app my-app --stack next-only --yes
