@@ -58,6 +58,28 @@ test("real package inventory retains every Next template asset and excludes deve
   expect(files.some((file) => file.startsWith("cli/"))).toBe(false);
 });
 
+test("Git ignore rules retain every release asset while excluding local OpenCode state", async () => {
+  const root = await temporary();
+  execFileSync("git", ["init", "--quiet", root]);
+  await writeFixtureFile(
+    root,
+    ".gitignore",
+    await readFile(path.join(packageRoot(), ".gitignore"), "utf8"),
+  );
+  const ignored = execFileSync(
+    "git",
+    ["-c", "core.excludesFile=/dev/null", "check-ignore", "--no-index", "--stdin"],
+    {
+      cwd: root,
+      input: [...auditPackage(), ".opencode/local-state.json"].join("\n") + "\n",
+      encoding: "utf8",
+    },
+  )
+    .trim()
+    .split("\n");
+  expect(ignored).toEqual([".opencode/local-state.json"]);
+});
+
 test("package audit fails when npm omits an existing template asset", async () => {
   const root = await temporary();
   await writeFixtureFile(
