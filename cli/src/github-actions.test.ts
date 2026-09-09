@@ -32,6 +32,13 @@ describe("github-actions extra", () => {
         await mkdir(path.join(dir, "bin"));
         await mkdir(path.join(dir, "scripts"));
         await writeFile(path.join(dir, phpRoot, ".env.example"), "");
+        if (stack === "api-next") {
+          await mkdir(path.join(dir, "apps/web"), { recursive: true });
+          await writeFile(
+            path.join(dir, "apps/web/.env.example"),
+            "FRONTEND_URL=http://localhost:3000\n",
+          );
+        }
         await writeFile(
           path.join(dir, "scripts/boost-sync-opencode-skills.sh"),
           'test "$APP_ENV" = testing\n',
@@ -62,6 +69,11 @@ printf '%s %s\\n' "$name" "$*" >> "$TRACE"
           },
         });
         expect(result.status, result.stderr).toBe(0);
+        if (stack === "api-next") {
+          expect(await readFile(path.join(dir, "apps/web/.env"), "utf8")).toBe(
+            await readFile(path.join(dir, "apps/web/.env.example"), "utf8"),
+          );
+        }
         const trace = await readFile(path.join(dir, "trace"), "utf8");
         expect(trace).toContain(
           stack === "next-only" ? "bun run db:migrate" : "php artisan boost:install",

@@ -151,6 +151,8 @@ jobs:
           bun install --frozen-lockfile
           if [ "$STACK" = next-only ]; then
             cp .env.example .env
+          elif [ "$STACK" = api-next ]; then
+            cp apps/web/.env.example apps/web/.env
           fi
           if [ "$STACK" != next-only ]; then
             PHP_ROOT=.
