@@ -1,6 +1,51 @@
 # Multi-stack generator verification
 
-The `0.2.0` bundle now pins published standards `v0.3.2` for the second CI correction round. Its package proof is under `u14-release-032`. All 359 recorded HTTPS runtime files still match current source and the new archive. The prior route/schema failures were missing migrated-database prerequisites, not production defects. Stable local HTTPS acceptance carries forward only for unchanged runtime content. Hosted CI retry and deployed-preview acceptance remain coordinator-owned.
+The `0.2.0` bundle now pins published standards `v0.3.3` for the PHP coverage correction. Its package proof is under `u14-release-033`. The change enables assertions only for Pest's coverage invocation; application runtime and dependency inputs are unchanged. The prior route/schema failures were missing migrated-database prerequisites, not production defects. Stable local HTTPS acceptance carries forward only for unchanged runtime content. Hosted CI retry and deployed-preview acceptance remain coordinator-owned.
+
+## PHP coverage correction: standards v0.3.3
+
+- Release: https://github.com/funnysoft-code/standards/releases/tag/v0.3.3, merged through PR #6.
+- Exact archived commit: `0d955d9297027749f660bae2ca489710f9ffd599`; remote tag independently resolves to it. GitHub confirms a published, non-draft, non-prerelease release. The coordinator verified its tree against reviewed `2e31e8795f9af4aaa27a52f03050c90f498935a8`.
+- Independently verified export digest: `62d9b0e0b8055d0fc9c52f25d02872faf1a65ec7e5f962163cb9fe96bf0f79be`.
+- Generator and template revision remain `0.2.0`. The full regenerated asset inventory matches the refreshed manifest; standards verification passes independently before import.
+- Artifact root `$R`: `/private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/u14-release-033`.
+
+Archive `$R/packed/create-f7t-app-0.2.0.tgz`:
+
+```text
+SHA-256 b09b807a7eb9249ad1e346018afada4403a2d8eb9caa017111b3e014deab21df
+```
+
+Local proof passes: **962 package files**, **194 outputs**, all three negative probes, **405 root tests / 7 opt-in skips**, and all **49 archived standards gate assertions**. Node **22.23.2** and Bun **1.4.0** were supplied by the existing isolated toolchain. The matrix records **zero new installs**. Counts remain **837 template assets, 120 standards files, 66 lock keys, 68 lock files and 34 fingerprints**.
+
+All 962 files match the newly extracted archive byte-for-byte. All **359 recorded HTTPS runtime hashes** match both current source and that archive, bound to runtime-manifest SHA-256 `a5d937bc448fbb7483949c36f4a7abfcabcc9524817182da514239f8fa20912f`. `parity.json` records the comparison and the fresh generated PHP gate hashes: Inertia `c6257560592d8654ce2322c440894fb273c1af37272ed1d39c563de322fab251`, API `189889c90731b018f2173396eaebf5f8184c7d3b4ea1e2bd89fe1638d1653a74`. Both equal the retained corrected template with `__PHP_ROOT__` substituted; no running fixture was modified.
+
+Commands after exact archive export and full inventory equality:
+
+```sh
+# PATH begins with the existing u14-release-031/toolchain.
+bun run verify:release
+F7T_STANDARDS_FIXTURE_SOURCE=/Users/jonaspauleta/Code/funnysoft/standards bun run check
+bun run verify:matrix --output "$R/packed"
+# From $R, using an already installed Playwright package without reinstalling:
+node standards-source/tests/gates_test.mjs /private/var/folders/7p/l3bv9g2j31l38ln4bmbqrx340000gn/T/opencode/u14-release-032/doctor/api/node_modules/@playwright/test
+```
+
+Receipts/logs: `packed/matrix.json`, `packed.log`, `check.log`, `standards-gates.log`, `delta.json`, `parity.json`. The matrix enables neither fixture mode nor installation. The coordinator's dedicated Redis service on port 6149 was left untouched.
+
+### Exact change and coverage evidence
+
+Only nine of 962 package files differ from v0.3.2 archive `1d2354d69ec306bc1477274ffcf27eede67bb4886afbbb6527e808f8ac04209f`: README, template provenance, both integrity manifests, three playbook quality documents and the two Laravel PHP quality scripts. The remaining **953 files and all executable modes are identical**. CLI, application templates, setup/configuration files and every dependency/lock input remain unchanged. `delta.json` records exact before/after hashes and full catalog equality.
+
+The sole PHP command change adds `-d zend.assertions=1` to the Pest coverage invocation. It does not change production INI or the separate type-coverage invocation. This keeps assertion lines executable for coverage even when the host's production INI disables them.
+
+Retained real production-INI logs at `coverage-debug-0334976` show the same passing test counts before and after: Inertia **115 / 968 assertions**, API **117 / 967 assertions**. Original coverage gates failed at **96.0% / 96.1%**. Corrected full PHP gates pass **100% line and type coverage** in both layouts. These are the root's retained real-suite runs, not fresh suite executions by the package worker. The debug fixture scripts were restored afterward; parity uses the retained corrected `standards-tracked/templates/scripts/php-gate.sh` with the appropriate PHP root substituted.
+
+### Hosted CI stage
+
+[Run 34299590161](https://github.com/funnysoft-code/f7t-stack/actions/runs/34299590161), head `0334976b51d3d04e71f87ffe6f6b0d8c577983a3`, passed root check, the full packed/frozen matrix and all six Next generated gates. Only the two Laravel generated jobs failed. The coordinator traced them to coverage under production INI. Job conclusions were independently verified with `gh run view`; the v0.3.3 retry remains pending root's commit/push.
+
+The existing 66-key frozen-install proof transfers through identical catalog and dependency bytes. This refresh does not repeat installs, Next Doctor/build checks or live HTTPS journeys. No deployment, global PHP setting or Redis lifecycle change was performed.
 
 ## CI round two: standards v0.3.2
 

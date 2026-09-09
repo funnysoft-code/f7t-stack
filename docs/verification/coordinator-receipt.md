@@ -1,6 +1,25 @@
 # Multi-stack implementation receipt
 
-## Source and delivery identity
+## Latest delivery identity: standards v0.3.3
+
+- Generator checkpoint before this rebundle: `0334976b51d3d04e71f87ffe6f6b0d8c577983a3`.
+- Generator and template version: `0.2.0`.
+- Published standards: `v0.3.3`, commit `0d955d9297027749f660bae2ca489710f9ffd599`, merged through standards PR #6. Remote tag and published release metadata independently verified.
+- Standards export digest: `62d9b0e0b8055d0fc9c52f25d02872faf1a65ec7e5f962163cb9fe96bf0f79be`.
+- Latest archive SHA-256: `b09b807a7eb9249ad1e346018afada4403a2d8eb9caa017111b3e014deab21df`.
+- Artifact: `u14-release-033/packed/create-f7t-app-0.2.0.tgz` under the approved temporary root documented in [package verification](multi-stack-generator.md).
+
+Latest local results: **962 package files**, **194 generated outputs**, three negative probes, **405 root tests passed / 7 opt-in skips**, and all **49 archived standards gate assertions** pass. All package source bytes match the extracted archive. This refresh performs **zero new installs**; all 66 lock keys and dependency fingerprints are unchanged.
+
+The only v0.3.2 archive changes are two PHP quality scripts, documentation and integrity metadata. Both freshly generated Laravel scripts match the corrected, real-suite-tested template after PHP-root substitution. The retained production-INI runs pass 100% named line/type coverage with unchanged test counts: Inertia 115 / 968 assertions, API 117 / 967 assertions. These are prior root-owned test executions, not new full suite runs during packaging.
+
+All **359 HTTPS runtime hashes** match current source and the v0.3.3 archive. Application runtime is unchanged; the PHP quality command is not production runtime. No new full-runtime or provider-deployment execution is claimed. Earlier identities and results follow as history.
+
+### Latest hosted CI stage
+
+[Run 34299590161](https://github.com/funnysoft-code/f7t-stack/actions/runs/34299590161) at `0334976` passed root check, packed/frozen matrix and all six Next generated gates. Only the two Laravel jobs failed on the diagnosed assertion/coverage issue. Published standards v0.3.3 adds `-d zend.assertions=1` only to the coverage command. Local affected verification is green; hosted retry for the new pin is pending the coordinator's commit/push. Hosted Composer installation already succeeded in the packed-matrix job.
+
+## Historical v0.3.1 source and delivery identity
 
 - Plan: `docs/plans/2026-09-08-1207-feat-multi-stack-generator-plan.md`.
 - Plan SHA-256: `bbf032cec55abe5d1a4121a0b092c5f396e2d2dbd51eefca8cb6e8c267bdddcd`.
@@ -10,7 +29,7 @@
 - Standards export digest: `9617fb25af0eab734dd99ac5fc4d1b8d186b9b5214b6ae4ec5cce70263d9aa42`.
 - Final candidate archive SHA-256: `a8076d66f6eb4d6c82144724e703da5afad03a186c1516cabf4961724de05605`.
 
-## Verification result
+## Historical v0.3.1 verification result
 
 Implementation and local verification are complete for the selected three-stack scope. U14 package delivery has passed local checks; hosted CI and final release acceptance remain open. This receipt does not mark the overall plan complete.
 
@@ -41,7 +60,7 @@ The full generator review produced six findings. Backend, frontend and standards
 
 ## Remaining delivery boundaries
 
-- Hosted Blacksmith CI must run for the PR revision. `COMPOSER_AUTH` presence is verified, but its hosted use is not yet proven.
+- Hosted Blacksmith CI must pass for the new v0.3.3 PR revision. Root checks, frozen installs and all six Next jobs passed in the preceding run; the corrected Laravel coverage jobs await retry.
 - Hosted Vercel/Laravel Cloud previews, actual Cloud proxy addresses and production-provider activation have not been verified or provisioned.
 - The owner confirmed Solo Scramble Pro use as FunnySoft's sole developer. The update-period entitlement and downstream license boundaries are recorded in [dependency entitlements](dependency-entitlements.md).
 - Revised screenshot owner approval remains unclaimed. Browser inspection and screenshots are recorded in the design and live-verification reports.
@@ -62,7 +81,7 @@ actual_model: unverified
 implementation_engine_binding: null
 fallback_reason: null
 run_id: null
-plan_checkpoint: ff01d4e
+plan_checkpoint: 0334976
 settled_decision_conflicts: []
 release_acceptance_complete: false
 ```
