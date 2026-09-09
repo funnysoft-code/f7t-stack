@@ -157,11 +157,11 @@ jobs:
             [ "$STACK" != api-next ] || PHP_ROOT=services/api
             (cd "$PHP_ROOT" && cp .env.example .env)
             (cd "$PHP_ROOT" && composer install --no-interaction --prefer-dist --no-progress && composer validate --strict --no-check-all)
-            (cd "$PHP_ROOT" && php artisan key:generate --force && php artisan migrate --force && php artisan boost:install --guidelines --skills --no-interaction)
+            (cd "$PHP_ROOT" && php artisan key:generate --force && php artisan migrate --force && APP_ENV=local php artisan boost:install --guidelines --skills --no-interaction)
             bash scripts/boost-sync-opencode-skills.sh
           elif [ "$CASE" = sqlite ]; then
-            DATABASE_URL=./local.sqlite bun run db:generate
-            DATABASE_URL=./local.sqlite bun run db:migrate
+            DATABASE_URL=file:./local.sqlite bun run db:generate
+            DATABASE_URL=file:./local.sqlite bun run db:migrate
           elif [ "$CASE" = postgres ]; then
             bun run db:generate
             bun run db:migrate
